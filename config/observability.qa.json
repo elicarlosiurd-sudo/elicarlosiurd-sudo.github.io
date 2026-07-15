@@ -1,0 +1,9 @@
+{
+  "SENTRY_DSN_PUBLIC": "https://216464bfd5fa813ce12b590224f15725@o4511612459483136.ingest.us.sentry.io/4511612884484096",
+  "SENTRY_ENVIRONMENT": "qa",
+  "SENTRY_RELEASE": "vitalia-v179-safe-refinement-gate",
+  "POSTHOG_KEY_PUBLIC": "phc_oLAvu9b5BcEcy4qHjce6WqSSNDJrBKt2XMFsp4KLn7hv",
+  "POSTHOG_HOST": "https://us.i.posthog.com",
+  "POSTHOG_ENABLED": true,
+  "ANALYTICS_ENABLED": true
+}

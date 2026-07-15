@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://qyerrlteeoiudtgmguzk.supabase.co https://*.supabase.co https://api.open-meteo.com https://cdn.jsdelivr.net https://elicarlosiurd-sudo.github.io https://raw.githubusercontent.com https://world.openfoodfacts.org https://*.sentry.io https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.posthog.com https://*.i.posthog.com; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com https://browser.sentry-cdn.com; worker-src 'self' blob:; base-uri 'self';">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="VitalIA">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#050505">
+<title>VitalIA - Saúde com Inteligência</title>
+<link rel="manifest" href="/assets/manifest-dBTnFHwR.json?v=vitalia-v230e2-main-split">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon-Dpi31azn.png?v=vitalia-v230e2-main-split">
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192-IrzRsN2J.png?v=vitalia-v230e2-main-split">
+<link rel="icon" type="image/png" sizes="512x512" href="/assets/icon-512-BFxO-nrp.png?v=vitalia-v230e2-main-split">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="/assets/main-C6x0jJF9.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/main-BbJQPaN2.css">
+</head>
+<body>
+<div id="root">
+  <div id="splash">
+    <div class="splash-logo">🌿</div>
+    <div class="splash-name">VitalIA</div>
+    <div class="splash-tag">Sistema inteligente de evolução humana</div>
+    <div class="splash-dots">
+      <div class="splash-dot"></div>
+      <div class="splash-dot"></div>
+      <div class="splash-dot"></div>
+    </div>
+  </div>
+
+  <!-- AUTH -->
+  <div id="auth-screen"></div>
+
+  <!-- MAIN APP -->
+  <div id="app" style="display:none;height:100%;display:flex;flex-direction:column">
+    <div id="app-body"></div>
+    <nav id="bottom-nav"></nav>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <!-- MODALS -->
+  <div class="modal-overlay" id="modal-overlay" onclick="closeModal()">
+    <div class="bottom-sheet" id="modal-sheet" onclick="event.stopPropagation()">
+      <div class="sheet-handle"></div>
+      <div class="sheet-header">
+        <div class="sheet-title" id="modal-title"></div>
+        <button class="sheet-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="sheet-body" id="modal-body"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Runtime version + observability -->
+<script src="./js/core/observability-boot.js?v=vitalia-v230e2-main-split"></script>
+
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="./js/core/supabase-client.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/core/storage-keys.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/core/errors.js?v=vitalia-v230e2-main-split"></script>
+
+<script src="./js/core/i18n.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/modules/sleep.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/modules/supplements.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/modules/notifications.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/modules/labs.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/modules/longevity.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/modules/mental.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/modules/microbiome.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/modules/shopping.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/modules/wearables.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/modules/athlete.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/modules/diagnostic.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/modules/progress.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/core/app-core.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/modules/recipes-data.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/modules/auth.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/core/router.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/modules/screens.js?v=vitalia-v230e2-main-split"></script>
+<script src="./js/core/boot.js?v=vitalia-v230e2-main-split"></script>
+
+<script src="./js/modules/coach.js?v=vitalia-v230e2-main-split"></script>
+
+</body>
+</html>

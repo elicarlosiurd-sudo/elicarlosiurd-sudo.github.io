@@ -1,0 +1,297 @@
+/* VitalIA Body Twin V1 - isolated visual layer */
+
+.bodytwin-shell {
+  padding: 0 16px calc(112px + env(safe-area-inset-bottom, 0));
+  overflow-x: hidden;
+}
+
+.bodytwin-hero {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.bodytwin-hero h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.bodytwin-hero p {
+  margin: 0;
+  color: var(--text2);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.bodytwin-orb {
+  width: 58px;
+  height: 58px;
+  border-radius: 22px;
+  display: grid;
+  place-items: center;
+  color: #86efac;
+  background:
+    radial-gradient(circle at 35% 24%, rgba(134,239,172,.36), transparent 42%),
+    linear-gradient(145deg, rgba(3,34,18,.9), rgba(2,10,5,.82));
+  border: 1px solid rgba(34,197,94,.22);
+  box-shadow: 0 18px 44px rgba(0,0,0,.42), 0 0 28px rgba(34,197,94,.10);
+  flex: 0 0 auto;
+}
+
+.bodytwin-root {
+  display: grid;
+  gap: 12px;
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+/* grid items default to min-width:auto — causes overflow when timeline is wide */
+.bodytwin-root > * {
+  min-width: 0;
+}
+
+.bodytwin-stage {
+  position: relative;
+  min-height: 58vh;
+  border-radius: 26px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 48% 22%, rgba(0,255,65,.18), transparent 52%),
+    radial-gradient(ellipse at 50% 82%, rgba(0,255,65,.12), transparent 45%),
+    #000;
+  border: 1px solid rgba(0,255,65,.24);
+  box-shadow:
+    0 24px 70px rgba(0,0,0,.62),
+    0 0 34px rgba(0,255,65,.10),
+    inset 0 1px 0 rgba(134,239,172,.14);
+}
+
+.bodytwin-loading,
+.bodytwin-empty,
+.bodytwin-error {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  text-align: center;
+  color: var(--text2);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.bodytwin-preview,
+.bodytwin-3d {
+  position: relative;
+  min-height: 58vh;
+}
+
+.bodytwin-3d canvas,
+#bodytwin-wire-canvas {
+  display: block;
+  width: 100% !important;
+  max-width: 100%;
+  height: auto;
+  min-height: 58vh;
+}
+
+.bodytwin-scanline {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 8%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0,255,65,.92), transparent);
+  box-shadow: 0 0 20px rgba(0,255,65,.75);
+  animation: bodytwinScan 1.4s ease-out 1 both;
+  pointer-events: none;
+}
+
+.bodytwin-quality {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  color: #86efac;
+  background: rgba(0,0,0,.72);
+  border: 1px solid rgba(0,255,65,.22);
+  backdrop-filter: blur(18px);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.bodytwin-habit-note {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 66px;
+  color: rgba(220,252,231,.84);
+  background: rgba(0,0,0,.58);
+  border: 1px solid rgba(0,255,65,.18);
+  border-radius: 14px;
+  padding: 8px 10px;
+  font-size: 11px;
+  line-height: 1.35;
+  backdrop-filter: blur(14px);
+}
+
+.bodytwin-preview-btns {
+  display: grid;
+  gap: 10px;
+}
+
+.bodytwin-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.bodytwin-toggle {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  color: var(--text2);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.bodytwin-hints,
+.bodytwin-disclaimer {
+  color: var(--text2);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.bodytwin-disclaimer {
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(34,197,94,.12);
+  background: rgba(2,20,11,.48);
+}
+
+.bodytwin-tech-link {
+  justify-self: center;
+  border: 0;
+  background: transparent;
+  color: rgba(134,239,172,.46);
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+}
+
+.bodytwin-snapshot-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 18px;
+  background: rgba(8,24,12,.72);
+  border: 1px solid rgba(34,197,94,.12);
+  margin-bottom: 8px;
+}
+
+.bodytwin-snapshot-row span {
+  display: block;
+  color: var(--text2);
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.bodytwin-timeline-label {
+  color: rgba(134,239,172,.72);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  margin: 8px 0 4px;
+}
+
+.bodytwin-snapshots {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.bodytwin-timeline {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 4px 0 10px;
+  scroll-snap-type: x proximity;
+  min-width: 0;
+  width: 100%;
+}
+
+.bodytwin-twin-card {
+  min-width: 112px;
+  max-width: 112px;
+  border: 1px solid rgba(34,197,94,.16);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(4,18,9,.82), rgba(2,10,5,.92));
+  color: var(--text);
+  padding: 8px;
+  text-align: left;
+  scroll-snap-align: start;
+  box-shadow: 0 16px 34px rgba(0,0,0,.32);
+}
+
+.bodytwin-twin-card img,
+.bodytwin-compare img {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 14px;
+  display: block;
+  background: #020a04;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+}
+
+.bodytwin-twin-card strong,
+.bodytwin-twin-card small {
+  display: block;
+  margin-top: 5px;
+}
+
+.bodytwin-twin-card small {
+  color: #86efac;
+  font-weight: 800;
+}
+
+.bodytwin-twin-empty {
+  min-height: 132px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: rgba(134,239,172,.55);
+  background: rgba(2,10,5,.72);
+}
+
+.bodytwin-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.bodytwin-compare span {
+  display: block;
+  color: #86efac;
+  font-size: 11px;
+  font-weight: 800;
+  margin-bottom: 7px;
+}
+
+@keyframes bodytwinScan {
+  from { transform: translateY(220px); opacity: 0; }
+  20% { opacity: 1; }
+  to { transform: translateY(-340px); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bodytwin-scanline {
+    animation: none;
+    opacity: .45;
+  }
+}
