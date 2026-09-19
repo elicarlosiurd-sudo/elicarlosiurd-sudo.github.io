@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#17191C" />
+  <meta name="description" content="MAVORIX — essenciais premium para homens que valorizam presença, tecnologia, cuidado e estilo." />
+  <title>MAVORIX — Essentials for Modern Men</title>
+  <style>
+    :root{
+      --graphite:#17191C;--coal:#0E0F11;--titanium:#3C4147;--metal:#737981;--silver:#B8BDC3;
+      --off:#F4F2ED;--white:#FAFAF8;--champ:#B99B6B;--line:rgba(23,25,28,.12);--shadow:0 24px 60px rgba(14,15,17,.12);
+      --radius:24px;--max:1240px;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;background:var(--off);color:var(--graphite);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}
+    button,a{font:inherit} a{color:inherit;text-decoration:none}
+    img{max-width:100%;display:block}
+    .wrap{width:min(var(--max),calc(100% - 40px));margin:auto}
+    .announce{background:var(--coal);color:var(--white);font-size:12px;letter-spacing:.14em;text-transform:uppercase;text-align:center;padding:10px 16px}
+    header{position:sticky;top:0;z-index:40;background:rgba(244,242,237,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+    .nav{height:74px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+    .brand{font-weight:900;letter-spacing:.23em;font-size:19px}
+    .navlinks{display:flex;gap:28px;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+    .navlinks a:hover{color:var(--champ)}
+    .actions{display:flex;gap:10px}
+    .iconbtn{width:42px;height:42px;border:1px solid var(--line);background:rgba(250,250,248,.72);border-radius:999px;display:grid;place-items:center;cursor:pointer}
+    .hero{min-height:720px;display:grid;grid-template-columns:1.03fr .97fr;align-items:center;gap:40px;padding:72px 0;overflow:hidden}
+    .eyebrow{font-size:12px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--metal);margin-bottom:18px}
+    h1,h2,h3,p{margin-top:0}
+    h1{font-size:clamp(52px,7vw,104px);line-height:.91;letter-spacing:-.055em;margin-bottom:26px;max-width:760px}
+    .lead{font-size:18px;color:#555b62;max-width:610px;margin-bottom:32px}
+    .btnrow{display:flex;flex-wrap:wrap;gap:12px}
+    .btn{border:0;border-radius:999px;padding:15px 22px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:10px}
+    .btn-dark{background:var(--graphite);color:white}.btn-dark:hover{background:var(--coal)}
+    .btn-light{background:transparent;border:1px solid rgba(23,25,28,.22)}
+    .hero-art{position:relative;min-height:560px;border-radius:40px;background:linear-gradient(145deg,#0d0f12 0%,#262a2f 55%,#777d84 130%);box-shadow:var(--shadow);overflow:hidden}
+    .hero-art:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 68% 24%,rgba(255,255,255,.24),transparent 28%),radial-gradient(circle at 24% 80%,rgba(185,155,107,.24),transparent 30%)}
+    .orb{position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,.22)}
+    .orb.o1{width:360px;height:360px;right:-60px;top:20px}.orb.o2{width:520px;height:520px;left:-160px;bottom:-240px}
+    .device{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-9deg);width:190px;height:330px;border-radius:52px;background:linear-gradient(135deg,#dfe2e4,#6c7279 44%,#1b1e22 70%,#b9bec3);box-shadow:0 35px 80px rgba(0,0,0,.45)}
+    .device:before{content:"";position:absolute;left:50%;top:34px;transform:translateX(-50%);width:92px;height:168px;border-radius:48px;background:linear-gradient(180deg,#17191c,#5e646a);box-shadow:inset 0 0 0 7px rgba(255,255,255,.06)}
+    .device:after{content:"M";position:absolute;left:50%;bottom:36px;transform:translateX(-50%);font-weight:900;font-size:46px;color:rgba(255,255,255,.82);letter-spacing:.08em}
+    .hero-tag{position:absolute;left:28px;bottom:24px;color:white;font-size:12px;letter-spacing:.16em;text-transform:uppercase}
+    .trust{background:var(--white);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+    .trustgrid{display:grid;grid-template-columns:repeat(4,1fr)}
+    .trustitem{padding:22px 24px;text-align:center;border-right:1px solid var(--line);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+    .trustitem:last-child{border-right:0}
+    section{padding:96px 0}
+    .sectionhead{display:flex;align-items:end;justify-content:space-between;gap:30px;margin-bottom:34px}
+    .sectionhead h2{font-size:clamp(36px,5vw,64px);line-height:.98;letter-spacing:-.045em;margin-bottom:0}
+    .muted{color:#676d74}
+    .products{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .card{background:var(--white);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;transition:.25s ease;cursor:pointer}
+    .card:hover{transform:translateY(-4px);box-shadow:0 18px 45px rgba(14,15,17,.09)}
+    .visual{height:340px;position:relative;display:grid;place-items:center;background:linear-gradient(145deg,#e7e5df,#c9cbd0)}
+    .visual.dark{background:linear-gradient(145deg,#15181b,#3b4045)}
+    .product-shape{position:relative;filter:drop-shadow(0 28px 25px rgba(0,0,0,.25))}
+    .shape-trimmer{width:70px;height:210px;border-radius:32px;background:linear-gradient(135deg,#e5e8ea,#484d53 50%,#15171a);border:1px solid rgba(255,255,255,.5)}
+    .shape-trimmer:before{content:"";position:absolute;width:102px;height:48px;border-radius:12px 12px 8px 8px;background:repeating-linear-gradient(90deg,#d5d9dc 0 5px,#555b61 5px 9px);left:50%;transform:translateX(-50%);top:-26px}
+    .shape-watch{width:118px;height:145px;border-radius:32px;background:#111418;border:9px solid #7c838a}
+    .shape-watch:before,.shape-watch:after{content:"";position:absolute;left:50%;transform:translateX(-50%);width:58px;height:105px;background:linear-gradient(90deg,#2b2f34,#8e959c,#24282d)}
+    .shape-watch:before{top:-108px;border-radius:18px 18px 5px 5px}.shape-watch:after{bottom:-108px;border-radius:5px 5px 18px 18px}
+    .shape-wallet{width:190px;height:116px;border-radius:18px;background:linear-gradient(145deg,#16191c,#555b61);transform:rotate(-8deg);border:1px solid rgba(255,255,255,.13)}
+    .shape-wallet:after{content:"MAVORIX";position:absolute;right:16px;bottom:13px;color:#bca174;font-weight:800;font-size:10px;letter-spacing:.18em}
+    .shape-phone{width:132px;height:248px;border-radius:34px;background:linear-gradient(145deg,#16191c,#5b6167);border:4px solid #a5abb0}
+    .shape-phone:before{content:"";position:absolute;width:48px;height:48px;border-radius:14px;background:#0d0f11;left:13px;top:13px;box-shadow:30px 0 0 #0d0f11,15px 27px 0 #0d0f11}
+    .shape-roll{width:210px;height:105px;border-radius:52px;background:linear-gradient(145deg,#4b3a2e,#181818);transform:rotate(-6deg);box-shadow:inset 0 0 0 2px rgba(185,155,107,.25)}
+    .shape-bag{width:220px;height:140px;border-radius:22px;background:linear-gradient(145deg,#202429,#5e646a);position:relative}
+    .shape-bag:before{content:"";position:absolute;left:44px;right:44px;top:-34px;height:48px;border:9px solid #30353a;border-bottom:0;border-radius:30px 30px 0 0}
+    .cardbody{padding:20px}
+    .cat{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--metal);font-weight:800}
+    .productname{font-size:19px;font-weight:800;margin:7px 0 9px}
+    .price{display:flex;align-items:center;justify-content:space-between;font-weight:800}
+    .from{font-size:12px;color:var(--metal);font-weight:600}
+    .categories{display:grid;grid-template-columns:1.2fr .8fr .8fr;gap:18px}
+    .category{min-height:420px;border-radius:30px;padding:30px;display:flex;flex-direction:column;justify-content:end;color:white;position:relative;overflow:hidden;background:linear-gradient(145deg,#111316,#4f555b)}
+    .category:nth-child(2){background:linear-gradient(145deg,#81715d,#17191c)}
+    .category:nth-child(3){background:linear-gradient(145deg,#545a60,#0e0f11)}
+    .category:before{content:"";position:absolute;width:240px;height:240px;border-radius:50%;border:1px solid rgba(255,255,255,.18);right:-70px;top:-60px}
+    .category h3{font-size:38px;letter-spacing:-.04em;margin-bottom:6px;position:relative}
+    .category p{margin:0;color:rgba(255,255,255,.72);position:relative}
+    .manifest{background:var(--graphite);color:white;border-radius:36px;padding:70px;display:grid;grid-template-columns:.85fr 1.15fr;gap:70px;align-items:center}
+    .manifest h2{font-size:clamp(44px,6vw,84px);line-height:.92;letter-spacing:-.05em}
+    .manifest p{color:#c8ccd0;font-size:18px}
+    .hero-product{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:stretch}
+    .hero-product .panel{border-radius:30px;min-height:560px;padding:46px;background:var(--white);border:1px solid var(--line)}
+    .hero-product .panel.dark{background:linear-gradient(145deg,#111316,#353a3f);color:white;display:grid;place-items:center}
+    .big-trimmer{transform:scale(1.55)}
+    .features{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:28px 0}
+    .feature{padding:18px;border:1px solid var(--line);border-radius:18px;background:#fff}
+    .feature strong{display:block;font-size:14px;margin-bottom:4px}
+    .feature span{font-size:12px;color:var(--metal)}
+    .bundles{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .bundle{border-radius:26px;background:var(--graphite);color:white;padding:28px;min-height:300px;display:flex;flex-direction:column;justify-content:space-between}
+    .bundle:nth-child(2){background:var(--titanium)} .bundle:nth-child(3){background:#27241f}
+    .bundle small{letter-spacing:.14em;text-transform:uppercase;color:#c3c7cb}
+    .why{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+    .whyitem{background:var(--white);border:1px solid var(--line);border-radius:22px;padding:28px;min-height:190px}
+    .whyitem .num{font-size:11px;color:var(--champ);font-weight:900;letter-spacing:.14em}
+    .whyitem h3{margin:44px 0 8px}
+    .reviewprep{background:linear-gradient(135deg,#ebe8e1,#fff);border:1px dashed #aaaeb4;border-radius:28px;padding:42px;text-align:center}
+    .newsletter{background:var(--coal);color:white;border-radius:30px;padding:56px;display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center}
+    .newsletter h2{font-size:48px;line-height:.95;letter-spacing:-.04em}
+    .inputrow{display:flex;background:white;border-radius:999px;padding:6px}
+    .inputrow input{flex:1;border:0;background:transparent;padding:0 18px;outline:none;min-width:0}
+    footer{padding:70px 0 30px}
+    .footergrid{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:40px}
+    .footergrid h4{font-size:11px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:16px}
+    .footergrid a{display:block;color:#666c72;margin:9px 0;font-size:14px}
+    .footerbrand{font-size:32px;font-weight:900;letter-spacing:.2em}
+    .copyright{margin-top:50px;padding-top:22px;border-top:1px solid var(--line);font-size:12px;color:#777d84;display:flex;justify-content:space-between;gap:20px}
+    .drawerback{position:fixed;inset:0;background:rgba(7,8,10,.45);opacity:0;pointer-events:none;transition:.25s;z-index:80}
+    .drawer{position:fixed;right:0;top:0;height:100%;width:min(440px,100%);background:var(--white);z-index:90;transform:translateX(105%);transition:.3s;padding:24px;display:flex;flex-direction:column;box-shadow:-20px 0 50px rgba(0,0,0,.14)}
+    .drawer.open{transform:none}.drawerback.open{opacity:1;pointer-events:auto}
+    .drawerhead{display:flex;justify-content:space-between;align-items:center;padding-bottom:18px;border-bottom:1px solid var(--line)}
+    .close{border:0;background:transparent;font-size:26px;cursor:pointer}
+    .cartitems{flex:1;overflow:auto;padding:10px 0}
+    .cartitem{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}
+    .mini{width:64px;height:64px;border-radius:15px;background:linear-gradient(145deg,#191c20,#838a91)}
+    .progress{height:6px;background:#ddd;border-radius:999px;overflow:hidden;margin:14px 0 7px}.progress span{display:block;height:100%;background:var(--champ);width:0}
+    .cartfoot{border-top:1px solid var(--line);padding-top:18px}
+    .full{width:100%}
+    .productmodal{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:20px;background:rgba(7,8,10,.55);opacity:0;pointer-events:none;transition:.2s}
+    .productmodal.open{opacity:1;pointer-events:auto}
+    .modalbox{width:min(980px,100%);max-height:90vh;overflow:auto;background:var(--white);border-radius:30px;display:grid;grid-template-columns:1fr 1fr;box-shadow:0 40px 100px rgba(0,0,0,.32)}
+    .modalvisual{min-height:520px;background:linear-gradient(145deg,#14171a,#555c62);display:grid;place-items:center}
+    .modalcontent{padding:42px}
+    .modalcontent h2{font-size:42px;line-height:.98;letter-spacing:-.04em}
+    .badges{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0}.badge{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:8px 11px}
+    .mobilemenu{display:none}
+    @media(max-width:980px){
+      .navlinks{display:none}.mobilemenu{display:grid}
+      .hero{grid-template-columns:1fr;padding-top:48px}.hero-art{min-height:440px}
+      .trustgrid{grid-template-columns:1fr 1fr}.trustitem:nth-child(2){border-right:0}.trustitem:nth-child(-n+2){border-bottom:1px solid var(--line)}
+      .products{grid-template-columns:1fr 1fr}.categories{grid-template-columns:1fr}.category{min-height:300px}
+      .manifest,.hero-product,.newsletter,.footergrid{grid-template-columns:1fr}.manifest{padding:42px;gap:24px}
+      .bundles{grid-template-columns:1fr}.why{grid-template-columns:1fr 1fr}.modalbox{grid-template-columns:1fr}.modalvisual{min-height:330px}
+    }
+    @media(max-width:640px){
+      .wrap{width:min(100% - 24px,var(--max))}.actions .iconbtn:first-child{display:none}
+      .hero{min-height:auto;padding:42px 0}.hero-art{min-height:380px;border-radius:26px}.device{transform:translate(-50%,-50%) rotate(-9deg) scale(.82)}
+      .btnrow .btn{width:100%}.products{grid-template-columns:1fr}.visual{height:300px}
+      section{padding:68px 0}.sectionhead{align-items:start;flex-direction:column}
+      .manifest{padding:30px;border-radius:26px}.hero-product .panel{min-height:420px;padding:28px}
+      .features{grid-template-columns:1fr}.why{grid-template-columns:1fr}
+      .newsletter{padding:30px}.inputrow{flex-direction:column;border-radius:22px}.inputrow input{min-height:48px}.inputrow .btn{width:100%}
+      .copyright{flex-direction:column}.footergrid{gap:24px}
+      .modalcontent{padding:26px}.modalcontent h2{font-size:34px}
+    }
+  </style>
+</head>
+<body>
+  <div class="announce">FRETE GRÁTIS ACIMA DE R$ 299 • COMPRA SEGURA • SUPORTE NO BRASIL</div>
+  <header>
+    <div class="wrap nav">
+      <button class="iconbtn mobilemenu" aria-label="Abrir menu" onclick="document.querySelector('.navlinks').style.display=document.querySelector('.navlinks').style.display==='flex'?'none':'flex'">☰</button>
+      <a href="#" class="brand">MAVORIX</a>
+      <nav class="navlinks">
+        <a href="#grooming">Grooming</a><a href="#watch">Watch</a><a href="#edc">EDC</a><a href="#lifestyle">Lifestyle</a><a href="#bestsellers">Best Sellers</a>
+      </nav>
+      <div class="actions">
+        <button class="iconbtn" aria-label="Buscar">⌕</button>
+        <button class="iconbtn" aria-label="Carrinho" onclick="openCart()">🛍</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap hero">
+      <div>
+        <div class="eyebrow">Men's Grooming • Style • Lifestyle</div>
+        <h1>PRESENÇA ESTÁ NOS DETALHES.</h1>
+        <p class="lead">Essenciais selecionados para homens que valorizam estilo, tecnologia, cuidado pessoal e uma rotina mais precisa.</p>
+        <div class="btnrow">
+          <a class="btn btn-dark" href="#bestsellers">Conhecer a MAVORIX</a>
+          <a class="btn btn-light" href="#bestsellers">Ver Best Sellers</a>
+        </div>
+      </div>
+      <div class="hero-art" aria-label="Visual premium MAVORIX">
+        <div class="orb o1"></div><div class="orb o2"></div><div class="device"></div>
+        <div class="hero-tag">MAVORIX BODY PRO • CONCEPT 01</div>
+      </div>
+    </div>
+
+    <div class="trust">
+      <div class="wrap trustgrid">
+        <div class="trustitem">Compra Segura</div><div class="trustitem">Garantia de 30 Dias</div><div class="trustitem">Rastreamento Online</div><div class="trustitem">Suporte no Brasil</div>
+      </div>
+    </div>
+
+    <section id="bestsellers">
+      <div class="wrap">
+        <div class="sectionhead">
+          <div><div class="eyebrow">Curadoria MAVORIX</div><h2>BEST SELLERS</h2></div>
+          <p class="muted">Poucos produtos. Escolhas melhores.</p>
+        </div>
+        <div class="products" id="heroProducts"></div>
+      </div>
+    </section>
+
+    <section style="padding-top:0">
+      <div class="wrap">
+        <div class="sectionhead"><div><div class="eyebrow">Shop by category</div><h2>ESCOLHA SEU UNIVERSO.</h2></div></div>
+        <div class="categories">
+          <a class="category" id="grooming" href="#bodypro"><div><h3>GROOMING</h3><p>Precisão, cuidado e confiança todos os dias.</p></div></a>
+          <a class="category" id="watch" href="#watchcollection"><div><h3>WATCH</h3><p>Transforme seu relógio. Eleve sua presença.</p></div></a>
+          <a class="category" id="edc" href="#edcessentials"><div><h3>EDC</h3><p>Essenciais funcionais para uma rotina mais limpa.</p></div></a>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap manifest">
+        <div><div class="eyebrow" style="color:#b8bdc3">The MAVORIX Standard</div><h2>O COMUM NÃO DEFINE VOCÊ.</h2></div>
+        <div><p>A MAVORIX nasce para selecionar produtos que unem função, design e presença. Nada de catálogo infinito. Cada item precisa merecer espaço na sua rotina.</p><a class="btn btn-light" style="color:white;border-color:#5d6369" href="#allproducts">Explorar coleção</a></div>
+      </div>
+    </section>
+
+    <section id="bodypro">
+      <div class="wrap hero-product">
+        <div class="panel dark"><div class="shape-trimmer product-shape big-trimmer"></div></div>
+        <div class="panel">
+          <div class="eyebrow">Hero 01 • Grooming</div><h2 style="font-size:56px;letter-spacing:-.05em">MAVORIX<br>BODY PRO</h2>
+          <p class="lead" style="font-size:16px">Uma experiência de grooming pensada para acabamento limpo, praticidade e presença.</p>
+          <div class="features">
+            <div class="feature"><strong>Resistente à água</strong><span>Projeto preparado para uso diário.</span></div>
+            <div class="feature"><strong>USB-C</strong><span>Recarga simples e moderna.</span></div>
+            <div class="feature"><strong>Design ergonômico</strong><span>Conforto e controle.</span></div>
+            <div class="feature"><strong>Refis futuros</strong><span>Estrutura pronta para recorrência.</span></div>
+          </div>
+          <button class="btn btn-dark" onclick="openProduct('body-pro')">Conhecer Body Pro</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="watchcollection">
+      <div class="wrap">
+        <div class="sectionhead"><div><div class="eyebrow">Watch Collection</div><h2>MUDE O RELÓGIO.<br>MUDE A PRESENÇA.</h2></div></div>
+        <div class="products" id="watchProducts"></div>
+      </div>
+    </section>
+
+    <section id="edcessentials">
+      <div class="wrap">
+        <div class="sectionhead"><div><div class="eyebrow">Everyday Carry</div><h2>CARREGUE MENOS.<br>LEVE MELHOR.</h2></div></div>
+        <div class="products" id="edcProducts"></div>
+      </div>
+    </section>
+
+    <section id="lifestyle">
+      <div class="wrap">
+        <div class="sectionhead"><div><div class="eyebrow">Sets</div><h2>COMPLETE YOUR SET.</h2></div></div>
+        <div class="bundles">
+          <div class="bundle"><small>Kit Presence</small><div><h3>Pulseira + Carteira</h3><p style="color:#c2c6ca">Duas peças para elevar o visual diário.</p></div><button class="btn btn-light" style="color:white;border-color:#666" onclick="addBundle(['titanium-band','slim-rfid'])">Adicionar kit</button></div>
+          <div class="bundle"><small>Kit Grooming</small><div><h3>Body Pro + Travel Case</h3><p style="color:#d0d3d5">Sua rotina organizada em qualquer lugar.</p></div><button class="btn btn-light" style="color:white;border-color:#777" onclick="addBundle(['body-pro','travel-case'])">Adicionar kit</button></div>
+          <div class="bundle"><small>Kit Executive</small><div><h3>Band + Wallet + Watch Roll</h3><p style="color:#d3cdc4">A seleção mais completa para presença e organização.</p></div><button class="btn btn-light" style="color:white;border-color:#6e655c" onclick="addBundle(['titanium-band','slim-rfid','watch-roll'])">Adicionar kit</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="sectionhead"><div><div class="eyebrow">Why MAVORIX</div><h2>MENOS RUÍDO.<br>MAIS CRITÉRIO.</h2></div></div>
+        <div class="why">
+          <div class="whyitem"><div class="num">01 — DESIGN</div><h3>Estética funcional</h3><p class="muted">Produtos escolhidos para unir forma e função.</p></div>
+          <div class="whyitem"><div class="num">02 — PERFORMANCE</div><h3>Função primeiro</h3><p class="muted">Nada entra apenas porque parece bonito.</p></div>
+          <div class="whyitem"><div class="num">03 — ESSENTIALS</div><h3>Catálogo enxuto</h3><p class="muted">Seleção curta e fácil de entender.</p></div>
+          <div class="whyitem"><div class="num">04 — CONFIDENCE</div><h3>Compra transparente</h3><p class="muted">Estrutura preparada para suporte e rastreio.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <div class="reviewprep">
+          <div class="eyebrow">Social Proof</div>
+          <h2 style="font-size:44px">AVALIAÇÕES REAIS ENTRARÃO AQUI.</h2>
+          <p class="muted">O layout está pronto para UGC e avaliações verificadas após as primeiras vendas — sem depoimentos inventados.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap newsletter">
+        <div><div class="eyebrow" style="color:#b8bdc3">MAVORIX Private List</div><h2>ENTRE ANTES.<br>VEJA PRIMEIRO.</h2><p style="color:#b8bdc3">Acesso antecipado a lançamentos, drops e condições especiais.</p></div>
+        <form class="inputrow" onsubmit="event.preventDefault(); alert('Cadastro demonstrativo. Integraremos sua ferramenta de e-mail depois.');">
+          <input required type="email" placeholder="Seu melhor e-mail" aria-label="Seu e-mail" />
+          <button class="btn btn-dark" type="submit">Entrar para a lista</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="allproducts" style="padding-top:20px">
+      <div class="wrap">
+        <div class="sectionhead"><div><div class="eyebrow">Catálogo inicial</div><h2>OS 7 ESSENCIAIS.</h2></div></div>
+        <div class="products" id="allProducts"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div class="footergrid">
+        <div><div class="footerbrand">MAVORIX</div><p class="muted" style="max-width:300px;margin-top:16px">Essenciais para homens que valorizam presença, tecnologia, cuidado e estilo.</p></div>
+        <div><h4>Shop</h4><a href="#grooming">Grooming</a><a href="#watch">Watch</a><a href="#edc">EDC</a><a href="#lifestyle">Lifestyle</a></div>
+        <div><h4>Support</h4><a href="#" onclick="alert('Página de rastreio será conectada à transportadora.');return false;">Rastrear pedido</a><a href="#" onclick="alert('Política de trocas será publicada antes do lançamento comercial.');return false;">Trocas e devoluções</a><a href="#" onclick="alert('FAQ em preparação.');return false;">FAQ</a></div>
+        <div><h4>MAVORIX</h4><a href="#" onclick="alert('Manifesto da marca em preparação.');return false;">Sobre</a><a href="#" onclick="alert('Política de privacidade será publicada antes do checkout real.');return false;">Privacidade</a><a href="#" onclick="alert('Termos serão publicados antes do checkout real.');return false;">Termos</a></div>
+      </div>
+      <div class="copyright"><span>© 2026 MAVORIX. Protótipo comercial.</span><span>Men's Grooming • Style • Lifestyle</span></div>
+    </div>
+  </footer>
+
+  <div class="drawerback" id="drawerback" onclick="closeCart()"></div>
+  <aside class="drawer" id="drawer">
+    <div class="drawerhead"><strong>SEU CARRINHO</strong><button class="close" onclick="closeCart()">×</button></div>
+    <div><div class="progress"><span id="progressbar"></span></div><small id="freeship" class="muted"></small></div>
+    <div class="cartitems" id="cartitems"></div>
+    <div class="cartfoot">
+      <div style="display:flex;justify-content:space-between;margin-bottom:16px"><strong>Subtotal</strong><strong id="subtotal">R$ 0,00</strong></div>
+      <button class="btn btn-dark full" onclick="demoCheckout()">Finalizar compra</button>
+      <p class="muted" style="font-size:11px;text-align:center;margin-top:10px">Checkout demonstrativo — gateway real ainda não conectado.</p>
+    </div>
+  </aside>
+
+  <div class="productmodal" id="productmodal" onclick="if(event.target===this)closeProduct()">
+    <div class="modalbox">
+      <div class="modalvisual" id="modalvisual"></div>
+      <div class="modalcontent">
+        <button class="close" style="float:right" onclick="closeProduct()">×</button>
+        <div class="eyebrow" id="modalcat"></div>
+        <h2 id="modaltitle"></h2>
+        <div style="font-size:26px;font-weight:900;margin:18px 0" id="modalprice"></div>
+        <p class="muted" id="modaldesc"></p>
+        <div class="badges"><span class="badge">Compra segura</span><span class="badge">Garantia 30 dias</span><span class="badge">Rastreamento</span></div>
+        <button class="btn btn-dark full" id="modaladd">Adicionar ao carrinho</button>
+        <hr style="border:0;border-top:1px solid var(--line);margin:28px 0">
+        <h3>Detalhes</h3><p class="muted">Estrutura pronta para especificações técnicas, compatibilidade, materiais, prazo e informações reais do fornecedor selecionado.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const products=[
+      {id:'body-pro',name:'MAVORIX Body Pro',cat:'Grooming',price:249.90,shape:'trimmer',desc:'Barbeador premium para uma rotina de grooming precisa e prática.'},
+      {id:'titanium-band',name:'MAVORIX Titanium Band',cat:'Watch • Apple Watch',price:189.90,shape:'watch',desc:'Pulseira premium com estética titanium para elevar o Apple Watch.'},
+      {id:'galaxy-band',name:'MAVORIX Galaxy Band',cat:'Watch • Galaxy Watch',price:169.90,shape:'watch',desc:'Pulseira masculina premium para uma presença mais executiva no Galaxy Watch.'},
+      {id:'magsafe-case',name:'MAVORIX MagSafe Case',cat:'EDC • Tech',price:139.90,shape:'phone',desc:'Capa premium com visual minimalista e proposta MagSafe.'},
+      {id:'slim-rfid',name:'MAVORIX Slim RFID',cat:'EDC',price:149.90,shape:'wallet',desc:'Carteira slim para cartões com estética limpa e proposta RFID.'},
+      {id:'watch-roll',name:'MAVORIX Watch Roll',cat:'Lifestyle',price:179.90,shape:'roll',desc:'Estojo premium para organizar e transportar relógios com discrição.'},
+      {id:'travel-case',name:'MAVORIX Travel Grooming Case',cat:'Lifestyle',price:159.90,shape:'bag',desc:'Necessaire masculina premium para grooming, viagem e organização.'}
+    ];
+    let cart=[];
+    const money=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+    function shapeHtml(shape){return '<div class="product-shape shape-'+shape+'"></div>'}
+    function card(p){
+      return '<article class="card" onclick="openProduct(\''+p.id+'\')"><div class="visual '+((p.shape==='trimmer'||p.shape==='watch')?'dark':'')+'">'+shapeHtml(p.shape)+'</div><div class="cardbody"><div class="cat">'+p.cat+'</div><div class="productname">'+p.name+'</div><div class="price"><span>'+money(p.price)+'</span><span class="from">ver produto →</span></div></div></article>'
+    }
+    document.getElementById('heroProducts').innerHTML=['body-pro','titanium-band','slim-rfid'].map(id=>card(products.find(p=>p.id===id))).join('');
+    document.getElementById('watchProducts').innerHTML=['titanium-band','galaxy-band','watch-roll'].map(id=>card(products.find(p=>p.id===id))).join('');
+    document.getElementById('edcProducts').innerHTML=['slim-rfid','magsafe-case','travel-case'].map(id=>card(products.find(p=>p.id===id))).join('');
+    document.getElementById('allProducts').innerHTML=products.map(card).join('');
+
+    function openProduct(id){
+      const p=products.find(x=>x.id===id); if(!p)return;
+      document.getElementById('modalvisual').innerHTML=shapeHtml(p.shape);
+      document.getElementById('modalcat').textContent=p.cat;
+      document.getElementById('modaltitle').textContent=p.name;
+      document.getElementById('modalprice').textContent=money(p.price);
+      document.getElementById('modaldesc').textContent=p.desc;
+      document.getElementById('modaladd').onclick=()=>{addToCart(id);closeProduct();openCart()};
+      document.getElementById('productmodal').classList.add('open');
+    }
+    function closeProduct(){document.getElementById('productmodal').classList.remove('open')}
+    function addToCart(id){const p=products.find(x=>x.id===id);if(!p)return;cart.push(p);renderCart()}
+    function addBundle(ids){ids.forEach(addToCart);openCart()}
+    function openCart(){renderCart();document.getElementById('drawer').classList.add('open');document.getElementById('drawerback').classList.add('open')}
+    function closeCart(){document.getElementById('drawer').classList.remove('open');document.getElementById('drawerback').classList.remove('open')}
+    function removeItem(i){cart.splice(i,1);renderCart()}
+    function renderCart(){
+      const box=document.getElementById('cartitems');
+      box.innerHTML=cart.length?cart.map((p,i)=>'<div class="cartitem"><div class="mini"></div><div><strong>'+p.name+'</strong><div class="muted" style="font-size:12px">'+money(p.price)+'</div></div><button class="close" onclick="removeItem('+i+')">×</button></div>').join(''):'<p class="muted" style="padding:24px 0">Seu carrinho está vazio.</p>';
+      const total=cart.reduce((a,b)=>a+b.price,0);document.getElementById('subtotal').textContent=money(total);
+      const threshold=299, pct=Math.min(100,total/threshold*100);document.getElementById('progressbar').style.width=pct+'%';
+      document.getElementById('freeship').textContent=total>=threshold?'Frete grátis desbloqueado.':'Faltam '+money(threshold-total)+' para frete grátis.';
+    }
+    function demoCheckout(){alert('Checkout demonstrativo. A próxima etapa é integrar Pix/cartão e cálculo real de frete.')}
+    renderCart();
+  </script>
+</body>
+</html>
