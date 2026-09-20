@@ -5,7 +5,7 @@ Preparação para o canal CSV no plano Basic, sem dependência da Shopify e sem 
 ## Situação verificada em 20/09/2026
 
 - Nova conta com Basic e CSV conectado; catálogo vazio.
-- AliExpress ainda precisa ser autorizado. A página de autorização foi bloqueada pela política de segurança do navegador remoto; o titular precisa concluir no próprio navegador.
+- AliExpress autorizado pelo titular e confirmado como **Conectado** no painel; a conta vinculada está definida como padrão. Canal CSV também confirmado como **Conectado**.
 - O checkout de `mavorix/index.html` é demonstrativo. Ainda faltam pagamento real e armazenamento de pedidos para alimentar este exportador.
 - API do DSers não ativada. Requisitos e limites estão em [API.md](API.md).
 
@@ -13,7 +13,7 @@ O Basic não cobra mensalidade. Mercadorias, frete e eventuais taxas da operaç�
 
 ## Como usar o canal
 
-1. Entre no [painel DSers](https://www.dsers.com/application/home). Vincule o fornecedor em **Configurar → Gestão do aplicativo → AliExpress → Adicionar contas**.
+1. Entre no [painel DSers](https://www.dsers.com/application/home). A conexão já está concluída; confira o estado do fornecedor em **Configurar → Gestão do aplicativo → AliExpress**.
 2. Por enquanto, mantenha produtos e pedidos vazios, conforme a orientação do titular.
 3. Quando houver autorização para cadastrar produtos, defina IDs e SKUs estáveis por variante, exporte o arquivo de produtos e carregue em **Carregar CSV → Produto**. Confira o mapeamento real do fornecedor em **Meus Produtos**.
 4. Após existir checkout real, gere o arquivo apenas com pedidos cujo pagamento foi confirmado pelo sistema de pedidos. Carregue em **Carregar CSV → Pedidos**, confira destinatário, variante, quantidade e frete antes de comprar do fornecedor.
