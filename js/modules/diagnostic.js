@@ -791,6 +791,7 @@ window.VitaliaWeek = (function () {
     model = null;
     rows = [];
     draft = null;
+    resetAutosave();
     busy = false;
     openModal(
       label('title'),
@@ -798,6 +799,7 @@ window.VitaliaWeek = (function () {
         e(label('loading')) +
         '</div><div id="week-status" role="status" aria-live="polite"></div>'
     );
+    document.getElementById('modal-overlay')?.addEventListener?.('click', guardClose, true);
     try {
       var sb = getVitaliaSupabaseClient();
       if (!sb || !owner) throw new Error('authentication_required');
@@ -850,9 +852,8 @@ window.VitaliaWeek = (function () {
       }
     }
   }
-  function plan() {
-    closeModal();
-    navigate('diagnostic');
+  async function plan() {
+    if (await close()) navigate('diagnostic');
   }
   // Local, reviewed habits. IDs shared with Meu Dia where the action is equivalent.
   var habitCatalog = [
@@ -1300,16 +1301,18 @@ window.VitaliaWeek = (function () {
     if (zoneInput) zoneInput.disabled = !!model.weekly_routine;
   }
 
-  async function commit(routine, date, check) {
+  async function commit(routine, date, check, automatic) {
     if (busy || !valid() || window.VITALIA_WEEKLY_ROUTINE_ENABLED === false) return false;
     busy = true;
+    lastCommitError = null;
     var account = owner,
       token = generation;
-    host()
-      .querySelectorAll('button')
-      .forEach(function (b) {
-        b.disabled = true;
-      });
+    if (!automatic)
+      host()
+        .querySelectorAll('button')
+        .forEach(function (b) {
+          b.disabled = true;
+        });
     try {
       var sb = getVitaliaSupabaseClient(),
         revision = model.weekly_routine?.revision || 0;
@@ -1323,17 +1326,19 @@ window.VitaliaWeek = (function () {
       });
       if (res.error) throw res.error;
       if (token !== generation || account !== currentOwner() || !valid()) return false;
-      model = Array.isArray(res.data) ? res.data[0] : res.data;
-      if (!model?.weekly_routine) throw new Error('save_failed');
-      document.getElementById('week-status').textContent = label('saved');
+      var confirmed = Array.isArray(res.data) ? res.data[0] : res.data;
+      if (!confirmed?.weekly_routine || confirmed.id !== model.id) throw new Error('save_failed');
+      model = confirmed;
+      if (!automatic) document.getElementById('week-status').textContent = label('saved');
       return true;
     } catch (error) {
-      report(error);
+      lastCommitError = error;
+      if (!automatic) report(error);
       return false;
     } finally {
       if (token === generation) {
         busy = false;
-        if (valid())
+        if (valid() && !automatic)
           host()
             .querySelectorAll('button')
             .forEach(function (b) {
@@ -1458,7 +1463,8 @@ window.VitaliaWeek = (function () {
     var legacy = rows.find(function (r) {
       return r.day_number === span(routine.origin, date) + 1;
     });
-    var data = record?.routine_data || {};
+    activeDate = date;
+    var data = Object.assign({}, record?.routine_data || {}, pendingCheck(date));
     var last = rows
       .filter(function (r) {
         return r.routine_date && r.routine_date <= today;
@@ -1489,7 +1495,9 @@ window.VitaliaWeek = (function () {
       e(pretty(cycle.end)) +
       '</p>' +
       (absent ? '<p style="color:var(--green)">' + e(label('resume')) + '</p>' : '') +
-      '<label>' +
+      '<div id="week-save-feedback" role="status" aria-live="polite" hidden style="position:sticky;top:0;z-index:1;background:var(--surface);padding:10px;border-radius:12px;margin:10px 0"><span id="week-autosave-status" style="color:var(--green)"></span><button id="week-retry" type="button" class="btn btn-outline" style="min-height:48px;white-space:normal" hidden onclick="VitaliaWeek.retrySave()"></button></div><details id="week-date-options"><summary>' +
+      e(label('more_options')) +
+      '</summary><label>' +
       e(label('date')) +
       '<input id="week-date" type="date" min="' +
       cycle.start +
@@ -1497,7 +1505,7 @@ window.VitaliaWeek = (function () {
       (ended ? cycle.end : today) +
       '" value="' +
       date +
-      '" onchange="VitaliaWeek.render(this.value)" style="display:block;padding:10px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border-color);border-radius:10px;color-scheme:dark"></label>' +
+      '" onchange="VitaliaWeek.render(this.value)" style="display:block;padding:10px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border-color);border-radius:10px;color-scheme:dark"></label></details>' +
       cycle.actions
         .map(function (_, i) {
           var state = data.states?.[i] || 'unrecorded';
@@ -1583,21 +1591,24 @@ window.VitaliaWeek = (function () {
           e(legacy.note) +
           '</p></details>'
         : '') +
-      select(
-        'week-useful',
-        label('useful'),
-        [
-          ['', label('none')],
-          ['yes', label('yes')],
-          ['no', label('no')]
-        ],
-        data.useful || ''
-      ) +
       '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
-      button('save()', label('save')) +
       button('close()', label('skip')) +
       '</div>' +
+      '<div id="week-review-stats">' +
       review(cycle, today) +
+      '</div>' +
+      (isReviewDay(cycle, today, date)
+        ? select(
+            'week-useful',
+            label('useful'),
+            [
+              ['', label('none')],
+              ['yes', label('yes')],
+              ['no', label('no')]
+            ],
+            data.useful || ''
+          )
+        : '') +
       (comparisonText ? '<p>' + e(comparisonText) + '</p>' : '') +
       '<p>' +
       e(label(barrier ? 'proposal_' + barrier : 'adjust')) +
@@ -1628,9 +1639,33 @@ window.VitaliaWeek = (function () {
     });
     document.getElementById('week-note').value = data.note ?? legacy?.note ?? '';
     cycle.actions.forEach(function (_, i) {
-      setCheckState(i, data.states?.[i] || 'unrecorded');
+      paintCheckState(i, data.states?.[i] || 'unrecorded');
     });
     updateBarrier();
+    ['difficulty', 'note', 'useful'].forEach(function (field) {
+      var el = document.getElementById('week-' + field);
+      if (!el) return;
+      if (field === 'note') {
+        el.oninput = function () {
+          editField(field, el.value, true);
+        };
+        el.onblur = function () {
+          if (!saveFailure) flushSaves();
+        };
+      } else
+        el.onchange = function () {
+          editField(field, el.value, false);
+        };
+    });
+    cycle.actions.forEach(function (_, i) {
+      var el = document.getElementById('week-swap-' + i);
+      if (el)
+        el.onchange = function () {
+          editField('replacements.' + i, el.value, false);
+        };
+    });
+    document.getElementById('week-retry').textContent = label('autosave_retry');
+    saveStatus(saveFailure ? 'failed' : saveFlight || edits.size ? 'saving' : '');
     var viewKey = owner + ':' + model.id + ':' + cycle.start;
     if (!reviewViews.has(viewKey)) {
       reviewViews.add(viewKey);
@@ -1645,8 +1680,8 @@ window.VitaliaWeek = (function () {
     var section = document.getElementById('week-barrier');
     if (section) section.hidden = !blocked;
   }
-  function setCheckState(i, state) {
-    if (busy || !valid() || !states.includes(state)) return;
+  function paintCheckState(i, state) {
+    if (!valid() || !states.includes(state)) return;
     var input = document.getElementById('week-state-' + i);
     if (!input) return;
     input.value = state;
@@ -1663,99 +1698,347 @@ window.VitaliaWeek = (function () {
     );
     updateBarrier();
   }
-  async function save() {
-    if (busy || !valid()) return;
-    var routine = JSON.parse(JSON.stringify(model.weekly_routine)),
-      cycle = routine.cycles.at(-1);
-    var date = document.getElementById('week-date').value;
-    var old = rows.find(function (r) {
+  // One serialized writer. Pending patches belong to this modal/account/plan only.
+  // A confirmed row is never replaced by an unacknowledged UI snapshot.
+  var edits = new Map(),
+    editSerial = 0,
+    saveFlight = null,
+    saveTimer = null;
+  var activeDate = null,
+    saveFailure = false,
+    lastCommitError = null;
+  function resetAutosave() {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    edits = new Map();
+    saveFlight = null;
+    activeDate = null;
+    saveFailure = false;
+  }
+  function baseCheck(date) {
+    var cycle = model.weekly_routine.cycles.at(-1);
+    var before =
+      rows.find(function (r) {
         return r.routine_date === date;
-      }),
-      before = old?.routine_data;
-    var check = {
-      states: cycle.actions.map(function (_, i) {
-        return document.getElementById('week-state-' + i).value;
-      }),
-      difficulty: document.getElementById('week-difficulty').value,
-      note: document.getElementById('week-note').value.trim(),
-      useful: document.getElementById('week-useful').value
-    };
-    check.replacements = cycle.actions.map(function (a, i) {
-      return (
-        document.getElementById('week-swap-' + i)?.value.trim() || before?.replacements?.[i] || a
-      );
+      })?.routine_data || {};
+    var legacy = rows.find(function (r) {
+      return r.day_number === span(model.weekly_routine.origin, date) + 1;
     });
-    if (_goalDiagnosticHasSafetySignal(check.replacements.join(' '))) {
-      document.getElementById('week-status').textContent = safetyText(check.replacements.join(' '));
-      return;
+    return {
+      states: cycle.actions.map(function (_, i) {
+        return before.states?.[i] || 'unrecorded';
+      }),
+      difficulty: before.difficulty || '',
+      note: before.note ?? legacy?.note ?? '',
+      useful: before.useful || '',
+      replacements: cycle.actions.map(function (a, i) {
+        return before.replacements?.[i] || a;
+      })
+    };
+  }
+  function applyPatch(check, field, value) {
+    var match = /^(states|replacements)\.(\d)$/.exec(field);
+    if (match) check[match[1]][Number(match[2])] = value;
+    else check[field] = value;
+  }
+  function pendingCheck(date) {
+    var check = baseCheck(date),
+      patch = edits.get(date);
+    if (patch)
+      patch.forEach(function (edit, field) {
+        applyPatch(check, field, edit.value);
+      });
+    return check;
+  }
+  function saveStatus(state) {
+    if (!valid()) return;
+    var status = document.getElementById('week-autosave-status'),
+      retry = document.getElementById('week-retry');
+    if (status) {
+      status.textContent = state && state !== 'failed' ? label('autosave_' + state) : '';
+      status.hidden = !state || state === 'failed';
     }
+    var feedback = document.getElementById('week-save-feedback');
+    if (feedback) feedback.hidden = !state;
+    if (retry) {
+      retry.textContent = label(state === 'failed' ? 'autosave_failed' : 'autosave_retry');
+      retry.hidden = state !== 'failed';
+      retry.style.display = state === 'failed' ? '' : 'none';
+      retry.disabled = !!saveFlight;
+    }
+  }
+  function editField(field, value, delayed) {
     if (
-      before &&
-      JSON.stringify([
-        check.states,
-        check.difficulty,
-        check.note,
-        check.useful,
-        check.replacements
-      ]) ===
-        JSON.stringify([
-          before.states,
-          before.difficulty,
-          before.note,
-          before.useful,
-          before.replacements
-        ])
+      !valid() ||
+      !activeDate ||
+      model?.status !== 'active' ||
+      window.VITALIA_WEEKLY_ROUTINE_ENABLED === false
     )
       return;
-    check.completed_once = check.states.map(function (s, i) {
-      return !!before?.completed_once?.[i] || s === 'done';
-    });
-    check.feedback_once = !!before?.feedback_once || !!check.useful;
-    var meaningful =
-      check.states.some(function (s) {
-        return s !== 'unrecorded';
-      }) ||
-      !!check.difficulty ||
-      !!check.note ||
-      !!check.useful;
-    check.submitted_once = !!before?.submitted_once || meaningful;
-    var last = rows
-      .filter(function (r) {
-        return r.routine_date;
-      })
-      .map(function (r) {
-        return r.routine_date;
-      })
-      .sort()
-      .at(-1);
-    if (await commit(routine, date, check)) {
-      rows = rows.filter(function (r) {
-        return r.routine_date !== date;
-      });
-      rows.push({ routine_date: date, routine_data: check });
-      if (meaningful && !before?.submitted_once) track('daily_checkin_submitted');
-      check.states.forEach(function (s, i) {
-        if (s === 'done' && !before?.completed_once?.[i]) track('daily_action_completed', i + 1);
-      });
-      if (check.useful && !before?.feedback_once) track('usefulness_feedback_submitted');
-      if (meaningful && span(last || cycle.start, date) >= 3) track('routine_resumed');
-      render(date);
-      if (_goalDiagnosticHasSafetySignal(check.note)) {
-        document.getElementById('week-status').textContent =
-          label('saved') + ' ' + safetyText(check.note);
+    var match = /^(states|replacements)\.(\d)$/.exec(field);
+    if (match && Number(match[2]) >= model.weekly_routine.cycles.at(-1).actions.length) return;
+    if (match?.[1] === 'states' && !states.includes(value)) return;
+    if (!match && !['note', 'difficulty', 'useful'].includes(field)) return;
+    if (field === 'difficulty' && !difficulties.includes(value)) return;
+    if (
+      field === 'useful' &&
+      (!['', 'yes', 'no'].includes(value) ||
+        !isReviewDay(
+          model.weekly_routine.cycles.at(-1),
+          day(new Date(), model.weekly_routine.timezone),
+          activeDate
+        ))
+    )
+      return;
+    value = String(value);
+    if (field === 'note') value = value.slice(0, 500);
+    if (match?.[1] === 'replacements')
+      value =
+        value.trim().slice(0, 240) || model.weekly_routine.cycles.at(-1).actions[Number(match[2])];
+    var current = pendingCheck(activeDate),
+      old = match ? current[match[1]][Number(match[2])] : current[field];
+    if (old === value) {
+      if (!saveFailure) saveStatus(saveFlight || edits.size ? 'saving' : 'saved');
+      return saveFlight || Promise.resolve(!saveFailure);
+    }
+    if (!edits.has(activeDate)) edits.set(activeDate, new Map());
+    edits.get(activeDate).set(field, { value: value, serial: ++editSerial });
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    // Failed edits remain pending. Only an explicit retry performs reconciliation.
+    if (saveFailure) {
+      saveStatus('failed');
+      return Promise.resolve(false);
+    }
+    saveStatus('saving');
+    if (delayed) {
+      saveTimer = setTimeout(function () {
+        saveTimer = null;
+        flushSaves();
+      }, 400);
+      return;
+    }
+    return flushSaves();
+  }
+  function isReviewDay(cycle, today, date) {
+    return today >= cycle.end && date === cycle.end;
+  }
+  async function refreshForRetry(token) {
+    var sb = getVitaliaSupabaseClient(),
+      id = model.id,
+      account = owner;
+    var plan = await sb
+      .from('goal_diagnostics')
+      .select('*')
+      .eq('user_id', account)
+      .eq('id', id)
+      .maybeSingle();
+    if (plan.error) throw plan.error;
+    var records = await sb
+      .from('diagnostic_checkins')
+      .select('day_number,note,routine_date,routine_data')
+      .eq('diagnostic_id', id)
+      .eq('user_id', account);
+    if (records.error) throw records.error;
+    if (token !== generation || !valid()) return false;
+    // Never move a pending patch to a different cycle or silently edit history.
+    if (
+      plan.data?.status !== 'active' ||
+      JSON.stringify(plan.data.weekly_routine?.cycles) !==
+        JSON.stringify(model.weekly_routine.cycles) ||
+      plan.data.weekly_routine.timezone !== model.weekly_routine.timezone
+    )
+      throw Error('routine_conflict');
+    model = plan.data;
+    rows = records.data || [];
+    return true;
+  }
+  async function retrySave() {
+    if (!valid() || saveFlight) return saveFlight;
+    var token = generation;
+    document.getElementById('week-status').textContent = '';
+    saveStatus('saving');
+    // Reserve the writer during refresh too, so repeated retry taps cannot race.
+    saveFlight = (async function () {
+      try {
+        if (!(await refreshForRetry(token))) return false;
+        saveFailure = false;
+        return true;
+      } catch (error) {
+        if (token === generation && valid()) {
+          report(error);
+          saveFailure = true;
+          saveStatus('failed');
+        }
+        return false;
       }
+    })();
+    var refreshed = await saveFlight;
+    if (token !== generation) return false;
+    saveFlight = null;
+    if (!refreshed) {
+      saveStatus('failed');
+      return false;
+    }
+    var saved = await flushSaves();
+    if (saved && token === generation && valid() && !edits.size) {
+      render(activeDate);
+      saveStatus('saved');
+    }
+    return saved;
+  }
+  function flushSaves() {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    if (saveFlight) return saveFlight;
+    if (!valid() || busy || saveFailure) return Promise.resolve(false);
+    var token = generation;
+    saveFlight = (async function () {
+      while (edits.size && token === generation && valid()) {
+        var date = edits.keys().next().value,
+          patch = edits.get(date),
+          sentSerial = editSerial;
+        var before = rows.find(function (r) {
+          return r.routine_date === date;
+        })?.routine_data;
+        var check = pendingCheck(date),
+          baseline = baseCheck(date);
+        if (JSON.stringify(check) !== JSON.stringify(baseline)) {
+          if (_goalDiagnosticHasSafetySignal(check.replacements.join(' '))) {
+            document.getElementById('week-status').textContent = safetyText(
+              check.replacements.join(' ')
+            );
+            saveFailure = true;
+            break;
+          }
+          check.completed_once = check.states.map(function (s, i) {
+            return !!before?.completed_once?.[i] || s === 'done';
+          });
+          check.feedback_once = !!before?.feedback_once || !!check.useful;
+          var meaningful =
+            check.states.some(function (s) {
+              return s !== 'unrecorded';
+            }) ||
+            !!check.difficulty ||
+            !!check.note ||
+            !!check.useful;
+          check.submitted_once = !!before?.submitted_once || !!meaningful;
+          var last = rows
+            .filter(function (r) {
+              return r.routine_date;
+            })
+            .map(function (r) {
+              return r.routine_date;
+            })
+            .sort()
+            .at(-1);
+          saveStatus('saving');
+          if (
+            !(await commit(JSON.parse(JSON.stringify(model.weekly_routine)), date, check, true))
+          ) {
+            if (token === generation && valid()) {
+              saveFailure = true;
+              if (lastCommitError) report(lastCommitError);
+            }
+            break;
+          }
+          if (token !== generation || !valid()) return false;
+          var existingRow = rows.find(function (r) {
+            return r.routine_date === date;
+          });
+          rows = rows.filter(function (r) {
+            return r.routine_date !== date;
+          });
+          rows.push(Object.assign({}, existingRow, { routine_date: date, routine_data: check }));
+          var reviewHost = document.getElementById('week-review-stats');
+          if (reviewHost)
+            reviewHost.innerHTML = review(
+              model.weekly_routine.cycles.at(-1),
+              day(new Date(), model.weekly_routine.timezone)
+            );
+          if (_goalDiagnosticHasSafetySignal(check.note))
+            document.getElementById('week-status').textContent =
+              label('autosave_saved') + ' ' + safetyText(check.note);
+          if (meaningful && !before?.submitted_once) track('daily_checkin_submitted');
+          check.states.forEach(function (s, i) {
+            if (s === 'done' && !before?.completed_once?.[i])
+              track('daily_action_completed', i + 1);
+          });
+          if (check.useful && !before?.feedback_once) track('usefulness_feedback_submitted');
+          if (meaningful && span(last || model.weekly_routine.cycles.at(-1).start, date) >= 3)
+            track('routine_resumed');
+        }
+        // Preserve fields edited while this RPC was in flight.
+        patch.forEach(function (edit, field) {
+          if (edit.serial <= sentSerial) patch.delete(field);
+        });
+        if (!patch.size) edits.delete(date);
+      }
+      return !saveFailure;
+    })();
+    var flight = saveFlight;
+    return flight.finally(function () {
+      if (token !== generation) return;
+      saveFlight = null;
+      saveStatus(saveFailure ? 'failed' : edits.size ? 'saving' : 'saved');
+    });
+  }
+  function setCheckState(i, state) {
+    if (!valid() || !states.includes(state)) return;
+    var input = document.getElementById('week-state-' + i);
+    if (!input) return;
+    paintCheckState(i, state);
+    return editField('states.' + i, state, false);
+  }
+  // Backward-compatible explicit save entry point; no extra save button is required.
+  function save() {
+    if (!valid() || !activeDate) return Promise.resolve(false);
+    var cycle = model.weekly_routine.cycles.at(-1);
+    cycle.actions.forEach(function (_, i) {
+      var state = document.getElementById('week-state-' + i),
+        swap = document.getElementById('week-swap-' + i);
+      if (state) editField('states.' + i, state.value, true);
+      if (swap) editField('replacements.' + i, swap.value, true);
+    });
+    ['difficulty', 'note', 'useful'].forEach(function (field) {
+      var el = document.getElementById('week-' + field);
+      if (el) editField(field, el.value, true);
+    });
+    if (saveFailure) return retrySave();
+    return flushSaves();
+  }
+
+  function guardClose(event) {
+    if (!valid()) return;
+    if (
+      event.target === document.getElementById('modal-overlay') ||
+      event.target.closest?.('.sheet-close')
+    ) {
+      event.stopImmediatePropagation();
+      close();
     }
   }
-  function records() {
-    closeModal();
-    navigate('nutrition');
+  async function records() {
+    if (await close()) navigate('nutrition');
   }
-  function close() {
+  async function close() {
+    if (valid() && (edits.size || saveFlight)) {
+      var token = generation;
+      if (saveFailure) {
+        saveStatus('failed');
+        return false;
+      }
+      await flushSaves();
+      if (token !== generation || !valid() || saveFailure || edits.size) return false;
+    }
+    document.getElementById('modal-overlay')?.removeEventListener?.('click', guardClose, true);
     generation++;
+    resetAutosave();
     model = null;
     rows = [];
     owner = null;
     closeModal();
+    return true;
   }
   return {
     suggestions: suggestions,
@@ -1771,6 +2054,9 @@ window.VitaliaWeek = (function () {
     changeAdvanced: changeAdvanced,
     setCustom: setCustom,
     setAdult: setAdult,
+    editField: editField,
+    retrySave: retrySave,
+    isReviewDay: isReviewDay,
     setCheckState: setCheckState,
     home: shell,
     open: open,

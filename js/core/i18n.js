@@ -2344,3 +2344,11 @@ Object.assign(LANG.ru, {
   "week_why_mind": "Создаёт паузу, чтобы заметить своё самочувствие.",
   "week_why_movement": "Выделяет время для движения в своём темпе."
 });
+
+Object.assign(LANG.pt, {"week_autosave_saving":"Salvando…","week_autosave_saved":"Salvo ✓","week_autosave_failed":"Não salvou, toque para tentar de novo","week_autosave_retry":"Tentar de novo"});
+
+Object.assign(LANG.en, {"week_autosave_saving":"Saving…","week_autosave_saved":"Saved ✓","week_autosave_failed":"Not saved. Tap to try again","week_autosave_retry":"Try again"});
+
+Object.assign(LANG.es, {"week_autosave_saving":"Guardando…","week_autosave_saved":"Guardado ✓","week_autosave_failed":"No se guardó. Toca para intentarlo de nuevo","week_autosave_retry":"Intentar de nuevo"});
+
+Object.assign(LANG.ru, {"week_autosave_saving":"Сохранение…","week_autosave_saved":"Сохранено ✓","week_autosave_failed":"Не сохранено. Нажмите, чтобы повторить","week_autosave_retry":"Повторить"});
