@@ -5,7 +5,7 @@
 ═══════════════════════════════════════ */
 
 function renderSleepRecoveryShell() {
-  return '<div class="screen-header"><div class="screen-title">😴 Sono & Recuperação</div></div><div id="main-content"></div>';
+  return ("<div class=\"screen-header\"><div class=\"screen-title\">" + getLang().sleep_title + "</div></div><div id=\"main-content\"></div>");
 }
 
 async function renderSleepRecovery() {
@@ -59,7 +59,7 @@ async function renderSleepRecovery() {
   } else {
     var qualLabels = t.sleep_quality_labels || ['','Péssimo','Ruim','Regular','Bom','Ótimo'];
     historyHtml = '<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr>'
-      + '<th style="text-align:left;padding:4px 6px;border-bottom:1px solid var(--border-color)">Data</th>'
+      + ("<th style=\"text-align:left;padding:4px 6px;border-bottom:1px solid var(--border-color)\">" + getLang().ui_date + "</th>")
       + '<th style="text-align:right;padding:4px 6px;border-bottom:1px solid var(--border-color)">h</th>'
       + '<th style="text-align:right;padding:4px 6px;border-bottom:1px solid var(--border-color)">★</th>'
       + '</tr></thead><tbody>';
@@ -90,10 +90,10 @@ async function renderSleepRecovery() {
   }
 
   main.innerHTML = '<div class="view-container" style="max-width:520px;margin:0 auto;padding:16px;">'
-    + '<h2 style="margin-bottom:16px;">😴 ' + escHtml(t.sleep_title||'Sono & Recuperação') + '</h2>'
+    + '<h2 style="margin-bottom:16px;">😴 ' + escHtml(t.sleep_title||getLang().sleep_title) + '</h2>'
     + metricsHtml
     + '<form id="sleep-form" class="card" style="padding:16px;margin-bottom:20px;">'
-    + '<div style="margin-bottom:10px;"><label style="font-size:13px;display:block;margin-bottom:4px;">' + escHtml(t.sleep_date||'Data') + '</label>'
+    + '<div style="margin-bottom:10px;"><label style="font-size:13px;display:block;margin-bottom:4px;">' + escHtml(t.sleep_date||(getLang().ui_date)) + '</label>'
     + '<input id="sl-date" type="date" value="' + (last && last.sleep_date ? last.sleep_date : new Date().toISOString().split("T")[0]) + '" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);"></div>'
     + '<div style="display:flex;gap:12px;margin-bottom:10px;">'
     + '<div style="flex:1;"><label style="font-size:13px;display:block;margin-bottom:4px;">' + escHtml(t.sleep_bedtime||'Dormir') + '</label>'

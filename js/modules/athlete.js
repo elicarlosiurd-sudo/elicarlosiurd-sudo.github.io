@@ -62,7 +62,7 @@ var ATHLETE_EXPERIENCE_LABELS = {
 };
 
 function renderAthleteShell() {
-  return '<div class="screen-header"><div class="screen-title">🏋️ Modo Atleta Premium</div></div><div id="main-content"></div>';
+  return ("" + "<div class=\"screen-header\">" + "" + "<div class=\"screen-title\">" + "🏋️ " + (LANG[APP.lang] || LANG.en).catalog_copy["Modo Atleta Premium"] + "</div>" + "" + "</div>" + "" + "<div id=\"main-content\">" + "" + "</div>" + "");
 }
 
 async function renderAthlete() {
@@ -86,8 +86,8 @@ async function renderAthlete() {
   } catch(e) {}
 
   var phaseKey = (profile && profile.current_phase) || 'hypertrophy';
-  var phase = ATHLETE_PHASES[phaseKey] || ATHLETE_PHASES.hypertrophy;
-  var nutrition = NUTRITION_BY_PHASE[phaseKey] || NUTRITION_BY_PHASE.hypertrophy;
+  var phase = localizeCatalogData(ATHLETE_PHASES)[phaseKey] || localizeCatalogData(ATHLETE_PHASES).hypertrophy;
+  var nutrition = localizeCatalogData(NUTRITION_BY_PHASE)[phaseKey] || localizeCatalogData(NUTRITION_BY_PHASE).hypertrophy;
   var daysPerWeek = (profile && profile.days_per_week) || 4;
   var mesoWeeks = (profile && profile.mesocycle_weeks) || 6;
   var mesoStart = profile && profile.mesocycle_start ? new Date(profile.mesocycle_start + 'T12:00:00') : new Date();
@@ -112,16 +112,16 @@ async function renderAthlete() {
     });
   });
 
-  var phaseOptions = Object.keys(ATHLETE_PHASES).map(function(k) {
-    return '<option value="' + k + '"' + (phaseKey === k ? ' selected' : '') + '>' + ATHLETE_PHASES[k].label + '</option>';
+  var phaseOptions = Object.keys(localizeCatalogData(ATHLETE_PHASES)).map(function(k) {
+    return '<option value="' + k + '"' + (phaseKey === k ? ' selected' : '') + '>' + localizeCatalogData(ATHLETE_PHASES)[k].label + '</option>';
   }).join('');
   var expKey = (profile && profile.experience_level) || 'intermediate';
-  var expOptions = Object.keys(ATHLETE_EXPERIENCE_LABELS).map(function(k) {
-    return '<option value="' + k + '"' + (expKey === k ? ' selected' : '') + '>' + ATHLETE_EXPERIENCE_LABELS[k] + '</option>';
+  var expOptions = Object.keys(localizeCatalogData(ATHLETE_EXPERIENCE_LABELS)).map(function(k) {
+    return '<option value="' + k + '"' + (expKey === k ? ' selected' : '') + '>' + localizeCatalogData(ATHLETE_EXPERIENCE_LABELS)[k] + '</option>';
   }).join('');
 
-  var volumeHtml = Object.keys(VOLUME_LANDMARKS).map(function(k) {
-    var v = VOLUME_LANDMARKS[k];
+  var volumeHtml = Object.keys(localizeCatalogData(VOLUME_LANDMARKS)).map(function(k) {
+    var v = localizeCatalogData(VOLUME_LANDMARKS)[k];
     var sets = weeklySetsByGroup[k] || 0;
     var color = sets < v.MEV ? '#9e9e9e' : sets > v.MRV ? '#f44336' : '#4caf50';
     return '<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border-color)22;">'
@@ -133,45 +133,45 @@ async function renderAthlete() {
 
   var recentHtml = logs.length ? logs.slice(0, 6).map(function(l) {
     var d = l.session_date ? new Date(l.session_date + 'T12:00:00').toLocaleDateString() : '';
-    var p = ATHLETE_PHASES[l.phase] || ATHLETE_PHASES.hypertrophy;
+    var p = localizeCatalogData(ATHLETE_PHASES)[l.phase] || localizeCatalogData(ATHLETE_PHASES).hypertrophy;
     return '<div class="card" style="padding:12px;margin-bottom:8px;border-left:3px solid ' + p.color + ';">'
       + '<div style="display:flex;justify-content:space-between;gap:8px;"><strong style="font-size:13px;">' + escHtml(d) + '</strong><span style="font-size:11px;color:' + p.color + ';">' + escHtml(p.label) + '</span></div>'
       + '<div style="font-size:12px;opacity:.7;margin-top:4px;">RPE ' + (l.session_rpe || '-') + ' · ' + (l.duration_min || '-') + ' min · ' + (l.total_sets || 0) + ' sets</div>'
       + (l.notes ? '<div style="font-size:12px;opacity:.65;margin-top:4px;">' + escHtml(l.notes).substring(0, 140) + '</div>' : '')
       + '</div>';
-  }).join('') : '<p style="text-align:center;padding:16px;opacity:.55;">Nenhum treino registrado ainda.</p>';
+  }).join('') : ("" + "<p style=\"text-align:center;padding:16px;opacity:.55;\">" + (LANG[APP.lang] || LANG.en).catalog_copy["Nenhum treino registrado ainda."] + "</p>" + "");
 
   main.innerHTML = '<div class="view-container" style="max-width:560px;margin:0 auto;padding:16px;">'
-    + '<h2 style="margin-bottom:4px;">🏋️ Modo Atleta Premium</h2>'
-    + '<p style="font-size:13px;opacity:.65;margin-bottom:14px;">Periodização · ACWR · MEV/MAV/MRV · nutrição por fase</p>'
+    + ("" + "<h2 style=\"margin-bottom:4px;\">" + "🏋️ " + (LANG[APP.lang] || LANG.en).catalog_copy["Modo Atleta Premium"] + "</h2>" + "")
+    + ("" + "<p style=\"font-size:13px;opacity:.65;margin-bottom:14px;\">" + (LANG[APP.lang] || LANG.en).catalog_copy["Periodização · ACWR · MEV/MAV/MRV · nutrição por fase"] + "</p>" + "")
     + '<div class="card" style="padding:14px;margin-bottom:12px;border-left:3px solid ' + phase.color + ';">'
-    + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><strong>' + escHtml(phase.label) + '</strong><span style="font-size:11px;padding:2px 8px;border-radius:10px;background:' + phase.bg + ';color:' + phase.color + ';">Semana ' + elapsedWeeks + '/' + mesoWeeks + '</span></div>'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><strong>' + escHtml(phase.label) + '</strong><span style="font-size:11px;padding:2px 8px;border-radius:10px;background:' + phase.bg + ';color:' + phase.color + (";\">" + (LANG[APP.lang] || LANG.en).catalog_copy["Semana"] + " ") + elapsedWeeks + '/' + mesoWeeks + '</span></div>'
     + '<div style="font-size:12px;opacity:.75;margin-top:5px;">' + escHtml(phase.focus) + '</div>'
     + '</div>'
     + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">'
     + '<div class="card" style="text-align:center;padding:12px;"><div style="font-size:11px;opacity:.6;">ACWR</div><div style="font-size:24px;font-weight:700;color:' + acwrColor + ';">' + acwr + '</div><div style="font-size:10px;opacity:.5;">0.8-1.3 ideal</div></div>'
-    + '<div class="card" style="text-align:center;padding:12px;"><div style="font-size:11px;opacity:.6;">Carga 7d</div><div style="font-size:24px;font-weight:700;">' + Math.round(currentLoad) + '</div><div style="font-size:10px;opacity:.5;">min x RPE</div></div>'
-    + '<div class="card" style="text-align:center;padding:12px;"><div style="font-size:11px;opacity:.6;">Frequência</div><div style="font-size:24px;font-weight:700;">' + daysPerWeek + 'x</div><div style="font-size:10px;opacity:.5;">por semana</div></div>'
+    + ("" + "<div class=\"card\" style=\"text-align:center;padding:12px;\">" + "" + "<div style=\"font-size:11px;opacity:.6;\">" + (LANG[APP.lang] || LANG.en).catalog_copy["Carga 7d"] + "</div>" + "" + "<div style=\"font-size:24px;font-weight:700;\">" + "") + Math.round(currentLoad) + '</div><div style="font-size:10px;opacity:.5;">min x RPE</div></div>'
+    + ("" + "<div class=\"card\" style=\"text-align:center;padding:12px;\">" + "" + "<div style=\"font-size:11px;opacity:.6;\">" + (LANG[APP.lang] || LANG.en).catalog_copy["Frequência"] + "</div>" + "" + "<div style=\"font-size:24px;font-weight:700;\">" + "") + daysPerWeek + ("x" + "</div>" + "" + "<div style=\"font-size:10px;opacity:.5;\">" + (LANG[APP.lang] || LANG.en).catalog_copy["por semana"] + "</div>" + "" + "</div>" + "")
     + '</div>'
-    + '<div class="card" style="padding:14px;margin-bottom:12px;"><div style="font-size:13px;font-weight:700;margin-bottom:8px;">📈 Volume semanal por grupo</div>' + volumeHtml + '</div>'
-    + '<div class="card" style="padding:14px;margin-bottom:12px;"><div style="font-size:13px;font-weight:700;margin-bottom:8px;">🍽 Nutrição da fase</div>'
+    + ("" + "<div class=\"card\" style=\"padding:14px;margin-bottom:12px;\">" + "" + "<div style=\"font-size:13px;font-weight:700;margin-bottom:8px;\">" + "📈 " + (LANG[APP.lang] || LANG.en).catalog_copy["Volume semanal por grupo"] + "</div>" + "") + volumeHtml + '</div>'
+    + ("" + "<div class=\"card\" style=\"padding:14px;margin-bottom:12px;\">" + "" + "<div style=\"font-size:13px;font-weight:700;margin-bottom:8px;\">" + "🍽 " + (LANG[APP.lang] || LANG.en).catalog_copy["Nutrição da fase"] + "</div>" + "")
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">'
-    + '<div><strong>Calorias</strong><br><span style="opacity:.7;">' + escHtml(nutrition.kcal) + '</span></div>'
-    + '<div><strong>Proteína</strong><br><span style="opacity:.7;">' + escHtml(nutrition.protein) + '</span></div>'
-    + '<div><strong>Carboidratos</strong><br><span style="opacity:.7;">' + escHtml(nutrition.carbs) + '</span></div>'
-    + '<div><strong>Gorduras</strong><br><span style="opacity:.7;">' + escHtml(nutrition.fat) + '</span></div>'
+    + ("" + "<div>" + "" + "<strong>" + (LANG[APP.lang] || LANG.en).catalog_copy["Calorias"] + "</strong>" + "" + "<br>" + "" + "<span style=\"opacity:.7;\">" + "") + escHtml(nutrition.kcal) + '</span></div>'
+    + ("" + "<div>" + "" + "<strong>" + (LANG[APP.lang] || LANG.en).catalog_copy["Proteína"] + "</strong>" + "" + "<br>" + "" + "<span style=\"opacity:.7;\">" + "") + escHtml(nutrition.protein) + '</span></div>'
+    + ("" + "<div>" + "" + "<strong>" + (LANG[APP.lang] || LANG.en).catalog_copy["Carboidratos"] + "</strong>" + "" + "<br>" + "" + "<span style=\"opacity:.7;\">" + "") + escHtml(nutrition.carbs) + '</span></div>'
+    + ("" + "<div>" + "" + "<strong>" + (LANG[APP.lang] || LANG.en).catalog_copy["Gorduras"] + "</strong>" + "" + "<br>" + "" + "<span style=\"opacity:.7;\">" + "") + escHtml(nutrition.fat) + '</span></div>'
     + '</div><div style="font-size:12px;opacity:.7;margin-top:8px;">' + escHtml(nutrition.note) + '</div></div>'
-    + '<button onclick="openAthleteLogForm();" class="btn-primary" style="width:100%;margin-bottom:10px;">Registrar treino</button>'
+    + ("" + "<button onclick=\"openAthleteLogForm();\" class=\"btn-primary\" style=\"width:100%;margin-bottom:10px;\">" + (LANG[APP.lang] || LANG.en).catalog_copy["Registrar treino"] + "</button>" + "")
     + '<div id="athlete-log-form" style="display:none;margin-bottom:12px;"></div>'
-    + '<div class="card" style="padding:14px;margin-bottom:12px;"><div style="font-size:13px;font-weight:700;margin-bottom:8px;">⚙️ Perfil atleta</div>'
+    + ("" + "<div class=\"card\" style=\"padding:14px;margin-bottom:12px;\">" + "" + "<div style=\"font-size:13px;font-weight:700;margin-bottom:8px;\">" + "⚙️ " + (LANG[APP.lang] || LANG.en).catalog_copy["Perfil atleta"] + "</div>" + "")
     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'
     + '<select id="ath-phase" style="padding:8px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);">' + phaseOptions + '</select>'
     + '<select id="ath-exp" style="padding:8px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);">' + expOptions + '</select>'
     + '<input id="ath-days" type="number" min="1" max="7" value="' + daysPerWeek + '" placeholder="Dias/semana" style="padding:8px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);">'
     + '<input id="ath-weeks" type="number" min="3" max="12" value="' + mesoWeeks + '" placeholder="Semanas" style="padding:8px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);">'
-    + '</div><button onclick="saveAthleteProfile();" class="btn-secondary" style="width:100%;margin-top:10px;">Salvar perfil</button><div id="ath-profile-status" style="min-height:18px;text-align:center;font-size:12px;margin-top:6px;"></div></div>'
-    + '<h3 style="margin-bottom:8px;">Últimos treinos</h3>' + recentHtml
-    + '<button id="ath-coach-btn" class="btn-secondary" style="width:100%;margin-top:8px;">Analisar periodização com CoachIA</button>'
+    + ("" + "</div>" + "" + "<button onclick=\"saveAthleteProfile();\" class=\"btn-secondary\" style=\"width:100%;margin-top:10px;\">" + (LANG[APP.lang] || LANG.en).catalog_copy["Salvar perfil"] + "</button>" + "" + "<div id=\"ath-profile-status\" style=\"min-height:18px;text-align:center;font-size:12px;margin-top:6px;\">" + "" + "</div>" + "" + "</div>" + "")
+    + ("" + "<h3 style=\"margin-bottom:8px;\">" + (LANG[APP.lang] || LANG.en).catalog_copy["Últimos treinos"] + "</h3>" + "") + recentHtml
+    + ("" + "<button id=\"ath-coach-btn\" class=\"btn-secondary\" style=\"width:100%;margin-top:8px;\">" + (LANG[APP.lang] || LANG.en).catalog_copy["Analisar periodização com CoachIA"] + "</button>" + "")
     + '</div>';
 
   var coachBtn = document.getElementById('ath-coach-btn');
@@ -197,8 +197,8 @@ function openAthleteLogForm() {
   if (!wrap) return;
   wrap.style.display = 'block';
   var today = new Date().toISOString().split('T')[0];
-  var phaseOptions = Object.keys(ATHLETE_PHASES).map(function(k) {
-    return '<option value="' + k + '">' + ATHLETE_PHASES[k].label + '</option>';
+  var phaseOptions = Object.keys(localizeCatalogData(ATHLETE_PHASES)).map(function(k) {
+    return '<option value="' + k + '">' + localizeCatalogData(ATHLETE_PHASES)[k].label + '</option>';
   }).join('');
   wrap.innerHTML = '<div class="card" style="padding:14px;border-left:3px solid var(--color-primary,#6c63ff);">'
     + '<div style="font-weight:700;font-size:13px;margin-bottom:10px;">Novo treino</div>'
@@ -210,9 +210,9 @@ function openAthleteLogForm() {
     + '<input id="ath-fatigue-before" type="number" min="1" max="5" placeholder="Fadiga antes 1-5" style="padding:8px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);">'
     + '<input id="ath-fatigue-after" type="number" min="1" max="5" placeholder="Fadiga depois 1-5" style="padding:8px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);">'
     + '</div><div id="ath-exercises"></div>'
-    + '<button onclick="addAthleteExerciseBlock();" class="btn-secondary" style="width:100%;margin-bottom:8px;">Adicionar exercício</button>'
+    + ("" + "<button onclick=\"addAthleteExerciseBlock();\" class=\"btn-secondary\" style=\"width:100%;margin-bottom:8px;\">" + (LANG[APP.lang] || LANG.en).catalog_copy["Adicionar exercício"] + "</button>" + "")
     + '<textarea id="ath-notes" rows="2" placeholder="Notas do treino" style="width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--border-color);border-radius:8px;background:var(--bg-secondary);color:var(--text-primary);resize:vertical;"></textarea>'
-    + '<button onclick="saveAthleteLog();" class="btn-primary" style="width:100%;margin-top:10px;">Salvar treino</button>'
+    + ("" + "<button onclick=\"saveAthleteLog();\" class=\"btn-primary\" style=\"width:100%;margin-top:10px;\">" + (LANG[APP.lang] || LANG.en).catalog_copy["Salvar treino"] + "</button>" + "")
     + '<div id="ath-log-status" style="min-height:18px;text-align:center;font-size:12px;margin-top:6px;"></div>'
     + '</div>';
   addAthleteExerciseBlock();
@@ -231,7 +231,7 @@ function addAthleteExerciseBlock() {
   var holder = document.getElementById('ath-exercises');
   if (!holder) return;
   var idx = holder.querySelectorAll('.ath-ex-row').length;
-  var exerciseOptions = EXERCISE_LIBRARY.map(function(ex) {
+  var exerciseOptions = localizeCatalogData(EXERCISE_LIBRARY).map(function(ex) {
     return '<option value="' + escHtml(ex.name) + '" data-group="' + ex.group + '">' + escHtml(ex.name) + '</option>';
   }).join('');
   holder.insertAdjacentHTML('beforeend', '<div class="ath-ex-row" style="display:grid;grid-template-columns:1fr 64px 64px;gap:6px;margin-bottom:6px;">'
@@ -254,7 +254,7 @@ async function saveAthleteLog() {
       var sel = row.querySelector('.ath-ex-name');
       var selected = sel && sel.options[sel.selectedIndex];
       var name = sel ? sel.value : '';
-      var lib = EXERCISE_LIBRARY.find(function(ex){ return ex.name === name; }) || {};
+      var lib = localizeCatalogData(EXERCISE_LIBRARY).find(function(ex){ return ex.name === name; }) || {};
       return { name: name, group: (selected && selected.getAttribute('data-group')) || lib.group || '', sets: parseInt((row.querySelector('.ath-ex-sets') || {}).value) || 0, reps: (row.querySelector('.ath-ex-reps') || {}).value || '' };
     }).filter(function(ex){ return ex.name && ex.sets > 0; });
     var totalSets = exercises.reduce(function(s,ex){ return s + ex.sets; }, 0);
@@ -276,7 +276,7 @@ async function saveAthleteLog() {
     if (status) { status.style.color = 'var(--color-success,#4caf50)'; status.textContent = 'Treino salvo!'; }
     setTimeout(function(){ renderAthlete(); }, 700);
   } catch(err) {
-    if (status) { status.style.color = 'var(--color-danger,#f44)'; status.textContent = 'Erro: ' + (err.message || err); }
+    if (status) { status.style.color = 'var(--color-danger,#f44)'; status.textContent = getLang().ui_save_error; }
   }
 }
 
@@ -309,6 +309,6 @@ async function saveAthleteProfile() {
     if (status) { status.style.color = 'var(--color-success,#4caf50)'; status.textContent = 'Perfil salvo!'; }
     setTimeout(function(){ renderAthlete(); }, 600);
   } catch(err) {
-    if (status) { status.style.color = 'var(--color-danger,#f44)'; status.textContent = 'Erro: ' + (err.message || err); }
+    if (status) { status.style.color = 'var(--color-danger,#f44)'; status.textContent = getLang().ui_save_error; }
   }
 }

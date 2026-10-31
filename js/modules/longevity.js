@@ -3,118 +3,11 @@
    Ex-bloco inline do index.html (extração literal).
 ═══════════════════════════════════════ */
 
-var LONGEVITY_PROTOCOLS = [
-  {
-    key: 'zone2',
-    emoji: '🚴',
-    title: 'Exercício Zona 2',
-    source: 'Attia',
-    evidence: 'HIGH',
-    time: '30–45 min',
-    desc: 'Cardio de baixa intensidade onde você consegue conversar. Máxima saúde mitocondrial, base da longevidade física.',
-    why: 'VO2max é o preditor individual mais forte de mortalidade por todas as causas. Zona 2 é o caminho mais eficiente para elevar o VO2max.',
-    action: 'Caminhe em ritmo acelerado, pedale ou nade sem ficar ofegante. Frequência cardíaca: 60–70% do máximo.'
-  },
-  {
-    key: 'strength',
-    emoji: '🏋️',
-    title: 'Treino de Força',
-    source: 'Attia',
-    evidence: 'HIGH',
-    time: '40–60 min',
-    desc: 'Massa muscular é o maior preditor de longevidade e independência funcional após os 60 anos.',
-    why: 'Músculo é o "órgão da longevidade" — regula glicose, produz miocinas anti-inflamatórias e previne sarcopenia.',
-    action: 'Foque em compostos: agachamento, levantamento terra, supino, remada. Progressão de carga ao longo do tempo.'
-  },
-  {
-    key: 'sunlight',
-    emoji: '☀️',
-    title: 'Luz Solar Matinal',
-    source: 'Huberman',
-    evidence: 'HIGH',
-    time: '10–20 min',
-    desc: 'Exposição aos olhos (sem óculos) nos primeiros 30–60 min após acordar. Âncora do ritmo circadiano.',
-    why: 'Ativa melanopsina nas células retinianas ipRGC. Dispara cortisol no momento certo, melhora sono noturno e regula humor.',
-    action: 'Saia para fora logo ao acordar. Nublado: 20 min. Ensolarado: 5–10 min. Nunca através de vidro.'
-  },
-  {
-    key: 'fasting',
-    emoji: '⏱️',
-    title: 'Jejum Intermitente',
-    source: 'Sinclair',
-    evidence: 'HIGH',
-    time: '16h+ de janela',
-    desc: 'Ativa autofagia, inibe mTOR e estimula sirtuínas — os três caminhos moleculares centrais da longevidade.',
-    why: 'Sem comida, células ativam modo de "limpeza" (autofagia), reciclando proteínas danificadas. mTOR inibido = menos envelhecimento celular.',
-    action: 'Janela alimentar de 8h (ex: 12h–20h). Café preto e água não quebram o jejum. Comece com 12h e evolua.'
-  },
-  {
-    key: 'sauna',
-    emoji: '🧖',
-    title: 'Sauna / Calor',
-    source: 'Attia + Huberman',
-    evidence: 'HIGH',
-    time: '20 min a 80–100°C',
-    desc: 'Proteínas de choque térmico (HSPs) protegem células. 4x/semana reduz mortalidade cardiovascular em 50% (Laukkanen et al.).',
-    why: 'HSPs previnem agregação de proteínas mal dobradas. Mimetiza esforço aeróbico. Aumenta GH naturalmente.',
-    action: 'Sauna seca 80–100°C por 15–20 min. Finalizar com ducha fria. Reposição de água essencial.'
-  },
-  {
-    key: 'cold',
-    emoji: '🧊',
-    title: 'Exposição ao Frio',
-    source: 'Huberman',
-    evidence: 'MEDIUM',
-    time: '2–5 min',
-    desc: 'Libera norepinefrina (300%), ativa gordura marrom, melhora foco e ânimo por horas.',
-    why: 'Frio aumenta norepinefrina e dopamina de forma sustentada — diferente da dopamina de redes sociais, não cria tolerância.',
-    action: 'Ducha fria nos últimos 2 min do banho, ou banho de gelo 11°C. Respire normalmente, não hiperventile antes.'
-  },
-  {
-    key: 'sleep_optimize',
-    emoji: '😴',
-    title: 'Sono Otimizado',
-    source: 'Huberman + Attia',
-    evidence: 'HIGH',
-    time: '7–9h consistentes',
-    desc: 'Durante o sono, sistema glinfático elimina beta-amiloide e tau — proteínas ligadas ao Alzheimer. Sem sono, não há longevidade.',
-    why: 'Sono < 6h por noche aumenta risco de Alzheimer, câncer, DCV e obesidade. É o único protocolo de longevidade sem custo.',
-    action: 'Mesma hora de dormir e acordar 7 dias/semana. Quarto frio (18–19°C). Zero luz após 22h. Melatonina 0.5mg se necessário.'
-  },
-  {
-    key: 'nmn_nad',
-    emoji: '🔬',
-    title: 'Precursores NAD+',
-    source: 'Sinclair',
-    evidence: 'EMERGING',
-    time: 'Diário (manhã)',
-    desc: 'NMN ou NR elevam NAD+, cofator essencial para sirtuínas e reparação do DNA. Declina 50% dos 20 aos 50 anos.',
-    why: 'Sirtuínas são as "guardiãs do epigenoma". Sem NAD+, não funcionam. Restaurar NAD+ é restaurar capacidade de reparo celular.',
-    action: '250–500mg NMN ou NR de manhã. Combinar com Resveratrol 250mg + gordura (ex: iogurte) para melhor absorção.'
-  },
-  {
-    key: 'glucose',
-    emoji: '📊',
-    title: 'Controle Glicêmico',
-    source: 'Attia',
-    evidence: 'HIGH',
-    time: 'Hábito alimentar',
-    desc: 'Picos de glicose geram glicação — envelhecimento acelerado de proteínas, vasos e neurônios.',
-    why: 'Hemoglobina glicada (HbA1c) é um marcador direto de velocidade de envelhecimento. Cada pico glicêmico danifica endotélio.',
-    action: 'Comer fibra antes de carboidratos. Caminhar 10 min após refeições. Evitar ultra-processados. Vinagre antes de refeições ricas em carbo.'
-  },
-  {
-    key: 'stress_mgmt',
-    emoji: '🧘',
-    title: 'Gestão de Estresse',
-    source: 'Huberman',
-    evidence: 'HIGH',
-    time: '5–10 min',
-    desc: 'Cortisol crônico encurta telômeros, acumula gordura visceral e suprime imunidade — envelhecimento acelerado direto.',
-    why: 'Técnica NSDR (Non-Sleep Deep Rest) restaura dopamina e norepinefrina de forma ativa — mais eficiente que "não pensar em nada".',
-    action: 'Respiração fisiológica: inspire fundo, 2ª inspiração curta, expire longo. Repita 3–5x para baixar cortisol em 30 segundos.'
-  }
-];
+var LONGEVITY_PROTOCOLS = [{"key":"zone2","emoji":"🚴","source":"Attia","evidence":"HIGH"},{"key":"strength","emoji":"🏋️","source":"Attia","evidence":"HIGH"},{"key":"sunlight","emoji":"☀️","source":"Huberman","evidence":"HIGH"},{"key":"fasting","emoji":"⏱️","source":"Sinclair","evidence":"EMERGING"},{"key":"sauna","emoji":"🧖","source":"Attia + Huberman","evidence":"EMERGING"},{"key":"cold","emoji":"🧊","source":"Huberman","evidence":"EMERGING"},{"key":"sleep_optimize","emoji":"😴","source":"Huberman + Attia","evidence":"HIGH"},{"key":"nmn_nad","emoji":"🔬","source":"Sinclair","evidence":"EMERGING"},{"key":"glucose","emoji":"📊","source":"Attia","evidence":"HIGH"},{"key":"stress_mgmt","emoji":"🧘","source":"Huberman","evidence":"EMERGING"}];
+function localizedLongevityProtocols() {
+ var copy=getLang();
+ return LONGEVITY_PROTOCOLS.map(function(item) {var result=Object.assign({},item,{time:copy.lon_time}); ['title','desc','why','action'].forEach(function(field){result[field]=copy['lon_'+item.key+'_'+field];});return result;});
+}
 
 var LONGEVITY_EVIDENCE = {
   HIGH:     { label: 'Alta evidência',      color: '#4caf50', bg: '#4caf5022' },
@@ -131,7 +24,7 @@ var LONGEVITY_SOURCES = {
 };
 
 function renderLongevityShell() {
-  return '<div class="screen-header"><div class="screen-title">🧬 Longevidade & Rejuvenescimento</div></div><div id="main-content"></div>';
+  return ("<div class=\"screen-header\"><div class=\"screen-title\">" + getLang().ui_lon_title + "</div></div><div id=\"main-content\"></div>");
 }
 
 async function renderLongevity() {
@@ -187,11 +80,11 @@ async function renderLongevity() {
     var src = LONGEVITY_SOURCES[f] || {};
     filterHtml += '<button onclick="window._longevityFilter=\'' + f + '\';renderLongevity();" style="padding:5px 12px;border-radius:20px;border:1px solid;cursor:pointer;font-size:12px;font-weight:500;'
       + (isActive ? 'background:' + (src.bg || 'rgba(108,99,255,.10)') + ';color:' + (src.color || 'var(--color-primary,#6c63ff)') + ';border-color:' + (src.color || 'var(--color-primary,#6c63ff)') + ';' : 'background:var(--bg-secondary);color:var(--text-secondary);border-color:var(--border-color);')
-      + '">' + (f === 'all' ? 'Todos' : f) + '</button>';
+      + '">' + (f === 'all' ? getLang().ui_all : f) + '</button>';
   });
   filterHtml += '</div>';
 
-  var filtered = LONGEVITY_PROTOCOLS.filter(function(p) {
+  var filtered = localizedLongevityProtocols().filter(function(p) {
     if (activeFilter === 'all') return true;
     return p.source.indexOf(activeFilter) >= 0;
   });
@@ -208,53 +101,53 @@ async function renderLongevity() {
       + '<strong style="font-size:14px;">' + escHtml(p.title) + '</strong>'
       + '<div style="display:flex;gap:5px;flex-wrap:wrap;">'
       + '<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:' + (src.bg||'#eee') + ';color:' + (src.color||'#333') + ';border:0.5px solid ' + (src.color||'#ccc') + '40;">' + escHtml(p.source) + '</span>'
-      + '<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:' + ev.bg + ';color:' + ev.color + ';border:0.5px solid ' + ev.color + '44;">' + ev.label + '</span>'
+      + '<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:' + ev.bg + ';color:' + ev.color + ';border:0.5px solid ' + ev.color + '44;">' + getLang()['ui_evidence_' + p.evidence] + '</span>'
       + '</div></div>'
       + '<div style="font-size:12px;opacity:.75;margin-bottom:6px;">' + escHtml(p.desc) + '</div>'
       + '<details style="margin-bottom:8px;">'
-      + '<summary style="font-size:12px;color:var(--color-primary,#6c63ff);cursor:pointer;list-style:none;">▸ Por que funciona · Como fazer</summary>'
+      + ("<summary style=\"font-size:12px;color:var(--color-primary,#6c63ff);cursor:pointer;list-style:none;\">" + getLang().ui_lon_details + "</summary>")
       + '<div style="margin-top:8px;padding:8px 10px;background:var(--bg-secondary);border-radius:6px;font-size:12px;line-height:1.6;">'
-      + '<div style="margin-bottom:4px;"><strong>🔬 Mecanismo:</strong> ' + escHtml(p.why) + '</div>'
-      + '<div><strong>✅ Ação:</strong> ' + escHtml(p.action) + '</div>'
+      + ("<div style=\"margin-bottom:4px;\"><strong>" + getLang().ui_lon_mechanism + "</strong> ") + escHtml(p.why) + '</div>'
+      + ("<div><strong>" + getLang().ui_lon_action + "</strong> ") + escHtml(p.action) + '</div>'
       + '</div></details>'
       + '<div style="display:flex;align-items:center;justify-content:space-between;">'
       + '<span style="font-size:11px;opacity:.55;">⏱ ' + escHtml(p.time) + '</span>'
       + '<button onclick="toggleLongevityProtocol(\'' + p.key + '\',' + (!isDone) + ');" style="padding:5px 14px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:600;'
       + (isDone ? 'background:#4caf5022;color:#4caf50;border:1px solid #4caf5055;' : 'background:rgba(108,99,255,.09);color:var(--color-primary,#6c63ff);border:1px solid rgba(108,99,255,.28);')
-      + '">' + (isDone ? '✓ Feito hoje' : '+ Marcar feito') + '</button>'
+      + '">' + (isDone ? getLang().ui_lon_done : getLang().ui_lon_mark) + '</button>'
       + '</div>'
       + '</div></div></div>';
   }).join('');
 
   main.innerHTML = '<div class="view-container" style="max-width:520px;margin:0 auto;padding:16px;">'
-    + '<h2 style="margin-bottom:4px;">🧬 Longevidade & Rejuvenescimento</h2>'
-    + '<p style="font-size:13px;opacity:.6;margin-bottom:16px;">Protocolos baseados em Sinclair · Attia · Huberman</p>'
+    + ("<h2 style=\"margin-bottom:4px;\">" + getLang().ui_lon_title + "</h2>")
+    + ("<p style=\"font-size:13px;opacity:.6;margin-bottom:16px;\">" + getLang().ui_lon_intro + "</p>")
     + '<div style="display:flex;gap:10px;margin-bottom:16px;">'
     + '<div class="card" style="flex:1;text-align:center;padding:14px;">'
-    + '<div style="font-size:11px;opacity:.6;">Hoje</div>'
+    + ("<div style=\"font-size:11px;opacity:.6;\"" + ">" + getLang().ui_today + "<" + "/div>")
     + '<div style="font-size:26px;font-weight:700;color:' + scoreColor + ';">' + doneCount + '/' + totalCount + '</div>'
-    + '<div style="font-size:11px;opacity:.6;">protocolos</div>'
+    + ("<div style=\"font-size:11px;opacity:.6;\"" + ">" + getLang().ui_protocols + "<" + "/div>")
     + '</div>'
     + '<div class="card" style="flex:1;text-align:center;padding:14px;">'
     + '<div style="font-size:11px;opacity:.6;">Score</div>'
     + '<div style="font-size:26px;font-weight:700;color:' + scoreColor + ';">' + scorePercent + '%</div>'
-    + '<div style="font-size:11px;opacity:.6;">do dia</div>'
+    + ("<div style=\"font-size:11px;opacity:.6;\"" + ">" + getLang().ui_day_score + "<" + "/div>")
     + '</div>'
     + '<div class="card" style="flex:1;text-align:center;padding:14px;">'
-    + '<div style="font-size:11px;opacity:.6;">Sequência</div>'
+    + ("<div style=\"font-size:11px;opacity:.6;\"" + ">" + getLang().ui_streak + "<" + "/div>")
     + '<div style="font-size:26px;font-weight:700;">' + streak + '</div>'
-    + '<div style="font-size:11px;opacity:.6;">dias</div>'
+    + ("<div style=\"font-size:11px;opacity:.6;\"" + ">" + getLang().ui_days + "<" + "/div>")
     + '</div>'
     + '</div>'
     + filterHtml
     + cardsHtml
-    + '<button id="lon-coach-btn" class="btn-secondary" style="width:100%;margin-top:8px;">🤖 Analisar meus protocolos com CoachIA</button>'
+    + ("<button id=\"lon-coach-btn\" class=\"btn-secondary\" style=\"width:100%;margin-top:8px;\">" + getLang().ui_lon_coach + "</button>")
     + '</div>';
 
   var coachBtn = document.getElementById('lon-coach-btn');
   if (coachBtn) {
     coachBtn.addEventListener('click', function() {
-      var activeProts = LONGEVITY_PROTOCOLS.filter(function(p){ return todayDone[p.key]; }).map(function(p){ return p.title; });
+      var activeProts = localizedLongevityProtocols().filter(function(p){ return todayDone[p.key]; }).map(function(p){ return p.title; });
       try {
         localStorage.setItem('vitalia_coach_context_longevity', JSON.stringify({
           protocols_done_today: activeProts,

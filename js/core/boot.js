@@ -18,10 +18,10 @@ function coachOpeningInsight() {
 
 
 function openSevenDayPlan(day) {
-  const protein = APP.calc?.prot || 120;
+  const protein = APP.calc?.prot;
   const days = t('plan7_days');
   const items = t('plan7_items');
-  openModal(t('home_plan_7'), `${items.map((x,i)=>`<div class="ingredient-item"><div class="step-num">${i+1}</div><div class="step-text">${x}<br><span style="color:var(--text3);font-size:11px">${days[day] || days[0]} · ${t('plan7_meta')} ${protein}g ${t('home_protein')}</span></div></div>`).join('')}<button class="btn btn-primary btn-full" onclick="closeModal();navigate('recipes')" style="margin-top:12px;padding:12px">${t('plan7_button')}</button>`);
+  openModal(t('home_plan_7'), `${items.map((x,i)=>`<div class="ingredient-item"><div class="step-num">${i+1}</div><div class="step-text">${x}<br><span style="color:var(--text3);font-size:11px">${days[day] || days[0]} · ${protein==null?t('profile_complete'):t('plan7_meta')+' '+protein+'g '+t('home_protein')}</span></div></div>`).join('')}<button class="btn btn-primary btn-full" onclick="closeModal();navigate('recipes')" style="margin-top:12px;padding:12px">${t('plan7_button')}</button>`);
 }
 
 REC.premium = REC.premium || {goal:'all', time:'all', protein:'all', carb:'all', budget:'all'};
@@ -111,9 +111,9 @@ function recipeFilterKeys(r) {
 function coachRecipeReason(r) { if ((APP.profile?.goal === 'gain') && Number(r.prot||0) >= 25) return t('recipe_reason_gain'); if ((APP.profile?.goal === 'lose') && Number(r.cal||999) <= 420) return t('recipe_reason_lose'); if (Number(r.carb||0) <= 18) return t('recipe_reason_lowcarb'); return t('recipe_reason_default'); }
 
 function renderHydration() {
-  const target = smartHydrationTarget(), pct = Math.min(100, Math.round((APP.water/target.cups)*100)), hist = WATER_HISTORY;
-  const weatherText = target.temp ? climateName(APP.waterContext.climate) + ' · ' + target.temp + '°C · ' + target.weatherLabel : climateName(APP.waterContext.climate) + ' · ajuste manual';
-  return `<div class="screen-header"><div class="screen-title">${vitaliaIcon('hydration')} ${t('hydration_smart')}</div></div><div style="padding:0 16px 12px;color:var(--text2);font-size:12px;line-height:1.55">${t('hydration_copy')}</div><div class="water-hero"><div style="position:relative;width:190px;height:190px;margin:0 auto 18px">${svgRing(190,14,pct,'var(--blue)','rgba(56,200,255,.16)')}<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column"><div class="water-big-num">${APP.water}</div><div style="font-size:12px;color:var(--text3)">${t('home_cups_of')} ${target.cups} ${t('unit_cups')}</div><div style="font-size:11px;color:var(--blue)">${target.ml}ml · ${pct}%</div></div></div></div><div style="padding:0 16px;margin-bottom:12px"><div class="card card-blue"><div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:8px">${t('hydration_by_weight')}</div><div style="font-size:12px;color:var(--text2);line-height:1.7">${t('hydration_base')}: ${target.base}ml · ${t('hydration_activity')}: +${target.activityExtra}ml · ${t('hydration_climate')}: ${target.climateExtra>=0?'+':''}${target.climateExtra}ml<br>${t('hydration_reading')}: ${weatherText}</div><button class="btn btn-outline btn-full" onclick="updateWeatherHydration(true);toast('Buscando clima real...','info')" style="margin-top:10px;padding:10px">${t('hydration_update_weather')}</button></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px;margin-bottom:12px"><select class="input" onchange="APP.waterContext.climate=this.value;APP.waterContext.weatherLabel='manual';save('v_water_context',APP.waterContext);navigate('hydration')"><option value="normal" ${APP.waterContext.climate==='normal'?'selected':''}>${t('hydration_normal')}</option><option value="hot" ${APP.waterContext.climate==='hot'?'selected':''}>${t('hydration_hot')}</option><option value="very_hot" ${APP.waterContext.climate==='very_hot'?'selected':''}>${t('hydration_very_hot')}</option><option value="cold" ${APP.waterContext.climate==='cold'?'selected':''}>${t('hydration_cold')}</option></select><input class="input" type="number" value="${APP.waterContext.activityMinutes||45}" onchange="APP.waterContext.activityMinutes=parseInt(this.value||0);save('v_water_context',APP.waterContext);navigate('hydration')" placeholder="${t('hydration_training_min')}"></div><div class="water-liquid-cups">${Array.from({length:target.cups},(_,i)=>`<div class="water-capsule ${i<APP.water?'filled':''}" onclick="setWater(${i+1})"></div>`).join('')}</div><div class="water-buttons">${[[250,'250ml'],[500,'500ml'],[750,'750ml'],[1000,'1L']].map(([ml,l])=>`<button class="water-add-btn" onclick="addWater(${ml})">${vitaliaIcon('hydration')} ${l}</button>`).join('')}</div><div style="padding:0 16px;margin:16px 0"><div class="card"><div style="font-size:12px;font-weight:700;margin-bottom:8px">${t('hydration_alerts')}</div><div style="font-size:12px;color:var(--text2);line-height:1.7">${t('hydration_alerts_desc')}</div><button class="btn btn-outline btn-full" onclick="requestVitalIANotifications(true)" style="margin-top:10px;padding:10px">${t('hydration_enable_alerts')}</button></div></div><div class="section-title">${t('hydration_last7')}</div><div style="padding:0 16px;margin-bottom:16px"><div class="history-bar-row">${hist.map(h=>`<div class="history-bar" style="height:${Math.round((h/Math.max(...hist))*100)}%;background:${h>=target.cups?'var(--blue)':'rgba(56,189,248,.3)'}"></div>`).join('')}</div></div>`;
+  const target = smartHydrationTarget(), pct = target.cups ? Math.min(100, Math.round(APP.water/target.cups*100)) : null, hist = NUTR.weekOwner===currentUserId() && Array.isArray(NUTR.week) ? NUTR.week.map(day=>day.water) : Array(7).fill(null);
+  const weatherText = target.temp != null ? climateName(APP.waterContext.climate)+' · '+target.temp+'°C · '+t('hydration_real_weather') : climateName(APP.waterContext.climate)+' · '+t('hydration_manual_weather');
+  return `<div class="screen-header"><div class="screen-title">${vitaliaIcon('hydration')} ${t('hydration_smart')}</div></div><div style="padding:0 16px 12px;color:var(--text2);font-size:12px;line-height:1.55">${t('hydration_copy')}</div><div class="water-hero"><div style="position:relative;width:190px;height:190px;margin:0 auto 18px">${svgRing(190,14,pct,'var(--blue)','rgba(56,200,255,.16)')}<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column"><div class="water-big-num">${APP.water}</div><div style="font-size:12px;color:var(--text3)">${target.cups==null?t('profile_complete'):t('home_cups_of')+' '+target.cups+' '+t('unit_cups')}</div><div style="font-size:11px;color:var(--blue)">${target.ml==null?t('profile_target_unavailable'):target.ml+'ml · '+pct+'% · '+t('profile_estimated')}</div></div></div></div><div style="padding:0 16px;margin-bottom:12px"><div class="card card-blue"><div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:8px">${t('hydration_by_weight')}</div><div style="font-size:12px;color:var(--text2);line-height:1.7">${t('hydration_base')}: ${target.base==null?'—':target.base+'ml'} · ${t('hydration_activity')}: ${target.activityExtra==null?'—':'+'+target.activityExtra+'ml'} · ${t('hydration_climate')}: ${target.climateExtra==null?'—':(target.climateExtra>=0?'+':'')+target.climateExtra+'ml'}<br>${t('hydration_reading')}: ${weatherText}</div><button class="btn btn-outline btn-full" onclick="updateWeatherHydration(true);toast(t('hydration_weather_loading'),'info')" style="margin-top:10px;padding:10px">${t('hydration_update_weather')}</button></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px;margin-bottom:12px"><select class="input" onchange="APP.waterContext.climate=this.value;APP.waterContext.weatherLabel='manual';save('v_water_context',APP.waterContext);navigate('hydration')"><option value="normal" ${APP.waterContext.climate==='normal'?'selected':''}>${t('hydration_normal')}</option><option value="hot" ${APP.waterContext.climate==='hot'?'selected':''}>${t('hydration_hot')}</option><option value="very_hot" ${APP.waterContext.climate==='very_hot'?'selected':''}>${t('hydration_very_hot')}</option><option value="cold" ${APP.waterContext.climate==='cold'?'selected':''}>${t('hydration_cold')}</option></select><input class="input" type="number" value="${APP.waterContext.activityMinutes??0}" onchange="APP.waterContext.activityMinutes=parseInt(this.value||0);save('v_water_context',APP.waterContext);navigate('hydration')" placeholder="${t('hydration_training_min')}"></div><div class="water-liquid-cups">${Array.from({length:target.cups || Math.max(8,APP.water+1)},(_,i)=>`<div class="water-capsule ${i<APP.water?'filled':''}" onclick="setWater(${i+1})"></div>`).join('')}</div><div class="water-buttons">${[[250,'250ml'],[500,'500ml'],[750,'750ml'],[1000,'1L']].map(([ml,l])=>`<button class="water-add-btn" onclick="addWater(${ml})">${vitaliaIcon('hydration')} ${l}</button>`).join('')}</div><div style="padding:0 16px;margin:16px 0"><div class="card"><div style="font-size:12px;font-weight:700;margin-bottom:8px">${t('hydration_alerts')}</div><div style="font-size:12px;color:var(--text2);line-height:1.7">${t('hydration_alerts_desc')}</div><button class="btn btn-outline btn-full" onclick="requestVitalIANotifications(true)" style="margin-top:10px;padding:10px">${t('hydration_enable_alerts')}</button></div></div><div class="section-title">${t('hydration_last7')}</div><div style="padding:0 16px;margin-bottom:16px"><div class="history-bar-row">${hist.map(h=>`<div class="history-bar" style="height:${Math.round((Number(h||0)/Math.max(1,...hist.map(value=>Number(value||0))))*100)}%;background:${h>=target.cups?'var(--blue)':'rgba(56,189,248,.3)'}"></div>`).join('')}</div></div>`;
 }
 
 function renderFasting() {
@@ -354,9 +354,9 @@ function parseFloatOrNull(str) {
 
 
 function reportProgressHealthError(label, err) {
-  var msg = err && err.message ? err.message : String(err || 'Erro desconhecido');
-  try { console.error('[VitalIA ProgressHealth]', label, err); } catch(e) {}
-  if (typeof toast === 'function') toast(label + ': ' + msg, 'error', 5000);
+  var code = err && typeof err.code === 'string' && /^[a-zA-Z0-9_-]{1,40}$/.test(err.code) ? err.code : 'operation_failed';
+  try { console.error('[VitalIA ProgressHealth]', { module: label, code: code }); } catch(e) {}
+  if (typeof toast === 'function') toast(getLang().ui_save_error, 'error', 5000);
 }
 
 function renderHome() {
@@ -366,9 +366,9 @@ function renderHome() {
   const h = new Date().getHours();
   const greet = h<12?t('greeting_m'):h<18?t('greeting_a'):t('greeting_e');
   const totals = macroTotals(), hyd = smartHydrationTarget(), quality = nutritionQualityScore();
-  const kcalPct = Math.min(100, Math.round((totals.kcal/(c.meta||1800))*100));
-  const proteinPct = Math.min(100, Math.round((totals.prot/(c.prot||120))*100));
-  const waterPct = Math.min(100, Math.round((APP.water/hyd.cups)*100));
+  const kcalPct = c.meta ? Math.min(100, Math.round(totals.kcal/c.meta*100)) : null;
+  const proteinPct = c.prot ? Math.min(100, Math.round(totals.prot/c.prot*100)) : null;
+  const waterPct = hyd.cups ? Math.min(100, Math.round(APP.water/hyd.cups*100)) : null;
   const streak = APP.streak || 0;
   const dayNames = ['S','T','Q','Q','S','S','D'];
   const liveInsights = (coachInsightsService ? coachInsightsService().home() : []).slice(0,3);
@@ -385,11 +385,13 @@ function renderHome() {
 
     ${window.VitaliaDaily.shell()}
 
+    ${window.VitaliaWeek ? window.VitaliaWeek.home() : ""}
+
     <div class="premium-metrics">
-      <button class="metric-card tap-effect" onclick="navigate('nutrition')"><div class="metric-k">${t('home_metric_nutrition')}</div><div class="metric-v" style="color:var(--firefly)">${quality}%</div><div class="metric-sub">${proteinPct}% ${t('home_protein_goal')}</div></button>
-      <button class="metric-card tap-effect" onclick="navigate('hydration')"><div class="metric-k">${t('home_metric_hydration')}</div><div class="metric-v" style="color:var(--blue)">${waterPct}%</div><div class="metric-sub">${APP.water} ${t('home_cups_of')} ${hyd.cups} ${t('unit_cups')}</div></button>
+      <button class="metric-card tap-effect" onclick="navigate('nutrition')"><div class="metric-k">${t('home_metric_nutrition')}</div><div class="metric-v" style="color:var(--firefly)">${quality}%</div><div class="metric-sub">${proteinPct==null?t('profile_complete'):proteinPct+'% '+t('home_protein_goal')}</div></button>
+      <button class="metric-card tap-effect" onclick="${hyd.cups?"navigate('hydration')":"editProfile()"}"><div class="metric-k">${t('home_metric_hydration')}</div><div class="metric-v" style="color:var(--blue)">${waterPct==null?'—':waterPct+'%'}</div><div class="metric-sub">${hyd.cups==null?t('profile_complete'):APP.water+' '+t('home_cups_of')+' '+hyd.cups+' '+t('unit_cups')}</div></button>
       <button class="metric-card tap-effect" onclick="navigate('progress')"><div class="metric-k">${t('home_metric_streak')}</div><div class="metric-v" style="color:var(--gold)">${streak} ${t('unit_days')}</div><div class="metric-sub">${t('home_rhythm')}</div></button>
-      <button class="metric-card tap-effect" onclick="navigate('nutrition')"><div class="metric-k">${t('home_metric_daily')}</div><div class="metric-v" style="color:var(--orange)">${kcalPct}%</div><div class="metric-sub">${totals.kcal} / ${c.meta||1800} kcal</div></button>
+      <button class="metric-card tap-effect" onclick="${c.meta?"navigate('nutrition')":"editProfile()"}"><div class="metric-k">${t('home_metric_daily')}</div><div class="metric-v" style="color:var(--orange)">${kcalPct==null?'—':kcalPct+'%'}</div><div class="metric-sub">${c.meta==null?t('profile_complete'):totals.kcal+' / '+c.meta+' kcal'}</div></button>
     </div>
 
     <div class="premium-card coach-feature tap-effect" onclick="navigate('coach')" style="padding:18px;margin:4px 0 14px">
@@ -479,13 +481,13 @@ function renderRecipes() {
     const timeItems = [['all','filter_all'],['breakfast','filter_breakfast'],['lunch','filter_lunch'],['snack','filter_snack'],['dinner','filter_dinner'],['drink','rec_detox'],['special','hydration']];
     const filters = [['weight_loss','rec_weight_loss'],['muscle_gain','rec_muscle'],['vegan','filter_vegan'],['gluten_free','filter_gluten'],['low_carb','rec_low_carb'],['protein','rec_high_protein'],['lactose_free','rec_lactose_free'],['detox','rec_detox'],['prebiotic','rec_prebiotic'],['pregnant','rec_pregnant'],['menstrual','rec_menstrual'],['pre_workout','rec_pre_workout'],['post_workout','rec_post_workout'],['omega3','rec_omega3'],['iron','rec_iron'],['anti_inflammatory','rec_anti_inflam']];
     return `<div class="screen-header"><div class="screen-title">${vitaliaIcon('recipes')} ${t('recipes')}</div></div>
-  <div style="padding:0 16px;margin-bottom:10px"><input class="input" placeholder="🔍 ${t('recipe_search')}" value="${escapeHTML(REC.search||'')}" oninput="REC.search=this.value;document.getElementById('rec-list').innerHTML=renderRecipeList()"></div>
+  <div style="padding:0 16px;margin-bottom:10px"><input id="recipe-search" aria-label="${escapeHTML(t('recipe_search'))}" class="input" placeholder="🔍 ${t('recipe_search')}" value="${escapeHTML(REC.search||'')}" oninput="REC.search=this.value;document.getElementById('rec-list').innerHTML=renderRecipeList()"></div>
   <div style="padding:0 16px;margin-bottom:10px"><div class="card" style="padding:12px;border-color:rgba(34,197,94,.18)"><div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:4px;text-transform:uppercase">${t('rec_intelligent_filters')}</div><div style="font-size:12px;color:var(--text2);margin-bottom:10px">${t('rec_selected_today')}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-    <select class="input" onchange="setPremiumFilter('goal',this.value)"><option value="all">${t('rec_goal')}</option><option value="lose" ${REC.premium.goal==='lose'?'selected':''}>${t('goal_lose')}</option><option value="gain" ${REC.premium.goal==='gain'?'selected':''}>${t('goal_gain')}</option><option value="maintain" ${REC.premium.goal==='maintain'?'selected':''}>${t('rec_performance')}</option><option value="health" ${REC.premium.goal==='health'?'selected':''}>${t('goal_health')}</option></select>
-    <select class="input" onchange="setPremiumFilter('time',this.value)"><option value="all">${t('rec_time')}</option><option value="15" ${REC.premium.time==='15'?'selected':''}>≤ 15min</option><option value="30" ${REC.premium.time==='30'?'selected':''}>≤ 30min</option><option value="45" ${REC.premium.time==='45'?'selected':''}>≤ 45min</option></select>
-    <select class="input" onchange="setPremiumFilter('protein',this.value)"><option value="all">${t('rec_protein')}</option><option value="high" ${REC.premium.protein==='high'?'selected':''}>${t('rec_high_protein')}</option><option value="elite" ${REC.premium.protein==='elite'?'selected':''}>${t('rec_elite')}</option></select>
-    <select class="input" onchange="setPremiumFilter('carb',this.value)"><option value="all">${t('rec_carb')}</option><option value="low" ${REC.premium.carb==='low'?'selected':''}>${t('rec_low_carb')}</option><option value="balanced" ${REC.premium.carb==='balanced'?'selected':''}>${t('goal_maintain')}</option></select>
-    <select class="input" onchange="setPremiumFilter('budget',this.value)"><option value="all">${t('rec_budget')}</option><option value="baixo" ${REC.premium.budget==='baixo'?'selected':''}>${t('rec_budget_low')}</option><option value="medio" ${REC.premium.budget==='medio'?'selected':''}>${t('rec_budget_medium')}</option><option value="premium" ${REC.premium.budget==='premium'?'selected':''}>${t('rec_budget_premium')}</option></select>
+    <select id="recipe-filter-goal" aria-label="${escapeHTML(t('rec_goal'))}" class="input" onchange="setPremiumFilter('goal',this.value)"><option value="all">${t('rec_goal')}</option><option value="lose" ${REC.premium.goal==='lose'?'selected':''}>${t('goal_lose')}</option><option value="gain" ${REC.premium.goal==='gain'?'selected':''}>${t('goal_gain')}</option><option value="maintain" ${REC.premium.goal==='maintain'?'selected':''}>${t('rec_performance')}</option><option value="health" ${REC.premium.goal==='health'?'selected':''}>${t('goal_health')}</option></select>
+    <select id="recipe-filter-time" aria-label="${escapeHTML(t('rec_time'))}" class="input" onchange="setPremiumFilter('time',this.value)"><option value="all">${t('rec_time')}</option><option value="15" ${REC.premium.time==='15'?'selected':''}>≤ 15min</option><option value="30" ${REC.premium.time==='30'?'selected':''}>≤ 30min</option><option value="45" ${REC.premium.time==='45'?'selected':''}>≤ 45min</option></select>
+    <select id="recipe-filter-protein" aria-label="${escapeHTML(t('rec_protein'))}" class="input" onchange="setPremiumFilter('protein',this.value)"><option value="all">${t('rec_protein')}</option><option value="high" ${REC.premium.protein==='high'?'selected':''}>${t('rec_high_protein')}</option><option value="elite" ${REC.premium.protein==='elite'?'selected':''}>${t('rec_elite')}</option></select>
+    <select id="recipe-filter-carb" aria-label="${escapeHTML(t('rec_carb'))}" class="input" onchange="setPremiumFilter('carb',this.value)"><option value="all">${t('rec_carb')}</option><option value="low" ${REC.premium.carb==='low'?'selected':''}>${t('rec_low_carb')}</option><option value="balanced" ${REC.premium.carb==='balanced'?'selected':''}>${t('goal_maintain')}</option></select>
+    <select id="recipe-filter-budget" aria-label="${escapeHTML(t('rec_budget'))}" class="input" onchange="setPremiumFilter('budget',this.value)"><option value="all">${t('rec_budget')}</option><option value="baixo" ${REC.premium.budget==='baixo'?'selected':''}>${t('rec_budget_low')}</option><option value="medio" ${REC.premium.budget==='medio'?'selected':''}>${t('rec_budget_medium')}</option><option value="premium" ${REC.premium.budget==='premium'?'selected':''}>${t('rec_budget_premium')}</option></select>
     <button class="btn btn-outline" onclick="REC.premium={goal:'all',time:'all',protein:'all',carb:'all',budget:'all'};navigate('recipes')">${t('rec_clear')}</button>
   </div></div></div>
   <div style="padding:0 16px;margin-bottom:8px"><div style="font-size:11px;color:var(--text3);font-weight:700;margin-bottom:7px;text-transform:uppercase">${t('recipe_by_time')}</div><div style="display:flex;gap:7px;overflow-x:auto;padding-bottom:4px">${timeItems.map(x=>`<button class="tab-btn ${REC.mealType===x[0]?'active':''}" onclick="REC.mealType='${x[0]}';navigate('recipes')">${t(x[1])}</button>`).join('')}</div></div>
@@ -527,7 +529,7 @@ function renderRecipeList() {
     return `<div style="text-align:center;padding:8px;font-size:12px;color:var(--text3)">${l.length} ${t('rec_found')}</div><div style="padding:0 16px">` + l.slice(0,30).map(function(r){
       var tags=recipeTags(r).slice(0,3).map(function(tag){return `<span class="pill pill-green" style="font-size:10px">${tag}</span>`;}).join('');
       var reason = coachRecipeReason(r);
-      return `<div class="recipe-card v-card" onclick="openRecipeSafe(${r.id})" style="margin-bottom:12px"><div class="recipe-premium-visual"><div class="recipe-premium-mark"></div></div><div class="recipe-body" style="padding:12px"><div style="margin-bottom:8px">${tags}</div><div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:7px">${recipeTitle(r)}</div><div style="font-size:11px;color:var(--green);margin-bottom:7px">${t('recipes.coachRecommends')}: ${reason}</div><div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--text2)"><span>${vitaliaIcon('fasting')} ${r.time||((r.tempo||15)+'min')}</span><span>${vitaliaIcon('progress')} ${recipeTerm(r.diff||t('rec_easy'))}</span><span style="color:var(--orange)">${r.cal||0} kcal</span><span style="color:#fbbf24">★ ★ ★ ★ ★</span></div></div></div>`;
+      return `<div class="recipe-card v-card" onclick="openRecipeSafe(${r.id})" style="margin-bottom:12px"><div class="recipe-premium-visual"><div class="recipe-premium-mark"></div></div><div class="recipe-body" style="padding:12px"><div style="margin-bottom:8px">${tags}</div><div style="font-size:15px;font-weight:700;color:var(--text);margin-bottom:7px">${recipeTitle(r)}</div><div style="font-size:11px;color:var(--green);margin-bottom:7px">${t('recipes.coachRecommends')}: ${reason}</div><div style="display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--text2)"><span>${vitaliaIcon('fasting')} ${r.time||((r.tempo||15)+'min')}</span><span>${vitaliaIcon('progress')} ${recipeTerm(r.diff||t('rec_easy'))}</span><span style="color:var(--orange)">${r.cal||0} kcal</span><span style="color:#fbbf24">${t('recipes.yourRating')}: ${getRecipePersonalState(r).rating ? getRecipePersonalState(r).rating+'/5' : t('recipes.notRated')}</span></div></div></div>`;
     }).join('') + '</div>';
   } catch(e) {
     console.error('renderRecipeList failed:', e);
@@ -546,10 +548,10 @@ async function handleAuthRedirectResult() {
     try { history.replaceState({}, document.title, location.pathname); } catch(_) {}
     if (String(errorCode).includes('otp_expired') || /expired|invalid/i.test(errorDesc)) {
       renderEmailConfirmationNotice(pendingEmail, 'expired');
-      toast('Link expirado. Reenvie a confirmação e use o email mais recente.', 'info', 6500);
+      toast(t('auth_link_expired_notice'), 'info', 6500);
       return true;
     }
-    toast('Falha na confirmação: ' + (errorDesc || errorCode), 'error', 7000);
+    toast(t('auth_confirmation_failed'), 'error', 7000);
     renderEmailConfirmationNotice(pendingEmail);
     return true;
   }
@@ -566,15 +568,15 @@ async function handleAuthRedirectResult() {
       sessionStorage.setItem('v_tab_active','1');
       APP.user = { email: session.user.email, name: session.user.user_metadata?.nome || session.user.email.split('@')[0], id: session.user.id };
       APP.session = session.access_token;
-      if (!APP.profile) APP.profile = { name: APP.user.name, weight:78, height:175, age:30, gender:'m', goal:'lose', activity:'mod', restrictions:[] };
+      if (!APP.profile) APP.profile = normalizeUserProfile(null,APP.user.name);
       APP.calc = calcProfile(APP.profile);
       await syncFromSupabase(session.user.id);
-      toast('Email confirmado. Acesso liberado!', 'success', 5000);
+      toast(t('auth_confirmed'), 'success', 5000);
       startApp();
       return true;
     }
   } catch(e) {
-    toast('Não foi possível concluir a confirmação: ' + (e.message || e), 'error', 7000);
+    toast(t('auth_confirmation_failed'), 'error', 7000);
     renderEmailConfirmationNotice(pendingEmail);
     return true;
   }
@@ -583,7 +585,7 @@ async function handleAuthRedirectResult() {
 
 window.addEventListener('DOMContentLoaded', async () => {
   applyTheme();
-  if(!LANG[APP.lang]) APP.lang='pt';
+  if(!LANG[APP.lang]) APP.lang='en';
 
   // Animate splash
   setTimeout(async () => {
@@ -613,7 +615,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         clearSensitiveLocalCache();
 
         // Load data from Supabase
-        if (!APP.profile) APP.profile = { name: APP.user.name, weight:78, height:175, age:30, gender:'m', goal:'lose', activity:'mod', restrictions:[] };
+        if (!APP.profile) APP.profile = normalizeUserProfile(null,APP.user.name);
         APP.calc = calcProfile(APP.profile);
         APP.meals=[];
 
@@ -628,10 +630,10 @@ window.addEventListener('DOMContentLoaded', async () => {
       // eslint-disable-next-line no-constant-binary-expression -- pré-existente no index.html; corrigir na V231
       } else if (false && APP.session && APP.user) {
         // Fallback to localStorage session
-        if(!APP.profile) APP.profile={name:'Usuário',weight:78,height:175,age:30,gender:'m',goal:'lose',activity:'mod'};
+        if(!APP.profile) APP.profile=normalizeUserProfile(null,t('gen_user'));
         APP.calc=calcProfile(APP.profile);
         APP.water=APP.water||0; APP.meals=APP.meals?.length?APP.meals:[];
-        if(!APP.weightHistory?.length) APP.weightHistory=WEIGHT_HISTORY.map((p,i)=>({date:new Date(Date.now()-i*86400000).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}),peso:p})).reverse();
+        if(!Array.isArray(APP.weightHistory)) APP.weightHistory=[];
         startApp(); scheduleNotifications();
       } else {
         startAuth();

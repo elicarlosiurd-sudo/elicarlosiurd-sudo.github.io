@@ -3,7 +3,7 @@ const BODYTWIN_HERO_FRONT_YAW = Math.PI;
 // URLs resolvidas contra o MODULO (js/bodytwin.js), nunca contra a pagina —
 // corrige o 404 em js/vendor/... no GitHub Pages.
 const MODEL_URL = new URL('../vendor/mediapipe/models/pose_landmarker_lite.task', import.meta.url).href;
-const SEGMENTER_MODEL_URL = new URL('../vendor/mediapipe/models/selfie_segmenter.task', import.meta.url).href;
+const SEGMENTER_MODEL_URL = new URL('../vendor/mediapipe/models/selfie_segmenter.tflite', import.meta.url).href;
 const WASM_ROOT = new URL('../vendor/mediapipe/tasks-vision/wasm', import.meta.url).href;
 const VISION_BUNDLE = new URL('../vendor/mediapipe/tasks-vision/vision_bundle.mjs', import.meta.url).href;
 const BODYTWIN_NEON = 0x00aaff;

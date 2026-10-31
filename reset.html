@@ -1,11 +1,11 @@
 <!doctype html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://qyerrlteeoiudtgmguzk.supabase.co https://*.supabase.co; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; frame-ancestors 'none'; base-uri 'self';">
   <meta name="theme-color" content="#050505">
-  <title>VitalIA | Atualizando</title>
+  <title>VitalIA</title>
   <style>
     :root {
       color-scheme: dark;
@@ -71,31 +71,58 @@
 <body>
   <main>
     <div class="mark">V</div>
-    <h1>Atualizando VitalIA</h1>
-    <p>Estou limpando a versao antiga do navegador e abrindo o app premium atualizado.</p>
+    <h1>VitalIA</h1>
+    <p aria-live="polite"></p>
   </main>
+  <script src="./release.js"></script>
+  <script src="./js/core/i18n.js"></script>
   <script>
-    (async function resetVitalIA() {
-      const target = './?v=20260507-v20';
-
+    let storedLang = ''; try { storedLang = localStorage.getItem('v_lang') || ''; } catch(_) {}
+    const requestedLang = (storedLang || navigator.language || 'en').slice(0,2).toLowerCase();
+    const copy = I18N[requestedLang] || I18N.en;
+    document.documentElement.lang = I18N[requestedLang] ? requestedLang : 'en';
+    document.title = copy.pwa_updating;
+    document.querySelector('h1').textContent = copy.pwa_updating;
+    const info = document.querySelector('p');
+    const retry = document.createElement('button');
+    retry.textContent = copy.pwa_update_retry;
+    retry.style.cssText = 'margin-top:16px;padding:10px 14px;border-radius:12px;border:1px solid var(--green);background:transparent;color:var(--green);cursor:pointer';
+    retry.onclick = updateVitalIA;
+    document.querySelector('main').appendChild(retry);
+    const open = document.createElement('a');open.href='./';open.textContent=copy.pwa_update_open;
+    open.style.cssText='display:block;margin-top:12px;color:var(--green)';
+    document.querySelector('main').appendChild(open);
+    async function updateVitalIA() {
+      info.textContent = copy.pwa_update_info;
+      if(!navigator.onLine) { info.textContent=copy.pwa_update_offline;return; }
+      retry.disabled=true;
       try {
-        if ('serviceWorker' in navigator) {
-          const registrations = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(registrations.map(registration => registration.unregister()));
+        if(!('serviceWorker' in navigator)) throw new Error('PWA unavailable');
+        const root = new URL('./',location.href).href;
+        let registration = await navigator.serviceWorker.getRegistration(root);
+        if(!registration || registration.scope!==root)registration=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});
+        await registration.update();
+        const worker=registration.installing;
+        if(worker && worker.state!=='installed') await new Promise((resolve,reject)=>{
+          const timer=setTimeout(()=>reject(new Error('Update deadline')),30000);
+          worker.addEventListener('statechange',()=>{
+            if(worker.state==='installed'){clearTimeout(timer);resolve();}
+            if(worker.state==='redundant'){clearTimeout(timer);reject(new Error('Release verification failed'));}
+          });
+        });
+        if(registration.waiting) {
+          await new Promise((resolve,reject)=>{
+            const timer=setTimeout(()=>reject(new Error('Activation deadline')),30000);
+            navigator.serviceWorker.addEventListener('controllerchange',()=>{clearTimeout(timer);resolve();},{once:true});
+            registration.waiting.postMessage({type:'VITALIA_SKIP_WAITING'});
+          });
         }
-
-        if ('caches' in window) {
-          const keys = await caches.keys();
-          await Promise.all(keys.map(key => caches.delete(key)));
-        }
-
-        localStorage.setItem('vitalia_cache_reset', '20260507-v20');
-      } catch (error) {
-        console.warn('[VitalIA] Reset de cache continuou com fallback.', error);
-      }
-
-      window.location.replace(target);
-    })();
+        // The verified worker removes only obsolete VitalIA caches during activation.
+        // Never unregister other applications, purge user storage or discard the usable offline shell.
+        location.replace('./?v='+encodeURIComponent(globalThis.VITALIA_APP_VERSION));
+      } catch(_) { info.textContent=copy.pwa_update_failed;retry.disabled=false; }
+    }
+    updateVitalIA();
   </script>
 </body>
 </html>

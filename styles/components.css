@@ -167,3 +167,24 @@ html,body,#root{background:radial-gradient(ellipse 65% 40% at 12% 15%,rgba(34,19
 .scanner-manual{margin-bottom:12px}.scanner-manual-label{font-size:12px;color:var(--text2);margin-bottom:8px}.scanner-manual-row{display:flex;gap:8px}.scanner-manual-input{flex:1;font-size:16px!important;letter-spacing:1px}.scanner-manual-btn{flex-shrink:0;padding:12px 18px!important;font-size:18px!important}
 .scanner-examples-title{font-size:11px;color:var(--text3);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
 .scanner-examples{margin-bottom:8px}.scanner-country{font-size:10px;color:var(--text3);font-weight:700;margin-bottom:4px}.scanner-chip-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:6px}.scanner-demo-chip{font-size:10px!important;padding:4px 9px!important}
+/* P1: scoped to Meu Dia, using existing VitalIA typography and color tokens. */
+.daily-card{padding:20px;margin:0 0 16px;overflow:hidden}
+.daily-header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.daily-title{font-size:19px;font-weight:700;font-family:inherit;margin:0;color:var(--text)}
+.daily-date,.daily-note,.daily-coverage,.daily-missing{font-size:12px;line-height:1.55;color:var(--text2)}
+.daily-overview{display:grid;grid-template-columns:minmax(70px,auto) 1fr;gap:18px;align-items:center;margin:18px 0 8px}
+.daily-score{font-size:clamp(48px,12vw,72px);font-weight:800;line-height:1;letter-spacing:-.05em;color:var(--green-bright)}
+.daily-score-label{font-size:14px;font-weight:700;margin:0 0 6px}
+.daily-message,.daily-weakest{font-size:12px;line-height:1.5;margin:5px 0;color:var(--text2)}
+.daily-actions{list-style:none;margin:18px 0 12px;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px}
+.daily-action{padding:14px;background:var(--surface2);border:1px solid var(--border2);border-radius:14px;min-width:0}
+.daily-action-title{margin:0 0 12px;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.daily-controls{display:flex;gap:8px;flex-wrap:wrap}
+.daily-button{min-height:44px;white-space:normal;max-width:100%;padding:10px 14px;font-size:12px}
+.daily-button:focus-visible{outline:2px solid var(--green-bright);outline-offset:3px}
+.daily-button:disabled{opacity:.65;cursor:default}
+.daily-action-done{border-color:var(--green);background:var(--green-glow)}
+.daily-status{font-size:12px;line-height:1.6;color:var(--text2);min-height:20px}
+.daily-formula{font-size:12px;line-height:1.6;margin-top:14px;color:var(--text2)}
+.daily-formula summary{cursor:pointer;min-height:32px;padding:6px 0}
+.daily-action{display:flex;flex-direction:column;justify-content:space-between}

@@ -4,23 +4,11 @@
    Funções globais: renderSupplementsShell, renderSupplements, toggleSupplement.
 ═══════════════════════════════════════ */
 
-var SUPPLEMENT_CATALOG = [
-  { key:'vitd3',       name:'Vitamina D3',       dose:'2000–5000 UI/dia',    evidence:'HIGH',     tags:['longevidade','imunidade','ossos'],       emoji:'☀️',  desc:'Essencial para imunidade, ossos e humor. Deficiência muito comum.' },
-  { key:'omega3',      name:'Ômega-3 (EPA/DHA)', dose:'1–3g/dia',            evidence:'HIGH',     tags:['coração','inflamação','cérebro'],        emoji:'🐟',  desc:'Anti-inflamatório potente. Suporte cardiovascular e cognitivo.' },
-  { key:'magnesium',   name:'Magnésio',           dose:'300–400mg/dia',       evidence:'HIGH',     tags:['sono','estresse','músculos'],            emoji:'🪨',  desc:'Melhora qualidade do sono, reduz estresse e cãibras.' },
-  { key:'creatine',    name:'Creatina',           dose:'3–5g/dia',            evidence:'HIGH',     tags:['atleta','músculo','força'],              emoji:'💪',  desc:'Maior evidência científica em suplementos esportivos.' },
-  { key:'b12',         name:'Vitamina B12',       dose:'500–1000mcg/dia',     evidence:'HIGH',     tags:['energia','neurológico','veganos'],       emoji:'⚡',  desc:'Essencial para energia e sistema nervoso. Crítico em dietas plant-based.' },
-  { key:'zinc',        name:'Zinco',              dose:'15–30mg/dia',         evidence:'MEDIUM',   tags:['imunidade','testosterona','pele'],       emoji:'🛡️', desc:'Suporte imunológico e hormonal. Evitar megadose.' },
-  { key:'collagen',    name:'Colágeno Hidrolisado',dose:'10–15g/dia',         evidence:'MEDIUM',   tags:['pele','articulações','rejuvenecimento'], emoji:'✨',  desc:'Melhora elasticidade da pele e saúde articular.' },
-  { key:'curcumin',    name:'Curcumina + Piperina',dose:'500–1000mg/dia',     evidence:'MEDIUM',   tags:['inflamação','articulações','antioxidante'],emoji:'🌿',desc:'Potente anti-inflamatório natural. Piperina aumenta absorção 20x.' },
-  { key:'probiotics',  name:'Probióticos',        dose:'10–50 bilhões UFC',   evidence:'MEDIUM',   tags:['intestino','imunidade','humor'],         emoji:'🦠',  desc:'Microbioma saudável ligado à imunidade, digestão e humor.' },
-  { key:'ashwagandha', name:'Ashwagandha',        dose:'300–600mg/dia',       evidence:'MEDIUM',   tags:['estresse','cortisol','sono'],            emoji:'🧘',  desc:'Adaptogênico. Reduz cortisol e melhora resposta ao estresse.' },
-  { key:'coq10',       name:'Coenzima Q10',       dose:'100–200mg/dia',       evidence:'MEDIUM',   tags:['longevidade','energia','coração'],       emoji:'⚙️', desc:'Suporte mitocondrial. Importante para quem usa estatinas.' },
-  { key:'melatonin',   name:'Melatonina',         dose:'0.5–3mg (noite)',     evidence:'HIGH',     tags:['sono','jet-lag','antioxidante'],         emoji:'🌙',  desc:'Regula ciclo circadiano. Usar dose baixa (0.5–1mg).' },
-  { key:'nmn',         name:'NMN / NR',           dose:'250–500mg/dia',       evidence:'EMERGING', tags:['longevidade','NAD+','rejuvenecimento'],  emoji:'🔬',  desc:'Precursor do NAD+. Pesquisas promissoras em longevidade (Sinclair).' },
-  { key:'resveratrol', name:'Resveratrol',         dose:'250–500mg/dia',       evidence:'EMERGING', tags:['longevidade','antioxidante','coração'],  emoji:'🍷',  desc:'Ativa sirtuínas. Estudos em longevidade ainda em curso.' },
-  { key:'protein',     name:'Proteína Whey/Vegetal',dose:'20–30g pós-treino', evidence:'HIGH',     tags:['atleta','músculo','recuperação'],        emoji:'🥛',  desc:'Base da hipertrofia e recuperação muscular.' }
-];
+var SUPPLEMENT_CATALOG = [{"key":"vitd3","evidence":"HIGH","tags":["longevidade","imunidade","ossos"],"emoji":"☀️"},{"key":"omega3","evidence":"HIGH","tags":["coração","inflamação","cérebro"],"emoji":"🐟"},{"key":"magnesium","evidence":"HIGH","tags":["sono","estresse","músculos"],"emoji":"🪨"},{"key":"creatine","evidence":"HIGH","tags":["atleta","músculo","força"],"emoji":"💪"},{"key":"b12","evidence":"HIGH","tags":["energia","neurológico","veganos"],"emoji":"⚡"},{"key":"zinc","evidence":"MEDIUM","tags":["imunidade","testosterona","pele"],"emoji":"🛡️"},{"key":"collagen","evidence":"MEDIUM","tags":["pele","articulações","rejuvenecimento"],"emoji":"✨"},{"key":"curcumin","evidence":"MEDIUM","tags":["inflamação","articulações","antioxidante"],"emoji":"🌿"},{"key":"probiotics","evidence":"MEDIUM","tags":["intestino","imunidade","humor"],"emoji":"🦠"},{"key":"ashwagandha","evidence":"MEDIUM","tags":["estresse","cortisol","sono"],"emoji":"🧘"},{"key":"coq10","evidence":"MEDIUM","tags":["longevidade","energia","coração"],"emoji":"⚙️"},{"key":"melatonin","evidence":"HIGH","tags":["sono","jet-lag","antioxidante"],"emoji":"🌙"},{"key":"nmn","evidence":"EMERGING","tags":["longevidade","NAD+","rejuvenecimento"],"emoji":"🔬"},{"key":"resveratrol","evidence":"EMERGING","tags":["longevidade","antioxidante","coração"],"emoji":"🍷"},{"key":"protein","evidence":"HIGH","tags":["atleta","músculo","recuperação"],"emoji":"🥛"}];
+function localizedSupplementCatalog() {
+  var copy = getLang();
+  return SUPPLEMENT_CATALOG.map(function(item) { return Object.assign({}, item, { name: copy['supp_name_' + item.key], desc: copy['supp_desc_' + item.key], dose: copy.ui_supp_dose }); });
+}
 
 var EVIDENCE_CONFIG = {
   HIGH:     { label:'Alta evidência',      color:'#4caf50', bg:'#4caf5022' },
@@ -30,7 +18,7 @@ var EVIDENCE_CONFIG = {
 };
 
 function renderSupplementsShell() {
-  return '<div class="screen-header"><div class="screen-title">💊 Suplementação Inteligente</div></div><div id="main-content"></div>';
+  return ("<div class=\"screen-header\"><div class=\"screen-title\">" + getLang().ui_supp_title + "</div></div><div id=\"main-content\"></div>");
 }
 
 async function renderSupplements() {
@@ -60,13 +48,13 @@ async function renderSupplements() {
   // Filtro ativo
   var currentFilter = window._suppFilter || 'all';
   var filters = [
-    { key:'all',           label:'Todos' },
-    { key:'atleta',        label:'Atleta' },
-    { key:'longevidade',   label:'Longevidade' },
+    { key:'all',           label:getLang().ui_all },
+    { key:'atleta',        label:getLang().ui_athlete },
+    { key:'longevidade',   label:getLang().ui_longevity },
     { key:'rejuvenecimento',label:'Rejuvenecimento' },
-    { key:'sono',          label:'Sono' },
-    { key:'inflamação',    label:'Anti-inflamatório' },
-    { key:'intestino',     label:'Intestino' }
+    { key:'sono',          label:getLang().ui_sleep },
+    { key:'inflamação',    label:getLang().ui_inflammation },
+    { key:'intestino',     label:getLang().ui_gut }
   ];
 
   var filterHtml = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">';
@@ -80,7 +68,7 @@ async function renderSupplements() {
   filterHtml += '</div>';
 
   // Filtrar catálogo
-  var filtered = SUPPLEMENT_CATALOG.filter(function(s) {
+  var filtered = localizedSupplementCatalog().filter(function(s) {
     if (currentFilter === 'all') return true;
     return s.tags.indexOf(currentFilter) >= 0;
   });
@@ -96,7 +84,7 @@ async function renderSupplements() {
       + '<div style="flex:1;">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">'
       + '<strong style="font-size:14px;">' + escHtml(s.name) + '</strong>'
-      + '<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:' + ev.bg + ';color:' + ev.color + ';border:1px solid ' + ev.color + ';">' + ev.label + '</span>'
+      + '<span style="font-size:11px;padding:2px 8px;border-radius:10px;background:' + ev.bg + ';color:' + ev.color + ';border:1px solid ' + ev.color + ';">' + getLang()['ui_evidence_' + s.evidence] + '</span>'
       + '</div>'
       + '<div style="font-size:12px;opacity:.7;margin:3px 0;">' + escHtml(s.desc) + '</div>'
       + '<div style="font-size:12px;opacity:.6;">📏 ' + escHtml(s.dose) + '</div>'
@@ -104,19 +92,20 @@ async function renderSupplements() {
       + '<button onclick="toggleSupplement(\'' + s.key + '\',' + (isActive ? 'false' : 'true') + ');" '
       + 'style="padding:6px 14px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:600;'
       + (isActive ? 'background:#f443361a;color:#f44336;' : 'background:rgba(108,99,255,.10);color:var(--color-primary,#6c63ff);border:1px solid var(--color-primary,#6c63ff);')
-      + '">' + (isActive ? '✓ Ativo — Desativar' : '+ Adicionar') + '</button>'
-      + (track.custom_dose ? '<span style="font-size:11px;opacity:.6;">Dose: ' + escHtml(track.custom_dose) + '</span>' : '')
+      + '">' + (isActive ? getLang().ui_supp_deactivate : getLang().ui_supp_add) + '</button>'
+      + '<button class="btn-secondary" onclick="editSupplementDose(\'' + s.key + '\')" style="font-size:11px;padding:6px;">' + getLang().ui_supp_edit_dose + '</button>'
+      + (track.custom_dose ? ("<span style=\"font-size:11px;opacity:.6;\">" + getLang().ui_dose) + escHtml(track.custom_dose) + '</span>' : '')
       + '</div>'
       + '</div></div></div>';
   }).join('');
 
   main.innerHTML = '<div class="view-container" style="max-width:520px;margin:0 auto;padding:16px;">'
-    + '<h2 style="margin-bottom:4px;">💊 Suplementação Inteligente</h2>'
-    + '<p style="font-size:13px;opacity:.6;margin-bottom:16px;">' + activeCount + ' suplementos ativos</p>'
+    + ("<h2 style=\"margin-bottom:4px;\">" + getLang().ui_supp_title + "</h2>")
+    + '<p style="font-size:13px;opacity:.6;margin-bottom:16px;">' + activeCount + ' ' + (getLang().ui_supp_active + "</p>")
     + filterHtml
     + cardsHtml
     + '<div style="margin-top:16px;">'
-    + '<button id="supp-coach-btn" class="btn-secondary" style="width:100%;">🤖 Analisar stack com CoachIA</button>'
+    + ("<button id=\"supp-coach-btn\" class=\"btn-secondary\" style=\"width:100%;\">" + getLang().ui_supp_coach + "</button>")
     + '</div>'
     + '</div>';
 
@@ -124,7 +113,7 @@ async function renderSupplements() {
   var coachBtn = document.getElementById('supp-coach-btn');
   if (coachBtn) {
     coachBtn.addEventListener('click', function() {
-      var activeSupps = SUPPLEMENT_CATALOG.filter(function(s) {
+      var activeSupps = localizedSupplementCatalog().filter(function(s) {
         return userTracking[s.key] && userTracking[s.key].is_active;
       }).map(function(s) { return { key: s.key, name: s.name, dose: (userTracking[s.key].custom_dose || s.dose) }; });
       try {
@@ -149,7 +138,7 @@ async function toggleSupplement(key, activate) {
     status.style.cssText = 'font-size:11px;margin-top:8px;min-height:16px;opacity:.85;';
     card.appendChild(status);
   }
-  if (status) { status.style.color = 'var(--text-secondary)'; status.textContent = 'Salvando...'; }
+  if (status) { status.style.color = 'var(--text-secondary)'; status.textContent = getLang().ui_saving; }
   try {
     var suppAuth = await getVitaliaSupabaseUser('suplementacao');
     var sb = suppAuth.sb;
@@ -161,13 +150,33 @@ async function toggleSupplement(key, activate) {
       updated_at:     new Date().toISOString()
     }], { onConflict: 'user_id,supplement_key' });
     if (error) throw error;
-    if (status) { status.style.color = 'var(--color-success,#4caf50)'; status.textContent = activate ? 'Suplemento adicionado.' : 'Suplemento desativado.'; }
+    if (status) { status.style.color = 'var(--color-success,#4caf50)'; status.textContent = activate ? getLang().ui_supp_added : getLang().ui_supp_removed; }
     renderSupplements();
   } catch(err) {
     if (status) {
       status.style.color = 'var(--color-danger,#f44)';
-      status.textContent = 'Erro ao salvar: ' + (err.message || err);
+      status.textContent = getLang().ui_save_error;
     }
     reportProgressHealthError('Suplementação', err);
   }
+}
+
+async function editSupplementDose(key) {
+  if (!SUPPLEMENT_CATALOG.some(function(item){return item.key===key;})) return;
+  try {
+    var auth = await getVitaliaSupabaseUser('suplementacao');
+    var current = await auth.sb.from('supplement_tracking').select('custom_dose').eq('user_id',auth.user.id).eq('supplement_key',key).maybeSingle();
+    if (current.error) throw current.error;
+    openModal(getLang().ui_supp_edit_dose, '<p style="font-size:12px;color:var(--text2);">'+escapeHTML(getLang().ui_supp_dose_help)+'</p><input id="supp-custom-dose" class="input" maxlength="120" value="'+escapeAttr(current.data?.custom_dose || '')+'"><button class="btn btn-primary btn-full" onclick="saveSupplementDose(\''+key+'\')">'+t('settings_save')+'</button>');
+  } catch(error) { reportProgressHealthError('supplements', error); }
+}
+async function saveSupplementDose(key) {
+  if (!SUPPLEMENT_CATALOG.some(function(item){return item.key===key;})) return;
+  try {
+    var auth = await getVitaliaSupabaseUser('suplementacao');
+    var custom = String(document.getElementById('supp-custom-dose')?.value || '').trim().slice(0,120);
+    var result = await auth.sb.from('supplement_tracking').upsert([{user_id:auth.user.id,supplement_key:key,custom_dose:custom || null,updated_at:new Date().toISOString()}],{onConflict:'user_id,supplement_key'});
+    if(result.error)throw result.error;
+    closeModal(); renderSupplements();
+  } catch(error) { reportProgressHealthError('supplements', error); }
 }

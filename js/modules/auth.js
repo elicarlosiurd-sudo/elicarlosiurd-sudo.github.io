@@ -108,11 +108,11 @@ window.renderLogin=function(){
   h+='<div class="auth-card-premium" style="padding:24px 20px;border-radius:20px">';
   h+='<h2 style="font-family:var(--font-serif);font-size:20px;font-weight:700;text-align:center;margin:0 0 20px;color:var(--text)">'+t('login_title')+'</h2>';
   h+='<div style="margin-bottom:16px">';
-  h+='<label style="display:block;font-size:12px;font-weight:700;color:var(--green);margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">E-MAIL</label>';
-  h+='<input id="a-email" class="input input-premium" type="email" placeholder="seu@email.com" autocomplete="email" style="padding:14px 16px;border-radius:12px;border:1.5px solid rgba(52,211,153,.25);font-size:15px">';
+  h+='<label for="a-email" style="display:block;font-size:12px;font-weight:700;color:var(--green);margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">'+t('email')+'</label>';
+  h+='<input id="a-email" class="input input-premium" type="email" placeholder="'+t('auth_email_example')+'" autocomplete="email" style="padding:14px 16px;border-radius:12px;border:1.5px solid rgba(52,211,153,.25);font-size:15px">';
   h+='</div>';
   h+='<div style="margin-bottom:8px">';
-  h+='<label style="display:block;font-size:12px;font-weight:700;color:var(--green);margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">SENHA</label>';
+  h+='<label for="a-pass" style="display:block;font-size:12px;font-weight:700;color:var(--green);margin-bottom:6px;letter-spacing:.5px;text-transform:uppercase">'+t('password')+'</label>';
   h+='<div style="position:relative">';
   h+='<input id="a-pass" class="input input-premium" type="password" placeholder="'+t('login_min_chars')+'" style="padding:14px 16px;border-radius:12px;border:1.5px solid rgba(52,211,153,.25);font-size:15px;padding-right:48px" onkeydown="if(event.key===\'Enter\')doLogin()">';
   h+='<button onclick="var p=document.getElementById(\'a-pass\');p.type=p.type===\'password\'?\'text\':\'password\';this.textContent=p.type===\'password\'?\'\ud83d\udc41\':\'\ud83d\udc41\u200d\ud83d\udde8\'" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;font-size:18px;cursor:pointer;color:var(--text3);padding:4px">\ud83d\udc41</button>';
@@ -174,12 +174,12 @@ async function doLogin() {
       toast(t('auth_email_unconfirmed'), 'info', 5000);
       renderEmailConfirmationNotice(email);
     } else {
-      toast(t('auth_login_failed') + ': ' + raw, 'error', 5000);
+      toast(t('auth_login_failed'), 'error', 5000);
     }
     return;
   }
   if (!APP.profile) {
-    APP.profile = {name: APP.user.name, weight:78, height:175, age:30, gender:'m', goal:'lose', activity:'mod'};
+    APP.profile = normalizeUserProfile(null,APP.user.name);
   }
   APP.calc = calcProfile(APP.profile);
   if (!APP.meals) APP.meals = [];
@@ -191,7 +191,7 @@ async function doLogin() {
 }
 
 function socialLogin(provider) {
-  toast(`Login com ${provider} será ativado somente via Supabase Auth.`, 'info');
+  toast(t('auth_social_unavailable'), 'info');
   return;
 }
 
@@ -199,7 +199,7 @@ async function tryBiometric() {
   var liveSession = null;
   try { liveSession = (await sb.auth.getSession())?.data?.session || null; } catch(_) {}
   if (!liveSession?.user) {
-    toast('Configure a biometria após acessar sua conta. Entre com email e senha para continuar.', 'info', 4200);
+    toast(t('auth_bio_setup_required'), 'info', 4200);
     APP.authStep = 'login'; renderAuth();
     return;
   }
@@ -225,7 +225,7 @@ async function tryBiometric() {
     await syncFromSupabase(APP.user.id);
     finishAuth(); return;
   }
-  toast('Biometria ainda não configurada para esta conta. Configure após o login.', 'info', 3800);
+  toast(t('auth_bio_setup_required'), 'info', 3800);
   APP.authStep = 'login'; APP.pinInput = ''; renderAuth();
 }
 
@@ -234,7 +234,7 @@ async function activateBiometric() {
     try {
       var challenge = new Uint8Array(32); window.crypto.getRandomValues(challenge);
       var userId = new Uint8Array(16); window.crypto.getRandomValues(userId);
-      var credential = await navigator.credentials.create({ publicKey: { challenge: challenge, rp: { name: 'VitalIA', id: location.hostname || 'localhost' }, user: { id: userId, name: APP.user?.email || 'user', displayName: APP.profile?.name || 'Usu\u00e1rio' }, pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }], authenticatorSelection: { authenticatorAttachment: 'platform', residentKey: 'required', userVerification: 'required' }, timeout: 60000 } });
+      var credential = await navigator.credentials.create({ publicKey: { challenge: challenge, rp: { name: 'VitalIA', id: location.hostname || 'localhost' }, user: { id: userId, name: APP.user?.email || 'user', displayName: APP.profile?.name || t('gen_user') }, pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }], authenticatorSelection: { authenticatorAttachment: 'platform', residentKey: 'required', userVerification: 'required' }, timeout: 60000 } });
       if (credential) {
         var credId = btoa(String.fromCharCode.apply(null, new Uint8Array(credential.rawId)));
         localStorage.setItem(userScopedKey('v_webauthn_id'), credId); localStorage.setItem(userScopedKey('v_biometric'), '1');
@@ -242,7 +242,7 @@ async function activateBiometric() {
       }
     } catch(e) {}
   }
-  toast('Biometria não disponível neste navegador. Você pode entrar com email e senha com segurança.', 'info', 4200);
+  toast(t('auth_bio_unavailable'), 'info', 4200);
   finishAuth();
 }
 
@@ -293,7 +293,7 @@ function pinKey(k) {
       var session = res?.data?.session || null;
       if (!session?.user) {
         APP.pinInput = '';
-        toast('PIN exige sessão Supabase ativa. Entre com email e senha.', 'info', 3500);
+        toast(t('auth_pin_requires_session'), 'info', 3500);
         APP.authStep = 'login';
         renderAuth();
         return;
@@ -336,10 +336,10 @@ function renderRegister1() {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
         ${goals.map(([v,e,n])=>`<button type="button" class="opt-card${APP.registerData.goal===v?' selected':''}" onclick="APP.registerData.goal='${v}';renderAuth()" style="padding:12px;border-radius:12px;border:2px solid ${APP.registerData.goal===v?'var(--green)':'var(--border2)'};cursor:pointer;text-align:left;background:${APP.registerData.goal===v?'rgba(34,197,94,.10)':'var(--surface2)'}"><div style="font-size:23px">${e}</div><div style="font-size:13px;font-weight:700;margin-top:5px">${n}</div></button>`).join('')}
       </div>
-      <div class="input-wrap"><label class="input-label">${t('name')}</label><input id="r-name" class="input" placeholder="João Silva" value="${APP.registerData.name||''}"></div>
-      <div class="input-wrap"><label class="input-label">${t('email')}</label><input id="r-email" class="input" type="email" placeholder="seu@email.com" value="${APP.registerData.email||''}"></div>
-      <div class="input-wrap"><label class="input-label">${t('password')}</label><input id="r-pass" class="input" type="password" placeholder="Mínimo 8 caracteres"></div>
-      <div class="input-wrap"><label class="input-label">Confirmar senha</label><input id="r-pass2" class="input" type="password" placeholder="Repita a senha"></div>
+      <div class="input-wrap"><label class="input-label" for="r-name">${t('name')}</label><input id="r-name" class="input" placeholder="João Silva" value="${APP.registerData.name||''}"></div>
+      <div class="input-wrap"><label class="input-label" for="r-email">${t('email')}</label><input id="r-email" class="input" type="email" placeholder="${t('auth_email_example')}" value="${APP.registerData.email||''}"></div>
+      <div class="input-wrap"><label class="input-label" for="r-pass">${t('password')}</label><input id="r-pass" class="input" type="password" placeholder="Mínimo 8 caracteres"></div>
+      <div class="input-wrap"><label class="input-label" for="r-pass2">Confirmar senha</label><input id="r-pass2" class="input" type="password" placeholder="Repita a senha"></div>
       <label class="terms-label" style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text2);cursor:pointer;margin-bottom:16px"><input type="checkbox" id="r-terms" style="accent-color:var(--green);margin-top:2px"> Concordo com os <span class="auth-link" style="font-size:12px" onclick="event.preventDefault();event.stopPropagation();showLegalModal('terms')">${t('Termos de Uso')||'Terms of Use'}</span> e <span class="auth-link" style="font-size:12px" onclick="event.preventDefault();event.stopPropagation();showLegalModal('privacy')">${t('Política de Privacidade')||'Privacy Policy'}</span></label>
       <label class="terms-label" style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text2);cursor:pointer;margin-bottom:16px"><input type="checkbox" id="r-health-consent" style="accent-color:var(--green);margin-top:2px"> Autorizo o tratamento de dados de saúde, nutrição, hidratação, peso e humor para personalização do VitalIA.</label>
       <button class="btn btn-primary btn-full" onclick="nextRegister1()" style="padding:14px">Continuar →</button>
@@ -383,38 +383,17 @@ function maskBirthDate(el) {
 }
 
 function renderEmailConfirmationNotice(email, reason) {
-  const safeEmail = escapeHTML(email || APP.registerData?.email || localStorage.getItem('v_pending_signup_email') || '');
-  const expired = reason === 'expired';
-  const el = document.getElementById('auth-screen');
-  el.classList.add('active');
-  el.innerHTML = `<div class="auth-bg" style="justify-content:center;padding:20px">
-    <div class="auth-card" style="text-align:center;max-width:340px">
-      <div style="font-size:44px;margin-bottom:12px">??</div>
-      <h2 class="auth-title" style="margin-bottom:8px">${expired ? 'Link expirado' : 'Confirme seu email'}</h2>
-      <p class="auth-sub" style="line-height:1.6">${expired ? 'Esse link de confirmacao expirou ou foi substituido por outro envio.' : 'Enviamos o link de acesso para'} <strong style="color:var(--green)">${safeEmail || 'seu email'}</strong>. Verifique caixa de entrada, spam e promocoes.</p>
-      <button id="resend-confirm-btn" class="btn btn-primary btn-full" onclick="resendSignupEmail('${safeEmail.replace(/'/g,"\\'")}')" style="padding:13px;margin-bottom:10px">Reenviar confirmacao</button>
-      <button class="btn btn-outline btn-full" onclick="APP.authStep='login';renderAuth()" style="padding:13px">Voltar para login</button>
-      <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-top:12px">Use sempre o email mais recente. Muitos cliques seguidos podem invalidar links anteriores.</div>
-    </div>
-  </div>`;
-  updateResendCooldown();
+ const rawEmail=String(email||APP.registerData?.email||localStorage.getItem('v_pending_signup_email')||''),safeEmail=escapeHTML(rawEmail),expired=reason==='expired',el=document.getElementById('auth-screen');
+ el.classList.add('active');
+ el.innerHTML=`<div class="auth-bg" style="justify-content:center;padding:20px"><div class="auth-card" style="text-align:center;max-width:340px"><div style="font-size:44px;margin-bottom:12px">✉️</div><h2 class="auth-title" style="margin-bottom:8px">${t(expired?'auth_link_expired':'auth_confirm_email')}</h2><p class="auth-sub" style="line-height:1.6">${t(expired?'auth_link_expired_notice':'auth_confirmation_notice')} <strong style="color:var(--green)">${safeEmail}</strong></p><button id="resend-confirm-btn" class="btn btn-primary btn-full" style="padding:13px;margin-bottom:10px">${t('auth_resend_label')}</button><button class="btn btn-outline btn-full" onclick="APP.authStep='login';renderAuth()" style="padding:13px">${t('auth_back_login')}</button><div style="font-size:11px;color:var(--text2);line-height:1.6;margin-top:12px">${t('auth_resend_caution')}</div></div></div>`;
+ document.getElementById('resend-confirm-btn').onclick=()=>resendSignupEmail(rawEmail);updateResendCooldown();
 }
 
 function renderExistingAccountNotice(email) {
-  const safeEmail = escapeHTML(email || APP.registerData?.email || localStorage.getItem('v_pending_signup_email') || '');
-  const jsEmail = safeEmail.replace(/'/g,"\\'");
-  const el = document.getElementById('auth-screen');
-  el.classList.add('active');
-  el.innerHTML = `<div class="auth-bg" style="justify-content:center;padding:20px">
-    <div class="auth-card" style="text-align:center;max-width:340px">
-      <div style="font-size:44px;margin-bottom:12px">OK</div>
-      <h2 class="auth-title" style="margin-bottom:8px">Conta ja existe</h2>
-      <p class="auth-sub" style="line-height:1.6">O email <strong style="color:var(--green)">${safeEmail || 'informado'}</strong> ja tem uma conta no VitalIA. Por seguranca, o Supabase nao envia novo email de confirmacao para uma conta ja criada.</p>
-      <button class="btn btn-primary btn-full" onclick="APP.authStep='login';renderAuth();setTimeout(()=>{const e=document.getElementById('a-email');if(e)e.value='${jsEmail}';},60)" style="padding:13px;margin-bottom:10px">Ir para login</button>
-      <button class="btn btn-outline btn-full" onclick="sendPasswordReset('${jsEmail}')" style="padding:13px">Recuperar senha</button>
-      <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-top:12px">Se quiser testar cadastro novo, use um email que ainda nao exista no projeto.</div>
-    </div>
-  </div>`;
+ const rawEmail=String(email||APP.registerData?.email||localStorage.getItem('v_pending_signup_email')||''),safeEmail=escapeHTML(rawEmail),el=document.getElementById('auth-screen');el.classList.add('active');
+ el.innerHTML=`<div class="auth-bg" style="justify-content:center;padding:20px"><div class="auth-card" style="text-align:center;max-width:340px"><div style="font-size:44px;margin-bottom:12px">✓</div><h2 class="auth-title" style="margin-bottom:8px">${t('auth_existing_title')}</h2><p class="auth-sub" style="line-height:1.6"><strong style="color:var(--green)">${safeEmail}</strong><br>${t('auth_existing_notice')}</p><button id="existing-account-login" class="btn btn-primary btn-full" style="padding:13px;margin-bottom:10px">${t('auth_back_login')}</button><button id="existing-account-reset" class="btn btn-outline btn-full" style="padding:13px">${t('auth_reset_label')}</button></div></div>`;
+ document.getElementById('existing-account-login').onclick=()=>{APP.authStep='login';renderAuth();setTimeout(()=>{const input=document.getElementById('a-email');if(input)input.value=rawEmail;},60);};
+ document.getElementById('existing-account-reset').onclick=()=>sendPasswordReset(rawEmail);
 }
 
 async function resendSignupEmail(email) {
@@ -422,28 +401,29 @@ async function resendSignupEmail(email) {
   const last = Number(localStorage.getItem('v_resend_confirm_at') || 0);
   const wait = Math.ceil((60000 - (Date.now() - last)) / 1000);
   if (wait > 0) {
-    toast('Aguarde ' + wait + 's antes de reenviar novamente.', 'info', 3500);
+    toast(t('auth_resend_wait').replace('{seconds}',wait), 'info', 3500);
     updateResendCooldown();
     return;
   }
   if (btn) { btn.disabled = true; btn.classList.add('btn-loading'); }
   const res = await sbResendSignupConfirmation(email);
   if (btn) { btn.disabled = false; btn.classList.remove('btn-loading'); }
-  if (res.error) toast('Erro ao reenviar: ' + res.error.message, 'error', 5000);
+  if (res.error) toast(t('auth_resend_failed'), 'error', 5000);
   else {
     localStorage.setItem('v_resend_confirm_at', String(Date.now()));
-    toast('Confirmacao reenviada. Use apenas o email mais recente.', 'success', 5000);
+    toast(t('auth_resend_success'), 'success', 5000);
     updateResendCooldown();
   }
 }
 
 async function sendPasswordReset(email) {
-  if (!email) { toast('Informe o email para recuperar a senha.', 'error', 4000); return; }
+  if (!email) { toast(t('auth_reset_email_required'), 'error', 4000); return; }
   try {
-    await sb.auth.resetPasswordForEmail(email, { redirectTo: getAuthRedirectUrl() });
-    toast('Email de recuperacao enviado. Verifique caixa de entrada e spam.', 'success', 5000);
+    const result = await sb.auth.resetPasswordForEmail(email, { redirectTo: getAuthRedirectUrl() });
+    if(result.error) throw result.error;
+    toast(t('auth_reset_sent'), 'success', 5000);
   } catch(e) {
-    toast('Nao foi possivel enviar recuperacao: ' + (e.message || e), 'error', 6000);
+    toast(t('auth_reset_failed'), 'error', 6000);
   }
 }
 
@@ -454,11 +434,11 @@ function updateResendCooldown() {
   const wait = Math.ceil((60000 - (Date.now() - last)) / 1000);
   if (wait > 0) {
     btn.disabled = true;
-    btn.textContent = 'Reenviar em ' + wait + 's';
+    btn.textContent = t('auth_resend_wait').replace('{seconds}',wait);
     setTimeout(updateResendCooldown, 1000);
   } else {
     btn.disabled = false;
-    btn.textContent = 'Reenviar confirmacao';
+    btn.textContent = t('auth_resend_label');
   }
 }
 
@@ -554,7 +534,7 @@ async function completeRegister() {
 
   try {
     if(!rd.email || !rd.password || !rd.name || !rd.weight || !rd.height || !rd.goal || !rd.activity) {
-      toast('Revise os passos anteriores. Faltam dados obrigatorios.','error');
+      toast(t('auth_registration_missing'),'error');
       APP.authStep = 'register';
       renderAuth();
       return;
@@ -564,60 +544,63 @@ async function completeRegister() {
 
     if (error) {
       if (error.message.includes('already registered')) {
-        toast('Este email já tem cadastro. Tente reenviar a confirmação ou fazer login.','info',6000);
+        toast(t('auth_account_exists'),'info',6000);
         renderExistingAccountNotice(rd.email);
       }
-      else toast('Erro no cadastro: ' + error.message, 'error', 7000);
+      else toast(t('auth_registration_failed'), 'error', 7000);
       return;
     }
 
     if (isExistingAccountSignup(data)) {
-      toast('Este email ja existe. Entre com sua senha ou recupere o acesso.','info',7000);
+      toast(t('auth_account_exists'),'info',7000);
       renderExistingAccountNotice(rd.email);
       return;
     }
 
     APP.user = { email: rd.email, name: rd.name, id: data.user?.id };
-    APP.profile = {
+    APP.profile = normalizeUserProfile({
       name: rd.name, weight: parseFloat(rd.weight), height: parseFloat(rd.height),
-      age: rd.age||30, gender: rd.gender||'m', goal: rd.goal||'lose',
-      activity: rd.activity||'mod', dob: rd.dob, restrictions:[]
-    };
+      age: rd.age, gender: rd.gender, goal: rd.goal,
+      activity: rd.activity, dob: rd.dob, restrictions:[], profileSource:'user_confirmed'
+    });
     APP.calc = calcProfile(APP.profile);
     APP.water = 0; APP.meals = [];
-    APP.weightHistory = [{ date: new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}), peso: APP.profile.weight }];
+    APP.weightHistory = [];
     APP.session = data.session?.access_token || null;
 
     clearSensitiveLocalCache();
 
     if (data.user?.id && data.session?.access_token) {
       try {
-        await sbSavePerfil(data.user.id, {
+        const savedProfile = await sbSavePerfil(data.user.id, {
           nome: rd.name, email: rd.email,
           peso: parseFloat(rd.weight), altura: parseFloat(rd.height),
-          idade: rd.age||30, genero: rd.gender||'m',
-          objetivo: rd.goal||'lose', atividade: rd.activity||'mod'
+          idade: APP.profile.age, genero: APP.profile.gender,
+          objetivo: APP.profile.goal, atividade: APP.profile.activity,profile_reviewed_at:new Date().toISOString()
         });
-        await sbSaveOnboardingGoal(data.user.id, rd.goal||'lose', { source: 'short_onboarding' });
+        if (!savedProfile) throw new Error('profile_sync_pending');
+        if (APP.profile.goal) await sbSaveOnboardingGoal(data.user.id, APP.profile.goal, { source: 'short_onboarding' });
         await sbRecordConsent(data.user.id, { source: 'register', user_agent: navigator.userAgent, app: 'VitalIA' });
-        await sbAddPeso(data.user.id, parseFloat(rd.weight));
+        if (APP.profile.weight != null) {
+          if (await sbAddPeso(data.user.id, APP.profile.weight)) APP.weightHistory = [{date:new Date().toLocaleDateString(getUserLanguage(),{day:'2-digit',month:'2-digit'}),peso:APP.profile.weight}];
+        }
       } catch(syncErr) {
-        console.warn('[VitalIA] Cadastro criado, sincronizacao inicial pendente:', syncErr);
-        toast('Conta criada. A sincronizacao continuara apos o login.', 'info', 4500);
+        console.warn('[register] profile_sync_pending');
+        toast(t('auth_profile_sync_pending'), 'info', 4500);
       }
     }
 
     confetti();
     if (!data.session) {
-      toast('Conta criada. Confirme seu email para liberar o acesso.', 'info', 6000);
+      toast(t('auth_confirmation_required'), 'info', 6000);
       renderEmailConfirmationNotice(rd.email);
     } else {
-      toast('Conta criada com sucesso!','success',2500);
+      toast(t('auth_account_created'),'success',2500);
       APP.authStep = 'biometric'; renderAuth();
     }
   } catch(e) {
     console.error('[VitalIA] Falha no cadastro:', e);
-    toast('Nao foi possivel criar a conta agora. Confira conexao e tente novamente.', 'error', 5000);
+    toast(t('auth_registration_failed'), 'error', 5000);
   } finally {
     const freshBtn = document.querySelector('#register-btn');
     if(freshBtn){
@@ -632,8 +615,9 @@ function finishAuth() {
   if(!APP.meals) APP.meals = [];
   normalizeMeals();
   if (!APP.calc && APP.profile) APP.calc = calcProfile(APP.profile);
-  if (!APP.meals?.length) { APP.water=0; APP.meals=[]; }
-  if (!APP.weightHistory?.length) APP.weightHistory = WEIGHT_HISTORY.map((p,i)=>({date:new Date(Date.now()-i*86400000).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}),peso:p})).reverse();
+  if (!APP.meals?.length) APP.meals=[];
+  if (!Number.isFinite(APP.water) || APP.water < 0) APP.water=0;
+  if (!Array.isArray(APP.weightHistory)) APP.weightHistory = [];
   document.getElementById('auth-screen').classList.remove('active');
   startApp();
 }

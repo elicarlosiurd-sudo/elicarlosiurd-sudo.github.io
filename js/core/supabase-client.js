@@ -165,34 +165,81 @@ async function sbSavePerfil(userId, perfil) {
 async function sbSaveOnboardingGoal(userId, goal, meta) {
   return sbSavePerfil(userId, {
     objetivo: goal,
+    profile_reviewed_at: currentUserId()===userId && APP.profile?.profileSource==='user_confirmed' ? new Date().toISOString() : null,
     restricoes: APP.profile?.restrictions || []
   });
 }
 
 // ── Refeições ─────────────────────────
+function localDateKey(value) {
+  const date = value instanceof Date ? value : new Date(value || Date.now());
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 async function sbGetRefeicoes(userId) {
-  const hoje = new Date().toISOString().split('T')[0];
+  const hoje = localDateKey();
   const { data, error } = await sb.from('refeicoes').select('*').eq('user_id', userId).eq('data', hoje).order('hora');
-  if (error) return [];
+  if (error) throw error;
   return sanitizeDbObject(data || []);
 }
 
 async function sbAddRefeicao(userId, refeicao) {
-  const hoje = new Date().toISOString().split('T')[0];
+  const hoje = localDateKey();
   const clean = sanitizeDbObject(refeicao || {});
-  const { error } = await sb.from('refeicoes').insert({ user_id: userId, data: hoje, ...clean });
-  return !error;
+  const { data, error } = await sb.from('refeicoes').insert({ user_id: userId, data: hoje, ...clean }).select('*').single();
+  if (error) throw error;
+  return sanitizeDbObject(data);
+}
+
+async function sbUpdateRefeicao(userId, refeicaoId, refeicao) {
+  if (!userId || !refeicaoId) throw new Error('Refeição sem identidade persistida.');
+  const clean = sanitizeDbObject(refeicao || {});
+  const { data, error } = await sb.from('refeicoes')
+    .update(clean)
+    .eq('id', refeicaoId)
+    .eq('user_id', userId)
+    .select('*')
+    .single();
+  if (error) throw error;
+  return sanitizeDbObject(data);
+}
+
+async function sbDeleteRefeicao(userId, refeicaoId) {
+  if (!userId || !refeicaoId) throw new Error('Refeição sem identidade persistida.');
+  const { data, error } = await sb.from('refeicoes')
+    .delete()
+    .eq('id', refeicaoId)
+    .eq('user_id', userId)
+    .select('id')
+    .single();
+  if (error) throw error;
+  return data?.id === refeicaoId;
+}
+
+async function sbGetRefeicoesPeriodo(userId, startDate, endDate) {
+  const { data, error } = await sb.from('refeicoes')
+    .select('*')
+    .eq('user_id', userId)
+    .gte('data', startDate)
+    .lte('data', endDate)
+    .order('data')
+    .order('hora');
+  if (error) throw error;
+  return sanitizeDbObject(data || []);
 }
 
 // ── Hidratação ────────────────────────
 async function sbGetAgua(userId) {
-  const hoje = new Date().toISOString().split('T')[0];
+  const hoje = localDateKey();
   const { data } = await sb.from('hidratacao').select('*').eq('user_id', userId).eq('data', hoje).single();
   return data?.copos || 0;
 }
 
 async function sbSaveAgua(userId, copos) {
-  const hoje = new Date().toISOString().split('T')[0];
+  const hoje = localDateKey();
   await sb.from('hidratacao').upsert({
     user_id: userId, data: hoje, copos,
     ml: copos * 250, atualizado_em: new Date().toISOString()
@@ -202,11 +249,17 @@ async function sbSaveAgua(userId, copos) {
 // ── Peso ──────────────────────────────
 async function sbGetPesos(userId) {
   const { data } = await sb.from('peso_historico').select('*').eq('user_id', userId).order('data', { ascending: false }).limit(30);
-  return (data || []).map(r => ({ date: new Date(r.data).toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'}), peso: r.peso })).reverse();
+  return (data || []).map(r => ({ date: new Date(r.data+'T12:00:00').toLocaleDateString({pt:'pt-BR',en:'en-US',es:'es-ES',ru:'ru-RU'}[getUserLanguage()]||'en-US', {day:'2-digit',month:'2-digit'}), peso: r.peso })).reverse();
+}
+
+async function sbGetHydrationPeriodo(userId,from,to) {
+  const {data,error}=await sb.from('hidratacao').select('data,copos').eq('user_id',userId).gte('data',from).lte('data',to).order('data');
+  if(error)throw error;
+  return data||[];
 }
 
 async function sbAddPeso(userId, peso) {
-  const hoje = new Date().toISOString().split('T')[0];
+  const hoje = localDateKey();
   const { error } = await sb.from('peso_historico').insert({ user_id: userId, peso, data: hoje });
   return !error;
 }
@@ -218,7 +271,7 @@ async function sbGetGamificacao(userId) {
 }
 
 async function sbSaveGamificacao(userId, xp, streak) {
-  const hoje = new Date().toISOString().split('T')[0];
+  const hoje = localDateKey();
   await sb.from('gamificacao').upsert({
     user_id: userId, xp, streak,
     ultimo_registro: hoje, atualizado_em: new Date().toISOString()
@@ -226,7 +279,7 @@ async function sbSaveGamificacao(userId, xp, streak) {
 }
 
 async function sbSaveHumor(userId, humor) {
-  const hoje = new Date().toISOString().split('T')[0];
+  const hoje = localDateKey();
   const cleanHumor = sanitizeDbString(humor, 20);
   await sb.from('humor').insert({
     user_id: userId,
@@ -260,47 +313,29 @@ async function syncFromSupabase(userId) {
       sbGetGamificacao(userId),
       sbGetRefeicoes(userId)
     ]);
+    // A late response from a previous account must never replace current state.
+    if (currentUserId() !== userId) return;
 
-    if (perfil) {
-      APP.profile = {
-        name: perfil.nome || APP.profile?.name || 'Usuário',
-        weight: perfil.peso || 78,
-        height: perfil.altura || 175,
-        age: perfil.idade || 30,
-        gender: perfil.genero || 'm',
-        goal: perfil.objetivo || 'lose',
-        activity: perfil.atividade || 'mod',
-        primaryGoalCaptured: !!perfil.objetivo,
-        restrictions: Array.isArray(perfil.restricoes) ? perfil.restricoes : []
-      };
-      APP.calc = calcProfile(APP.profile);
-    } else {
-      APP.profile = {
-        name: authName,
-        weight: 78,
-        height: 175,
-        age: 30,
-        gender: 'm',
-        goal: 'lose',
-        activity: 'mod',
-        primaryGoalCaptured: false,
-        restrictions: []
-      };
-      APP.calc = calcProfile(APP.profile);
-    }
+    APP.profile = normalizeUserProfile(perfil,authName);
+    APP.calc = calcProfile(APP.profile);
 
     APP.water = agua || 0;
-    APP.weightHistory = pesos.length ? pesos : [{ date: new Date().toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit'}), peso: APP.profile?.weight || 78 }];
+    APP.weightHistory = Array.isArray(pesos) ? pesos : [];
     APP.xp = gami.xp || 0;
     APP.streak = gami.streak || 0;
     APP.meals = (refeicoes || []).map(r => ({
+      id: r.id, persisted: true,
       name: r.nome, emoji: r.emoji || '🍽️',
       kcal: r.calorias || 0, prot: r.proteina || 0,
       carb: r.carbo || 0, fat: r.gordura || 0,
-      time: r.hora?.slice(0,5) || '12:00', type: r.tipo || 'almoco'
+      quantity: Number(r.quantidade ?? 1), date: r.data,
+      time: r.hora?.slice(0,5) || '12:00', type: r.tipo || 'lunch'
     }));
     try {
-      saveUserLanguage(getUserLanguage(userId) || perfil?.language || APP.lang || 'pt', userId);
+      var scopedLanguage = null;
+      try { scopedLanguage = localStorage.getItem(userScopedKey('v_lang', userId)); } catch (_) {}
+      var profileLanguage = perfil?.language;
+      saveUserLanguage(VITALIA_CLINICAL.normalizeClinicalLang(scopedLanguage || profileLanguage || getUserLanguage(userId)), userId);
       coachMemoryService().saveMemory(userId, 'profile', APP.profile, { silent:true });
       coachMemoryService().saveMemory(userId, 'nutrition_sync', { meals:APP.meals.length, water:APP.water, calc:APP.calc }, { silent:true });
     } catch(_) {}
@@ -314,13 +349,15 @@ async function syncFromSupabase(userId) {
 }
 
 async function syncToSupabase() {
+  const owner=currentUserId();
   const user = await sbGetUser();
-  if (!user) return;
+  if (!user || user.id!==owner || currentUserId()!==owner) return;
   try {
     await Promise.all([
       sbSaveAgua(user.id, APP.water),
       sbSaveGamificacao(user.id, APP.xp, APP.streak),
     ]);
+    if (currentUserId() !== owner) return;
     if (APP.profile) {
       await sbSavePerfil(user.id, {
         nome: APP.profile.name,
@@ -334,7 +371,7 @@ async function syncToSupabase() {
       });
     }
   } catch (e) {
-    console.warn('Sync to Supabase error:', e);
+    console.warn('[sync] save_failed');
     toastFriendlyError('sync-save', e);
   }
 }

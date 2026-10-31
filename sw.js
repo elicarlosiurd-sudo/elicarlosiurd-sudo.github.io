@@ -1,155 +1,63 @@
-const CACHE_NAME = 'vitalia-v230e2-p1-meu-dia-r1';
-const APP_SHELL = [
-  './styles/daily.css?v=vitalia-v230e2-p1-meu-dia-r1',
-  './js/modules/daily.js?v=vitalia-v230e2-p1-meu-dia-r1',
-  './',
-  './index.html',
-  './manifest.json',
-  './icon.svg',
-  './icon-192.png',
-  './icon-512.png',
-  './apple-touch-icon.png',
-  './reset.html',
-  './config/observability.qa.json?v=vitalia-v230e2-main-split',
-  './js/core/observability-boot.js?v=vitalia-v230e2-p1-meu-dia-r1',
-  './js/core/supabase-client.js?v=vitalia-v230e2-main-split',
-  './js/core/storage-keys.js?v=vitalia-v230e2-p1-meu-dia-r1',
-  './js/core/errors.js?v=vitalia-v230e2-main-split',
-  './js/core/i18n.js?v=vitalia-v230e2-p1-meu-dia-r1',
-  './js/modules/sleep.js?v=vitalia-v230e2-main-split',
-  './js/modules/supplements.js?v=vitalia-v230e2-main-split',
-  './js/modules/notifications.js?v=vitalia-v230e2-main-split',
-  './js/modules/labs.js?v=vitalia-v230e2-main-split',
-  './js/modules/longevity.js?v=vitalia-v230e2-main-split',
-  './js/modules/mental.js?v=vitalia-v230e2-main-split',
-  './js/modules/microbiome.js?v=vitalia-v230e2-main-split',
-  './js/modules/shopping.js?v=vitalia-v230e2-main-split',
-  './js/modules/wearables.js?v=vitalia-v230e2-main-split',
-  './js/modules/athlete.js?v=vitalia-v230e2-main-split',
-  './js/modules/diagnostic.js?v=vitalia-v230e2-main-split',
-  './js/modules/progress.js?v=vitalia-v230e2-main-split',
-  './js/modules/coach.js?v=vitalia-v230e2-coach-mobile-r1',
-  './js/core/app-core.js?v=vitalia-v230e2-p1-meu-dia-r1',
-  './js/modules/recipes-data.js?v=vitalia-v230e2-main-split',
-  './js/modules/auth.js?v=vitalia-v230e2-main-split',
-  './js/core/router.js?v=vitalia-v230e2-main-split',
-  './js/modules/screens.js?v=vitalia-v230e2-p1-meu-dia-r1',
-  './js/core/boot.js?v=vitalia-v230e2-p1-meu-dia-r1',
-  './styles/theme.css',
-  './styles/base.css',
-  './styles/components.css',
-  './styles/utilities.css',
-  './styles/bodytwin.css'
-];
-
-function forceUtf8Html(response) {
-  const type = response.headers.get('content-type') || '';
-  if (!type.includes('text/html')) return Promise.resolve(response);
-  return response.blob().then(blob => {
-    const headers = new Headers(response.headers);
-    headers.set('Content-Type', 'text/html; charset=UTF-8');
-    headers.set('Cache-Control', 'no-cache');
-    return new Response(blob, {
-      status: response.status,
-      statusText: response.statusText,
-      headers
-    });
-  });
+importScripts('./release.js', './precache.js');
+const CACHE_NAME = self.VITALIA_APP_VERSION;
+const APP_SHELL = self.VITALIA_PRECACHE;
+const ROOT = new URL('./', self.location.href);
+const SHELL_PATHS = new Set(APP_SHELL.map(path => new URL(path, ROOT).pathname));
+function cacheKey(request) {
+  const url = new URL(typeof request === 'string' ? request : request.url, ROOT);
+  if (url.pathname === ROOT.pathname) url.pathname += 'index.html';
+  url.search = '?v=' + CACHE_NAME;
+  return url.href;
 }
-
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.map(key => caches.delete(key))))
-      .then(() => caches.open(CACHE_NAME))
-      .then(cache => cache.addAll(APP_SHELL))
-      .then(() => self.skipWaiting())
-  );
+  // Preserve the old release if downloading the new shell fails.
+  event.waitUntil((async () => {
+    const responses = await Promise.all(APP_SHELL.map(async path => {
+      const response = await fetch(new URL(path, ROOT), {cache:'no-store'});
+      if (!response.ok) throw new Error('Release asset unavailable');
+      const bytes = await response.clone().arrayBuffer();
+      const digest = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),byte => byte.toString(16).padStart(2,'0')).join('');
+      if (digest !== self.VITALIA_INTEGRITY[path]) throw new Error('Release asset integrity mismatch');
+      return [path,response];
+    }));
+    // Verify the whole release before writing any assets, including same-version checks.
+    const cache = await caches.open(CACHE_NAME);
+    await Promise.all(responses.map(([path,response]) => cache.put(new URL(path,ROOT),response)));
+  })());
 });
-
 self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))))
-      .then(() => self.clients.claim())
-  );
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('vitalia-') && key !== CACHE_NAME).map(key => caches.delete(key)))).then(() => self.clients.claim()).then(async () => {
+    const clients = await self.clients.matchAll({ type: 'window' });
+    clients.forEach(client => client.postMessage({ type: 'VITALIA_RELEASE_READY', version: CACHE_NAME }));
+  }));
 });
-
 self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'VITALIA_SKIP_WAITING') {
-    self.skipWaiting();
-    return;
+  if (event.data?.type === 'VITALIA_SKIP_WAITING') self.skipWaiting();
+  if (event.data?.type === 'VITALIA_CLEAR_CACHE') {
+    event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('vitalia-')).map(key => caches.delete(key)))).then(async () => {
+      const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      clients.forEach(client => client.postMessage({ type: 'VITALIA_CACHE_CLEARED' }));
+    }));
   }
-  if (!event.data || event.data.type !== 'VITALIA_CLEAR_CACHE') return;
-
-  event.waitUntil(
-    caches.keys()
-      .then(keys => Promise.all(keys.map(key => caches.delete(key))))
-      .then(() => self.clients.matchAll({ type: 'window', includeUncontrolled: true }))
-      .then(clients => clients.forEach(client => client.postMessage({ type: 'VITALIA_CACHE_CLEARED' })))
-  );
 });
-
-function isRecipeJsonRequest(url) {
-  return /^receitas_(pt|en|es|ru)\.json$/.test(url.pathname.split('/').pop() || '');
-}
-
-function isRuntimeCachedAsset(url) {
-  return isRecipeJsonRequest(url) || url.pathname.includes('/vendor/');
-}
-
-function staleWhileRevalidate(request) {
-  return caches.open(CACHE_NAME).then(cache =>
-    cache.match(request).then(cached => {
-      const network = fetch(request).then(response => {
-        if (response && response.ok) cache.put(request, response.clone());
-        return response;
-      }).catch(error => {
-        if (cached) return cached;
-        throw error;
-      });
-      return cached || network;
-    })
-  );
-}
-
 self.addEventListener('fetch', event => {
   const request = event.request;
-  if (request.method !== 'GET') return;
-
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin) return;
-
-  if (isRuntimeCachedAsset(url)) {
-    event.respondWith(staleWhileRevalidate(request));
-    return;
-  }
-
-  const acceptsHtml = request.headers.get('accept')?.includes('text/html');
-  if (request.mode === 'navigate' || acceptsHtml || url.pathname.endsWith('/') || url.pathname.endsWith('.html')) {
-    event.respondWith(
-      fetch(request, { cache: 'reload' })
-        .then(response => forceUtf8Html(response))
-        .then(response => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
-          return response;
-        })
-        .catch(() => caches.match(request).then(cached => cached ? forceUtf8Html(cached) : caches.match('./index.html').then(fallback => fallback ? forceUtf8Html(fallback) : fallback)))
-    );
-    return;
-  }
-
-  event.respondWith(
-    caches.match(request).then(cached => {
-      if (cached) return cached;
-      return fetch(request)
-        .then(response => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
-          return response;
-        })
-        .catch(() => cached);
-    })
-  );
+  if (request.method !== 'GET' || url.origin !== ROOT.origin) return;
+  const navigation = request.mode === 'navigate';
+  // Only public application assets; never API responses or user data.
+  if (!navigation && !SHELL_PATHS.has(url.pathname) && !url.pathname.includes('/vendor/') && !url.pathname.includes('/assets/')) return;
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    const key = navigation && !SHELL_PATHS.has(url.pathname) ? cacheKey('./index.html') : cacheKey(request);
+    const cached = await cache.match(key);
+    if (cached) return cached;
+    try {
+      const response = await fetch(request, { cache: 'no-store' });
+      if (response.ok && response.type !== 'opaque') await cache.put(key, response.clone());
+      return response;
+    } catch (_) {
+      return new Response('Offline', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
+    }
+  })());
 });

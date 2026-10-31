@@ -54,7 +54,7 @@ function mealPlanIcon(key) {
     return MEAL_PLAN_ICON_FALLBACK[key] || '';
   }
 }
-const NUTR = {tab:'diary', analysis:null, loading:false, imagePreview:null, mealFilter:'all', showPlan:false, cameraOpening:false};
+const NUTR = {tab:'diary', analysis:null, loading:false, imagePreview:null, mealFilter:'all', showPlan:false, cameraOpening:false, week:null, weekLoading:false, weekError:null};
 
 function renderNutrition() {
   normalizeMeals();
@@ -100,9 +100,12 @@ function renderNutrition() {
   <div class="meal-entry">
     <div class="meal-time">${m.time}</div>
     <div class="meal-dot"></div>
-    <div class="meal-info"><div class="meal-name">${escapeHTML(m.name)}</div><div class="meal-cal">${getKcal(m)} kcal · P:${m.prot}g C:${m.carb}g G:${m.fat}g</div></div>
+    <div class="meal-info"><div class="meal-name">${escapeHTML(m.name)}</div><div class="meal-cal">${getKcal(m)} kcal · P:${m.prot}g C:${m.carb}g G:${m.fat}g · ${escapeHTML(String(m.quantity ?? 1))}×</div></div>
     <div class="meal-emoji">${m.emoji}</div>
+    <div style="display:flex;gap:5px"><button class="btn btn-sm btn-outline" onclick="openEditMeal('${escapeAttr(String(m.id))}')" aria-label="${t('nutr_edit_meal')}">✏️</button><button class="btn btn-sm btn-outline" onclick="confirmDeleteMeal('${escapeAttr(String(m.id))}')" aria-label="${t('nutr_delete_meal')}">🗑️</button></div>
   </div>`).join('')}
+
+  ${APP.meals.length ? '' : `<div class="card" style="margin:0 16px 14px;padding:18px;text-align:center;color:var(--text2)">${t('nutr_no_meals')}</div>`}
 
   <!-- Meal plan section -->
   <div class="section-title" style="margin-top:8px">${t('nutr_ai_plan')}</div>
@@ -114,7 +117,7 @@ function renderNutrition() {
   <div style="padding:0 16px;margin-bottom:12px">
     <div class="card card-purple">
       <div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:8px">${vitaliaIcon('coach')} ${t('nutr_mood_title')}</div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.6">${t('nutr_mood_today')}: <span style="font-size:18px">${APP.mood||'—'}</span> · ${t('nutr_food_quality')}: <span style="color:var(--green);font-weight:700">${totalCal<=((APP.calc?.meta||1800)*1.1)?t('nutr_quality_good'):t('nutr_quality_high')}</span></div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6">${t('nutr_mood_today')}: <span style="font-size:18px">${APP.mood||'—'}</span> · ${t('nutr_food_quality')}: <span style="color:var(--green);font-weight:700">${!APP.calc?.meta?t('profile_target_unavailable'):totalCal<=APP.calc.meta*1.1?t('nutr_quality_good'):t('nutr_quality_high')}</span></div>
       <div style="margin-top:10px;padding:10px;background:rgba(167,139,250,.08);border-radius:8px;font-size:11px;color:var(--text2)">${t('nutr_stress_tip')}</div>
     </div>
   </div>`;
@@ -140,10 +143,10 @@ function renderNutritionPlanTab() {
     </div>
     <div class="nutrition-macro-grid">
       ${[
-        [t('calories'), (c.meta||1800)+' kcal', 'var(--orange)'],
-        [t('home_protein'), (c.prot||120)+'g', 'var(--firefly)'],
-        [t('home_carbs'), (c.carb||220)+'g', 'var(--cyan)'],
-        [t('home_fat'), (c.fat||60)+'g', 'var(--purple)']
+        [t('calories'), (c.meta ?? '—')+' kcal', 'var(--orange)'],
+        [t('home_protein'), (c.prot ?? '—')+'g', 'var(--firefly)'],
+        [t('home_carbs'), (c.carb ?? '—')+'g', 'var(--cyan)'],
+        [t('home_fat'), (c.fat ?? '—')+'g', 'var(--purple)']
       ].map(([l,v,col])=>`<div class="macro-card"><div class="macro-label">${l}</div><div class="macro-val" style="color:${col}">${v}</div></div>`).join('')}
     </div>
     <div class="section-title" style="margin-top:12px">${t('nutr_ai_plan')}</div>
@@ -158,42 +161,46 @@ function renderNutritionPlanTab() {
 
 function renderAnalysisResult() {
   const a = NUTR.analysis;
+  const manual = a.needs_manual_input === true;
   const scoreCol = a.score>=7?'var(--green)':a.score>=4?'var(--orange)':'var(--red)';
   return `<div class="analysis-card nutrition-analysis-result" style="margin-bottom:12px">
     ${NUTR.imagePreview?`<img src="${NUTR.imagePreview}" class="preview-img">`:''}
     <div class="analysis-head">
-      <div class="analysis-title">${escapeHTML(a.name || 'Prato analisado pela IA')} ${escapeHTML(a.emoji || '')}</div>
-      <div class="score-badge" style="background:${scoreCol}18;color:${scoreCol};border:2px solid ${scoreCol}40">${a.score}/10</div>
+      <div class="analysis-title">${t('nutr_review_before_save')}</div>
+      <div class="score-badge" style="background:${scoreCol}18;color:${scoreCol};border:2px solid ${scoreCol}40">${manual?'—':a.score+'/10'}</div>
     </div>
-    <div class="analysis-macro-chips">
-      <span class="pill pill-orange">🔥 ${Number(a.kcal ?? a.cal)||0} kcal</span>
-      <span class="pill pill-blue">💪 ${a.prot}g prot</span>
-      <span class="pill pill-green">🌾 ${a.carb}g carb</span>
-      <span class="pill pill-yellow">🧈 ${a.fat}g gord</span>
+    <div class="input-wrap" style="margin-bottom:8px"><label class="input-label">${t('nutr_meal_name')}</label><input class="input" id="analysis-name" value="${escapeAttr(manual?'':a.name || '')}" maxlength="120"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div class="input-wrap"><label class="input-label">${t('nutr_meal_type')}</label><select class="input" id="analysis-type">${mealTypeOptions(a.type || 'lunch')}</select></div>
+      <div class="input-wrap"><label class="input-label">${t('nutr_quantity')}</label><input class="input" id="analysis-quantity" type="number" min="0" step="0.1" value="${Number(a.quantity ?? 1)}"></div>
+      <div class="input-wrap"><label class="input-label">${t('calories')}</label><input class="input" id="analysis-kcal" type="number" min="0" step="1" value="${manual?'':Number(a.kcal ?? a.cal)||0}"></div>
+      <div class="input-wrap"><label class="input-label">${t('home_protein')}</label><input class="input" id="analysis-prot" type="number" min="0" step="0.1" value="${manual?'':Number(a.prot)||0}"></div>
+      <div class="input-wrap"><label class="input-label">${t('home_carbs')}</label><input class="input" id="analysis-carb" type="number" min="0" step="0.1" value="${manual?'':Number(a.carb)||0}"></div>
+      <div class="input-wrap"><label class="input-label">${t('home_fat')}</label><input class="input" id="analysis-fat" type="number" min="0" step="0.1" value="${manual?'':Number(a.fat)||0}"></div>
     </div>
     <div class="nutrient-grid">
-      ${[['Fe',a.nutrition?.iron||'1.8mg'],['Ca',a.nutrition?.calcium||'65mg'],['Na',a.nutrition?.sodium||'280mg'],['Vit A',a.nutrition?.vitA||'120µg'],['Vit C',a.nutrition?.vitC||'18mg'],['B12',a.nutrition?.b12||'0.8µg']].map(([l,v])=>`<div class="nutrient-chip"><span>${escapeHTML(l)}</span><strong>${escapeHTML(String(v))}</strong></div>`).join('')}
+      ${[['Fe',a.nutrition?.iron||'—'],['Ca',a.nutrition?.calcium||'—'],['Na',a.nutrition?.sodium||'—'],['Vit A',a.nutrition?.vitA||'—'],['Vit C',a.nutrition?.vitC||'—'],['B12',a.nutrition?.b12||'—']].map(([l,v])=>`<div class="nutrient-chip"><span>${escapeHTML(l)}</span><strong>${escapeHTML(String(v))}</strong></div>`).join('')}
     </div>
     <div style="margin-top:12px;padding:10px 12px;background:rgba(34,197,94,.06);border-radius:8px;border-left:3px solid var(--green)">
-      <div style="font-size:12px;color:var(--green);font-weight:700;margin-bottom:4px">💡 Orientação personalizada</div>
+      <div style="font-size:12px;color:var(--green);font-weight:700;margin-bottom:4px">💡 ${t('nutr_guidance')}</div>
       <div style="font-size:12px;color:var(--text2)">${escapeHTML(a.msg || '')}</div>
     </div>
     <div style="display:flex;gap:8px;margin-top:12px">
-      <button class="btn btn-primary" style="flex:1;padding:10px" onclick="addAnalyzedMeal()">+ Adicionar ao diário</button>
-      <button class="btn btn-outline" style="flex:1;padding:10px" onclick="NUTR.analysis=null;navigate('nutrition')">Descartar</button>
+      <button class="btn btn-primary" style="flex:1;padding:10px" onclick="addAnalyzedMeal()">+ ${t('nutr_add_diary')}</button>
+      <button class="btn btn-outline" style="flex:1;padding:10px" onclick="NUTR.analysis=null;navigate('nutrition')">${t('nutr_discard')}</button>
     </div>
   </div>`;
 }
 
-function addAnalyzedMeal() {
-  var a = NUTR.analysis;
-  var meal = {id:Date.now(),time:new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}),name:sanitizeDbString(a.name,120),emoji:a.emoji,kcal:Number(a.kcal ?? a.cal)||0,prot:Number(a.prot)||0,carb:Number(a.carb)||0,fat:Number(a.fat)||0,type:'lunch'};
-  APP.meals.push(meal);
-  saveMealsLocal();
-  try { coachMemoryService().saveMemory(currentUserId(), 'meal_logged', { source:'nutrition_ai', meal:meal, analysis:a }); } catch(_) {}
-  try{if(APP.user&&APP.user.id&&String(APP.user.id).indexOf('local')<0)sbAddRefeicao(APP.user.id,{nome:meal.name,emoji:meal.emoji,calorias:meal.kcal,proteina:meal.prot,carbo:meal.carb,gordura:meal.fat,hora:meal.time,tipo:meal.type});}catch(e){}
-  addXP(20); toast('\u2705 Refei\u00e7\u00e3o adicionada! +20 XP','success');
-  NUTR.analysis=null; navigate('nutrition');
+async function addAnalyzedMeal() {
+  try {
+    if (NUTR.analysis?.needs_manual_input && ['name','kcal','prot','carb','fat'].some(function(key) { return !document.getElementById('analysis-'+key)?.value.trim(); })) throw new Error(t('nutr_manual_required'));
+    var meal = readMealForm('analysis', NUTR.analysis?.emoji || '🍽️');
+    var saved = await persistNewMeal(meal);
+    try { coachMemoryService().saveMemory(currentUserId(), 'meal_logged', { source:'nutrition_ai', meal:saved, analysis:NUTR.analysis }); } catch(_) {}
+    addXP(20); toast(t('nutr_meal_added'),'success');
+    NUTR.analysis=null; navigate('nutrition');
+  } catch(e) { mealPersistenceError(e); }
 }
 
 function saveMealsLocal() {
@@ -215,24 +222,114 @@ function loadMealsLocal() {
 }
 
 function openQuickMeal() {
-  openModal('Registrar Refei\u00e7\u00e3o', '<div style="display:flex;gap:6px;margin-bottom:12px"><button class="btn btn-sm btn-outline" onclick="document.getElementById(\'qm-type\').value=\'breakfast\'">\u2600 Caf\u00e9</button><button class="btn btn-sm btn-primary" onclick="document.getElementById(\'qm-type\').value=\'lunch\'">\ud83c\udf5d Almo\u00e7o</button><button class="btn btn-sm btn-outline" onclick="document.getElementById(\'qm-type\').value=\'dinner\'">\ud83c\udf19 Jantar</button><button class="btn btn-sm btn-outline" onclick="document.getElementById(\'qm-type\').value=\'snack\'">\ud83c\udf4e Lanche</button></div><input type="hidden" id="qm-type" value="lunch"><div class="input-wrap" style="margin-bottom:10px"><label class="input-label">Nome</label><input class="input" id="qm-name" placeholder="Ex: Arroz, frango e salada"></div><div style="display:flex;gap:8px;margin-bottom:10px"><div class="input-wrap" style="flex:1"><label class="input-label">Calorias</label><input class="input" id="qm-cal" type="number" placeholder="350"></div><div class="input-wrap" style="flex:1"><label class="input-label">Prote\u00edna</label><input class="input" id="qm-prot" type="number" placeholder="25"></div></div><div style="display:flex;gap:8px;margin-bottom:12px"><div class="input-wrap" style="flex:1"><label class="input-label">Carbos</label><input class="input" id="qm-carb" type="number" placeholder="40"></div><div class="input-wrap" style="flex:1"><label class="input-label">Gordura</label><input class="input" id="qm-fat" type="number" placeholder="12"></div></div><button class="btn btn-primary btn-full" onclick="saveQuickMeal()" style="padding:13px">\u2705 Salvar</button>');
+  openModal(t('nutr_register_meal'), `<input type="hidden" id="qm-type" value="lunch"><div class="input-wrap" style="margin-bottom:8px"><label class="input-label">${t('nutr_meal_name')}</label><input class="input" id="qm-name" maxlength="120"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><div class="input-wrap"><label class="input-label">${t('nutr_meal_type')}</label><select class="input" id="qm-type-select" onchange="document.getElementById('qm-type').value=this.value">${mealTypeOptions('lunch')}</select></div><div class="input-wrap"><label class="input-label">${t('nutr_quantity')}</label><input class="input" id="qm-quantity" type="number" min="0" step="0.1" value="1"></div><div class="input-wrap"><label class="input-label">${t('calories')}</label><input class="input" id="qm-kcal" type="number" min="0" step="1" value="0"></div><div class="input-wrap"><label class="input-label">${t('home_protein')}</label><input class="input" id="qm-prot" type="number" min="0" step="0.1" value="0"></div><div class="input-wrap"><label class="input-label">${t('home_carbs')}</label><input class="input" id="qm-carb" type="number" min="0" step="0.1" value="0"></div><div class="input-wrap"><label class="input-label">${t('home_fat')}</label><input class="input" id="qm-fat" type="number" min="0" step="0.1" value="0"></div></div><button class="btn btn-primary btn-full" onclick="saveQuickMeal()" style="padding:13px">${t('settings_save')}</button>`);
 }
 
-function saveQuickMeal() {
-  var name = sanitizeDbString(document.getElementById('qm-name')?.value?.trim(), 120);
-  if(!name) { toast('Digite o nome','error'); return; }
-  var meal = { id: Date.now(), time: new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}), name: name, emoji: '\ud83c\udf5d', kcal: Number(document.getElementById('qm-cal')?.value)||0, prot: Number(document.getElementById('qm-prot')?.value)||0, carb: Number(document.getElementById('qm-carb')?.value)||0, fat: Number(document.getElementById('qm-fat')?.value)||0, type: document.getElementById('qm-type')?.value||'lunch' };
-  APP.meals.push(meal); saveMealsLocal();
-  try { coachMemoryService().saveMemory(currentUserId(), 'meal_logged', { source:'quick_meal', meal:meal }); } catch(_) {}
-  try{if(APP.user&&APP.user.id&&String(APP.user.id).indexOf('local')<0)sbAddRefeicao(APP.user.id,{nome:meal.name,emoji:meal.emoji,calorias:meal.kcal,proteina:meal.prot,carbo:meal.carb,gordura:meal.fat,hora:meal.time,tipo:meal.type});}catch(e){}
-  addXP(15); toast('\u2705 '+name+' registrado!','success');
-  closeModal(); navigate('nutrition');
+function mealTypeOptions(selected) {
+  return [['breakfast','nutr_breakfast'],['snack','nutr_snack'],['lunch','nutr_lunch'],['dinner','nutr_dinner']]
+    .map(([value,key]) => `<option value="${value}" ${selected===value?'selected':''}>${t(key)}</option>`).join('');
+}
+
+function readNonNegativeNumber(id, label) {
+  const input = document.getElementById(id);
+  const raw = String(input?.value ?? '').trim().replace(',', '.');
+  const value = Number(raw);
+  if (raw === '' || !Number.isFinite(value) || value < 0) throw new Error(label + ': ' + t('nutr_invalid_value'));
+  return value;
+}
+
+function readMealForm(prefix, emoji) {
+  const name = sanitizeDbString(document.getElementById(prefix+'-name')?.value, 120);
+  if (!name) throw new Error(t('nutr_name_required'));
+  const type = document.getElementById(prefix+'-type')?.value || 'lunch';
+  return {
+    name, emoji: emoji || '🍽️', type,
+    quantity: readNonNegativeNumber(prefix+'-quantity', t('nutr_quantity')),
+    kcal: readNonNegativeNumber(prefix+'-kcal', t('calories')),
+    prot: readNonNegativeNumber(prefix+'-prot', t('home_protein')),
+    carb: readNonNegativeNumber(prefix+'-carb', t('home_carbs')),
+    fat: readNonNegativeNumber(prefix+'-fat', t('home_fat')),
+    time: new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+  };
+}
+
+function mealDbPayload(meal) {
+  return {nome:meal.name,emoji:meal.emoji||'🍽️',quantidade:meal.quantity,calorias:meal.kcal,proteina:meal.prot,carbo:meal.carb,gordura:meal.fat,hora:meal.time,tipo:meal.type};
+}
+
+function mealFromDb(row) {
+  return {id:row.id,persisted:true,name:row.nome,emoji:row.emoji||'🍽️',quantity:Number(row.quantidade??1),kcal:Number(row.calorias)||0,prot:Number(row.proteina)||0,carb:Number(row.carbo)||0,fat:Number(row.gordura)||0,time:String(row.hora||'12:00').slice(0,5),type:row.tipo||'lunch',date:row.data};
+}
+
+async function persistNewMeal(meal) {
+  const user = await sbGetUser();
+  if (!user?.id) throw new Error(t('nutr_login_to_save'));
+  const row = await sbAddRefeicao(user.id, mealDbPayload(meal));
+  const saved = mealFromDb(row);
+  APP.meals.push(saved);
+  NUTR.week = null; NUTR.weekError = null;
+  saveMealsLocal();
+  return saved;
+}
+
+function mealPersistenceError(error) {
+  console.warn('[VitalIA Nutrition] persistence failed', {code: String(error?.code || 'unavailable').slice(0, 40)});
+  toast(t('nutr_save_failed'), 'error', 6000);
+}
+
+function openEditMeal(mealId) {
+  const meal = (APP.meals||[]).find(item => String(item.id) === String(mealId));
+  if (!meal?.persisted) { toast(t('nutr_reload_to_edit'),'info'); return; }
+  openModal(t('nutr_edit_meal'), `<div class="input-wrap" style="margin-bottom:8px"><label class="input-label">${t('nutr_meal_name')}</label><input class="input" id="edit-name" maxlength="120" value="${escapeAttr(meal.name)}"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px"><div class="input-wrap"><label class="input-label">${t('nutr_meal_type')}</label><select class="input" id="edit-type">${mealTypeOptions(meal.type)}</select></div><div class="input-wrap"><label class="input-label">${t('nutr_quantity')}</label><input class="input" id="edit-quantity" type="number" min="0" step="0.1" value="${meal.quantity??1}"></div><div class="input-wrap"><label class="input-label">${t('calories')}</label><input class="input" id="edit-kcal" type="number" min="0" step="1" value="${meal.kcal}"></div><div class="input-wrap"><label class="input-label">${t('home_protein')}</label><input class="input" id="edit-prot" type="number" min="0" step="0.1" value="${meal.prot}"></div><div class="input-wrap"><label class="input-label">${t('home_carbs')}</label><input class="input" id="edit-carb" type="number" min="0" step="0.1" value="${meal.carb}"></div><div class="input-wrap"><label class="input-label">${t('home_fat')}</label><input class="input" id="edit-fat" type="number" min="0" step="0.1" value="${meal.fat}"></div></div><button class="btn btn-primary btn-full" onclick="saveEditedMeal('${escapeAttr(String(meal.id))}')">${t('settings_save')}</button>`);
+}
+
+async function saveEditedMeal(mealId) {
+  try {
+    const current = (APP.meals||[]).find(item => String(item.id) === String(mealId));
+    if (!current?.persisted) throw new Error(t('nutr_reload_to_edit'));
+    const edited = readMealForm('edit', current.emoji);
+    edited.time = current.time;
+    const user = await sbGetUser();
+    if (!user?.id) throw new Error(t('nutr_login_to_save'));
+    const row = await sbUpdateRefeicao(user.id, current.id, mealDbPayload(edited));
+    const index = APP.meals.findIndex(item => String(item.id) === String(current.id));
+    if (index >= 0) APP.meals[index] = mealFromDb(row);
+    NUTR.week = null; NUTR.weekError = null;
+    saveMealsLocal(); closeModal(); toast(t('nutr_meal_updated'),'success'); navigate('nutrition');
+  } catch(e) { mealPersistenceError(e); }
+}
+
+function confirmDeleteMeal(mealId) {
+  const meal = (APP.meals||[]).find(item => String(item.id) === String(mealId));
+  if (!meal?.persisted) { toast(t('nutr_reload_to_edit'),'info'); return; }
+  openModal(t('nutr_delete_meal'), `<p style="color:var(--text2);line-height:1.6">${t('nutr_delete_confirm')} <strong>${escapeHTML(meal.name)}</strong>?</p><button class="btn btn-danger btn-full" onclick="deleteMeal('${escapeAttr(String(meal.id))}')">${t('nutr_delete_meal')}</button>`);
+}
+
+async function deleteMeal(mealId) {
+  try {
+    const user = await sbGetUser();
+    if (!user?.id) throw new Error(t('nutr_login_to_save'));
+    await sbDeleteRefeicao(user.id, mealId);
+    APP.meals = (APP.meals||[]).filter(item => String(item.id) !== String(mealId));
+    NUTR.week = null; NUTR.weekError = null;
+    saveMealsLocal(); closeModal(); toast(t('nutr_meal_deleted'),'success'); navigate('nutrition');
+  } catch(e) { mealPersistenceError(e); }
+}
+
+async function saveQuickMeal() {
+  try {
+    var meal = readMealForm('qm', '🍝');
+    var saved = await persistNewMeal(meal);
+    try { coachMemoryService().saveMemory(currentUserId(), 'meal_logged', { source:'quick_meal', meal:saved }); } catch(_) {}
+    addXP(15); toast(t('nutr_meal_added'),'success');
+    closeModal(); navigate('nutrition');
+  } catch(e) { mealPersistenceError(e); }
 }
 
 function renderMealPlan() {
   const c = APP.calc||{};
   const meals = getDefaultMealPlan().map(function(m) {
-    return Object.assign({}, m, { cal: Math.round((c.meta||1800) * m.ratio) });
+    return Object.assign({}, m, { cal: Math.round((c.meta ?? '—') * m.ratio) });
   });
   return `<div style="padding:0 16px;margin-bottom:12px">
     ${meals.map(m=>`<div class="plan-meal-row" style="display:flex;gap:12px;align-items:center">
@@ -244,18 +341,18 @@ function renderMealPlan() {
 }
 
 function analyzeTextMeal() {
-  openModal('Descrever refeição', `
-    <div class="input-wrap"><label class="input-label">Descreva sua refeição</label><textarea class="input" id="meal-desc" rows="3" placeholder="Ex: arroz integral, frango grelhado e salada verde com azeite" style="resize:none"></textarea></div>
-    <button class="btn btn-primary btn-full" onclick="analyzeDescription()" style="padding:13px">🔍 Analisar com IA</button>`);
+  openModal(t('nutr_describe'), `
+    <div class="input-wrap"><label class="input-label">${t('nutr_description_label')}</label><textarea class="input" id="meal-desc" rows="3" placeholder="${escapeAttr(t('nutr_description_example'))}" style="resize:none"></textarea></div>
+    <button class="btn btn-primary btn-full" onclick="analyzeDescription()" style="padding:13px">🔍 ${t('nutr_analyze_photo')}</button>`);
 }
 
 function analyzeDescription() {
   const desc = document.getElementById('meal-desc')?.value;
-  if (!desc?.trim()) { toast('Descreva a refeição','error'); return; }
-  closeModal(); NUTR.loading=true; navigate('nutrition');
+  if (!desc?.trim()) { toast(t('nutr_description_label'),'error'); return; }
+  closeModal(); NUTR.imagePreview=null; NUTR.loading=true; navigate('nutrition');
   analyzeFood(desc).then(result => {
     NUTR.analysis=result; NUTR.loading=false; navigate('nutrition');
-    toast('✅ Análise concluída!','success'); addXP(15);
+    toast(result.needs_manual_input?t('nutr_manual_required'):t('nutr_analysis_done'),result.needs_manual_input?'info':'success'); if(!result.needs_manual_input) addXP(15);
   });
 }
 
@@ -290,13 +387,16 @@ function handleFoodPhoto(e) {
   NUTR.cameraOpening = false;
   clearTimeout(window.__nutritionCameraFeedbackTimer);
   if(!file) { toast(t('nutr_camera_open_error'), 'error'); return; }
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 10 * 1024 * 1024) { toast(t('nutr_camera_open_error'), 'error'); return; }
   const reader = new FileReader();
+  reader.onerror = () => { NUTR.loading = false; toast(t('nutr_camera_open_error'), 'error'); };
   reader.onload = ev => {
     NUTR.imagePreview = ev.target.result;
     NUTR.loading = true; navigate('nutrition');
     analyzeFood('food photo').then(result=>{
       NUTR.analysis=result; NUTR.loading=false; navigate('nutrition');
-      toast('✅ Foto analisada!','success'); addXP(20);
+      if (result.needs_manual_input || result.fallback) toast(t('nutr_manual_required'), 'info');
+      else { toast(t('nutr_analyze_photo'), 'success'); addXP(20); }
     });
   };
   reader.readAsDataURL(file); e.target.value='';
@@ -312,7 +412,7 @@ REC.premium = REC.premium || {goal:'all', time:'all', protein:'all', carb:'all',
 function setLang(code) {
   saveUserLanguage(normalizeLang(code));
   // Limpar receitas do idioma anterior
-  window.RECIPES = window.RECIPES.filter(function(r) { return !r.external; });
+  replaceActiveRecipeBank([]);
   window._recipesLang = null;
   window._recipesLoaded = false;
   // Disparar carregamento do novo idioma
@@ -344,7 +444,7 @@ const RECIPE_SUBS_I18N = {
 };
 function recipeTerm(value) {
   var raw = String(value || '');
-  return (RECIPE_TERM_I18N[APP.lang] && RECIPE_TERM_I18N[APP.lang][raw]) || raw;
+  return (RECIPE_TERM_I18N[APP.lang] && RECIPE_TERM_I18N[APP.lang][raw]) || localizedRecipeLabel(raw, APP.lang);
 }
 function recipeTitle(r) { return repairI18n(recipeTerm(r.name || r.nome || r.title || t('recipes.title'))); }
 function recipeTags(r) { return (r.tags || []).map(recipeTerm); }
@@ -359,17 +459,17 @@ function renderRecipeDetail(id) {
       REC.openRecipe = null;
       return `<div class="screen-header"><button class="btn btn-ghost" onclick="REC.openRecipe=null;navigate('recipes')" style="font-size:20px">←</button><div class="screen-title">${vitaliaIcon('recipes')} ${t('recipes')}</div></div>${showRecipeErrorState(APP.lang || 'pt')}`;
     }
-    const scoreCol = r.score>=7?'var(--green)':r.score>=4?'var(--orange)':'var(--red)';
+    const personal = getRecipePersonalState(r);
     const title = recipeTitle(r);
     const tags = recipeTags(r);
     const ingredients = recipeIngredients(r);
     const steps = recipeSteps(r);
     const substitutions = recipeSubstitutions(r);
-    const subsHtml = substitutions.length ? substitutions.map(function(s){ return '• '+escapeHTML(recipeTerm(s)); }).join('<br>') : RECIPE_SUBS_I18N[APP.lang] || RECIPE_SUBS_I18N.pt;
+    const subsHtml = substitutions.length ? substitutions.map(function(s){ return '• '+escapeHTML(recipeTerm(s)); }).join('<br>') : RECIPE_SUBS_I18N[APP.lang] || RECIPE_SUBS_I18N.en;
     return `
   <div class="screen-header">
     <button class="btn btn-ghost" onclick="REC.openRecipe=null;navigate('recipes')" style="font-size:20px">←</button>
-    <div style="display:flex;gap:8px"><button class="btn btn-sm btn-outline" onclick="toast(t('recipes.saved'),'success')">${t('recipes.save')}</button></div>
+    <div style="display:flex;gap:8px"><button class="btn btn-sm btn-outline" onclick="saveRecipeFavorite(${r.id})">${personal.favorite?t('recipes.saved'):t('recipes.save')}</button></div>
   </div>
   <div style="background:var(--surface2);padding:40px;text-align:center;font-size:80px">${r.emoji}</div>
   <div class="recipe-detail v-recipe-detail">
@@ -378,7 +478,7 @@ function renderRecipeDetail(id) {
       ${tags.map(tag=>`<span class="pill pill-green">${tag}</span>`).join('')}
     </div>
     <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
-      <span class="pill pill-orange">⏱ ${(r.time||((r.tempo||15)+'min'))}</span><span class="pill pill-blue">🎯 ${recipeTerm(r.diff||t('rec_easy'))}</span><span class="pill pill-green">🔥 ${r.cal} kcal</span><div class="stars">${Array.from({length:5},(_,i)=>`<span class="star ${i<Math.round((r.score||8))?'filled':''}">★</span>`).join('')} <span style="font-size:12px;color:var(--text2);">${(r.score||8)} (${r.reviews||0} ${t('recipes.reviews')})</span></div>
+      <span class="pill pill-orange">⏱ ${(r.time||((r.tempo||15)+'min'))}</span><span class="pill pill-blue">🎯 ${recipeTerm(r.diff||t('rec_easy'))}</span><span class="pill pill-green">🔥 ${r.cal} kcal</span><div class="stars" style="flex-wrap:wrap;max-width:100%" aria-label="${t('recipes.yourRating')}">${Array.from({length:5},(_,i)=>`<button class="btn btn-ghost" style="min-width:44px;min-height:44px;padding:4px" aria-label="${t('recipes.yourRating')} ${i+1}/5" aria-pressed="${personal.rating===i+1}" onclick="setRecipePersonalRating(${r.id},${i+1})"><span class="star ${i<(personal.rating||0)?'filled':''}">★</span></button>`).join('')} <span style="font-size:12px;color:var(--text2)">${t('recipes.yourRating')}: ${personal.rating ? personal.rating+'/5' : t('recipes.notRated')} </span></div>
     </div>
 
     <!-- Nutrition table -->
@@ -387,13 +487,16 @@ function renderRecipeDetail(id) {
       <div class="macro-row" style="margin-bottom:8px">
         ${[[vitaliaIcon('calories'),r.cal,'kcal'],[vitaliaIcon('protein'),r.prot+'g',t('recipes.protein')],[vitaliaIcon('nutrition'),r.carb+'g',t('recipes.carbs')],[vitaliaIcon('fasting'),r.fat+'g',t('recipes.fat')],[vitaliaIcon('recipes'),(r.fiber||0)+'g',t('recipes.fiber')]].map(([e,v,l])=>`<div class="macro-card" style="text-align:center"><div style="font-size:16px">${e}</div><div style="font-size:14px;font-weight:700">${v}</div><div style="font-size:9px;color:var(--text3)">${l}</div></div>`).join('')}
       </div>
-      <div style="font-size:11px;color:var(--text2)">${t('recipes.estimatedGI')}: ${r.gi||'-'} · ${t('recipes.score')}: <span style="color:${scoreCol};font-weight:700">${r.score||8}/10</span></div>
+      <div style="font-size:11px;color:var(--text2)">${escapeHTML(VITALIA_RECIPE_NUTRITION.recipeNutritionNotice(APP.lang))}</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:10px">${escapeHTML(r.nutritional_focus||'')}</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;margin-top:10px"><strong>${t('recipe_benefits')}</strong>${(r.benefits||[]).map(benefit=>`<div>• ${escapeHTML(benefit)}</div>`).join('')}</div>
     </div>
 
     <h3 style="font-family:var(--font-serif);margin-bottom:12px">${t('recipes.ingredients')}</h3>
     ${ingredients.map(ing=>`<div class="ingredient-item"><div class="ingredient-bullet"></div><div style="font-size:13px">${escapeHTML(String(ing))}</div></div>`).join('')}
     <h3 style="font-family:var(--font-serif);margin:16px 0 12px">${t('recipes.preparation')}</h3>
     ${steps.map((s,i)=>`<div class="step-item"><div class="step-num">${i+1}</div><div class="step-text">${escapeHTML(String(s))}</div></div>`).join('')}
+    <div class="card card-blue" style="margin:12px 0;font-size:12px;color:var(--text2)"><strong>${t('recipe_chef_note')}</strong><div style="margin-top:6px">${escapeHTML(r.chef_note||'')}</div></div>
 
     <div class="card card-blue" style="margin-top:4px">
       <div style="font-size:12px;font-weight:700;color:var(--blue);margin-bottom:4px">${vitaliaIcon('refresh')} ${t('recipes.substitutions')}</div>
@@ -401,8 +504,8 @@ function renderRecipeDetail(id) {
     </div>
 
     <div style="margin-top:16px;display:flex;gap:10px">
-      <button class="btn btn-primary" style="flex:1;padding:13px" onclick="rememberRecipeSelection(${r.id},'add_to_plan');toast(t('recipes.added')+' +15 XP','success');addXP(15)">${t('recipes.addToPlan')}</button>
-      <button class="btn btn-outline" style="flex:1;padding:13px" onclick="navigate('shopping')">${vitaliaIcon('shopping')} ${t('recipes.shoppingList')}</button>
+      <button class="btn btn-primary" style="flex:1;padding:13px" onclick="addRecipeToPersonalPlan(${r.id})">${t('recipes.addToPlan')}</button>
+      <button class="btn btn-outline" style="flex:1;padding:13px" onclick="addRecipeIngredientsToShopping(${r.id})">${vitaliaIcon('shopping')} ${t('recipes.shoppingList')}</button>
     </div>
   </div>`;
   } catch(e) {
@@ -440,7 +543,7 @@ function openRecipeSafe(id) {
 
 function rememberRecipeSelection(id, action) {
   try {
-    var recipe = RECIPES.find(function(item){ return item.id === id; });
+    var recipe = window.RECIPES.find(function(item){ return item.id === id; });
     if (!recipe || typeof coachMemoryService !== 'function') return;
     coachMemoryService().saveMemory(currentUserId(), 'recipe_interaction', {
       recipe_id: recipe.sourceId || recipe.id,
@@ -460,7 +563,7 @@ function rememberRecipeSelection(id, action) {
 ═══════════════════════════════════════ */
 function addWater(ml) {
   const cups = Math.round(ml/250);
-  APP.water = Math.min(APP.water+cups, (APP.calc?.aguaCopos||8)+4);
+  APP.water = Math.max(0,APP.water+cups);
   try { coachMemoryService().saveMemory(currentUserId(), 'hydration', { cups:APP.water, addedMl:ml, target:smartHydrationTarget() }); } catch(_) {}
   sbGetUser().then(u => { if(u) sbSaveAgua(u.id, APP.water); }).catch(e => toastFriendlyError('water', e));
   toast(t('water_added',ml),'success'); addXP(5);
@@ -1078,17 +1181,25 @@ async function doScan(code) {
 ═══════════════════════════════════════ */
 
 async function registerWeight() {
-  const w = parseFloat(document.getElementById('weight-input').value);
-  if(!w||w<20||w>300){toast(t('prog_invalid'),'error');return;}
-  APP.weightHistory.push({date:new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}),peso:w});
-  // Sync to Supabase
-  const user = await sbGetUser();
-  if(user) {
-    await sbAddPeso(user.id, w);
-    await sbSavePerfil(user.id, { peso: w });
-  }
-  addXP(10);
-  toast(t('prog_logged')+' +10 XP ✅','success'); navigate('progress');
+  if(registerWeight.pending)return;
+  const w = Number(document.getElementById('weight-input').value);
+  const owner = currentUserId();
+  if(!Number.isFinite(w)||w<20||w>300){toast(t('prog_invalid'),'error');return;}
+  registerWeight.pending=true;
+  try{
+    const user=await sbGetUser();
+    if(!user || user.id!==owner || currentUserId()!==owner)throw new Error('authentication_required');
+    if(!(await sbAddPeso(user.id,w)))throw new Error('weight_not_saved');
+    if(currentUserId()!==owner)return;
+    const reviewed = APP.profile?.profileSource==='user_confirmed' ? new Date().toISOString() : null;
+    const profileSaved=await sbSavePerfil(user.id,{peso:w,profile_reviewed_at:reviewed});
+    if(currentUserId()!==user.id)return;
+    APP.weightHistory.push({date:new Date().toLocaleDateString({pt:'pt-BR',en:'en-US',es:'es-ES',ru:'ru-RU'}[getUserLanguage()]||'en-US',{day:'2-digit',month:'2-digit'}),peso:w});
+    if(profileSaved&&APP.profile){APP.profile.weight=w;APP.profile.profile_reviewed_at=reviewed;APP.calc=calcProfile(APP.profile);}
+    addXP(10);
+    toast(t(profileSaved?'prog_logged':'progress_weight_profile_error'),profileSaved?'success':'error');navigate('progress');
+  }catch(error){toastFriendlyError('weight',error);}
+  finally{registerWeight.pending=false;}
 }
 
 /* ═══════════════════════════════════════
@@ -1330,7 +1441,7 @@ function renderSettings() {
     <div class="settings-row" onclick="navigate('telegram')"><div class="settings-icon">${vitaliaIcon('telegram')}</div><div class="settings-text"><div class="settings-label">Telegram</div><div class="settings-sub">${t('settings_telegram_sub')}</div></div><div class="settings-arrow">›</div></div>
     <div class="settings-row" onclick="toast(t('set_soon'),'info',2000)"><div class="settings-icon">${vitaliaIcon('community')}</div><div class="settings-text"><div class="settings-label">WhatsApp</div><div class="settings-sub">${t('settings_whatsapp_sub')}</div></div><div class="settings-arrow">›</div></div>
     <div class="settings-row" onclick="toast(t('set_soon'),'info',2000)"><div class="settings-icon">${vitaliaIcon('edit')}</div><div class="settings-text"><div class="settings-label">Email</div><div class="settings-sub">${t('settings_email_sub')}</div></div><div class="settings-arrow">›</div></div>
-    
+
   </div>
 
   <!-- Security -->
@@ -1338,7 +1449,7 @@ function renderSettings() {
   <div class="settings-group">
     <div class="settings-row" onclick="typeof handleSecSetting==='function'?handleSecSetting('pinSetup'):toast(t('set_soon'),'info',2000)"><div class="settings-icon">${vitaliaIcon('settings')}</div><div class="settings-text"><div class="settings-label">${t('settings_pin')}</div><div class="settings-sub">${t('settings_pin_sub')}</div></div><div class="settings-arrow">›</div></div>
     <div class="settings-row" onclick="typeof handleSecSetting==='function'?handleSecSetting('accessHistory'):toast(t('set_soon'),'info',2000)"><div class="settings-icon">${vitaliaIcon('analytics')}</div><div class="settings-text"><div class="settings-label">${t('settings_history')}</div><div class="settings-sub">${t('settings_history_sub')}</div></div><div class="settings-arrow">›</div></div>
-    
+
   </div>
 
   <!-- Data -->
@@ -1347,7 +1458,7 @@ function renderSettings() {
     <div class="settings-row" onclick="exportFullHistory()"><div class="settings-icon">${vitaliaIcon('analytics')}</div><div class="settings-text"><div class="settings-label">${t('settings_export')}</div><div class="settings-sub">${t('settings_export_sub')}</div></div><div class="settings-arrow">›</div></div>
     <div class="settings-row" onclick="showPrivacyCenter()"><div class="settings-icon">${vitaliaIcon('settings')}</div><div class="settings-text"><div class="settings-label">${t('settings_privacy')}</div><div class="settings-sub">${t('settings_privacy_sub')}</div></div><div class="settings-arrow">›</div></div>
     <div class="settings-row" onclick="confirmDeleteLocalAccount()"><div class="settings-icon">${vitaliaIcon('scanner')}</div><div class="settings-text"><div class="settings-label">${t('set_delete')}</div><div class="settings-sub">${t('set_delete_sub')}</div></div><div class="settings-arrow">›</div></div>
-    
+
   </div>
 
 
@@ -1393,7 +1504,7 @@ function renderSettings() {
     <div class="settings-row" onclick="showAppInfoModal()"><div class="settings-icon">${vitaliaIcon('premium')}</div><div class="settings-text"><div class="settings-label">VitalIA v1.0.0</div><div class="settings-sub">${t('settings_app_version')}</div></div><div class="settings-arrow">›</div></div>
     <div class="settings-row" onclick="toast(t('settings_rate_toast'),'success',3000)"><div class="settings-icon">${vitaliaIcon('achievements')}</div><div class="settings-text"><div class="settings-label">${t('settings_rate_app')}</div><div class="settings-sub">${t('settings_rate_sub')}</div></div><div class="settings-arrow">›</div></div>
     <div class="settings-row" onclick="showReportProblemModal()"><div class="settings-icon">${vitaliaIcon('scanner')}</div><div class="settings-text"><div class="settings-label">${t('settings_report_problem')}</div><div class="settings-sub">${t('settings_report_sub')}</div></div><div class="settings-arrow">›</div></div>
-    
+
   </div>
 
   <!-- Logout -->
@@ -1542,102 +1653,80 @@ function openAvatarSheet() {
 
 function editProfile() {
   const p = APP.profile||{};
-  openModal('Editar Perfil', `
-    <div class='input-wrap'><label class='input-label'>Nome</label><input id='ep-name' class='input' value='${p.name||''}' placeholder='Seu nome completo'></div>
+  const options=(value,choices)=>`<option value="" ${value==null?'selected':''}>${t('profile_select')}</option>`+choices.map(([code,key])=>`<option value="${code}" ${value===code?'selected':''}>${t(key)}</option>`).join('');
+  openModal(t('set_profile'), `
+    ${p.profileSource==='legacy_unverified'?`<div class='card' style='font-size:12px;line-height:1.6'>${t('profile_review_required')}</div>`:''}
+    <div class='input-wrap'><label class='input-label' for='ep-name'>${t('profile_name')}</label><input id='ep-name' class='input' value='${escapeHTML(p.name||'')}' placeholder='${t('profile_name')}'></div>
     <div style='display:grid;grid-template-columns:1fr 1fr;gap:10px'>
-      <div class='input-wrap'><label class='input-label'>Peso (kg)</label><input id='ep-weight' class='input' type='number' value='${p.weight||78}'></div>
-      <div class='input-wrap'><label class='input-label'>Altura (cm)</label><input id='ep-height' class='input' type='number' value='${p.height||175}'></div>
+      <div class='input-wrap'><label class='input-label' for='ep-weight'>${t('profile_weight')}</label><input id='ep-weight' class='input' type='number' value='${p.weight??''}'></div>
+      <div class='input-wrap'><label class='input-label' for='ep-height'>${t('profile_height')}</label><input id='ep-height' class='input' type='number' value='${p.height??''}'></div>
     </div>
     <div style='display:grid;grid-template-columns:1fr 1fr;gap:10px'>
-      <div class='input-wrap'><label class='input-label'>Idade</label><input id='ep-age' class='input' type='number' value='${p.age||30}'></div>
-      <div class='input-wrap'><label class='input-label'>Sexo</label><select id='ep-gender' class='input'><option value='m' ${p.gender==='m'?'selected':''}>Masculino</option><option value='f' ${p.gender==='f'?'selected':''}>Feminino</option></select></div>
+      <div class='input-wrap'><label class='input-label' for='ep-age'>${t('profile_age')}</label><input id='ep-age' class='input' type='number' value='${p.age??''}'></div>
+      <div class='input-wrap'><label class='input-label' for='ep-gender'>${t('profile_gender')}</label><select id='ep-gender' class='input'>${options(p.gender,[['m','profile_male'],['f','profile_female'],['other','profile_unspecified']])}</select></div>
     </div>
-    <div class='input-wrap'><label class='input-label'>Objetivo</label><select id='ep-goal' class='input'><option value='lose' ${p.goal==='lose'?'selected':''}>Perder peso</option><option value='maintain' ${p.goal==='maintain'?'selected':''}>Manter peso</option><option value='gain' ${p.goal==='gain'?'selected':''}>Ganhar massa</option><option value='health' ${p.goal==='health'?'selected':''}>Saúde geral</option></select></div>
-    <div class='input-wrap'><label class='input-label'>Nível de atividade</label><select id='ep-activity' class='input'><option value='sed' ${p.activity==='sed'?'selected':''}>Sedentário</option><option value='light' ${p.activity==='light'?'selected':''}>Levemente ativo</option><option value='mod' ${p.activity==='mod'?'selected':''}>Moderadamente ativo</option><option value='active' ${p.activity==='active'?'selected':''}>Muito ativo</option></select></div>
-    <button class='btn btn-primary btn-full' onclick='saveEditProfile()' style='padding:13px;margin-top:4px'>💾 Salvar alterações</button>
+    <div class='input-wrap'><label class='input-label' for='ep-goal'>${t('profile_goal')}</label><select id='ep-goal' class='input'>${options(p.goal,[['lose','profile_lose'],['maintain','profile_maintain'],['gain','profile_gain'],['health','profile_health']])}</select></div>
+    <div class='input-wrap'><label class='input-label' for='ep-activity'>${t('profile_activity')}</label><select id='ep-activity' class='input'>${options(p.activity,[['sed','profile_sedentary'],['light','profile_light'],['mod','profile_moderate'],['active','profile_active']])}</select></div>
+    <div style='font-size:12px;color:var(--text2);margin:8px 0'>${t('profile_estimated')}</div>
+    <button class='btn btn-primary btn-full' onclick='saveEditProfile()' style='padding:13px;margin-top:4px'>💾 ${t('profile_save')}</button>
   `);
 }
 
-window.saveEditProfile = function() {
+window.saveEditProfile = async function() {
   const name = sanitizeDbString(document.getElementById('ep-name')?.value.trim(), 120);
   const weight = parseFloat(document.getElementById('ep-weight')?.value);
   const height = parseFloat(document.getElementById('ep-height')?.value);
-  const age = parseInt(document.getElementById('ep-age')?.value);
+  const age = document.getElementById('ep-age')?.value;
   const gender = document.getElementById('ep-gender')?.value;
   const goal = document.getElementById('ep-goal')?.value;
   const activity = document.getElementById('ep-activity')?.value;
   if(!name){toast(t('toast_name_req'),'error');return;}
-  if(!weight||weight<20||weight>300){toast(t('toast_weight_inv'),'error');return;}
-  if(!height||height<100||height>250){toast(t('toast_height_inv'),'error');return;}
-  APP.profile = {...(APP.profile||{}), name, weight, height, age:age||30, gender:gender||'m', goal:goal||'lose', activity:activity||'mod'};
-  APP.user = {...(APP.user||{}), name};
-  APP.calc = calcProfile(APP.profile);
-  sbGetUser().then(u => { if(u) sbSavePerfil(u.id, { nome: name, peso: weight, altura: height, idade: age||30, genero: gender||'m', objetivo: goal||'lose', atividade: activity||'mod', email: APP.user?.email }); }).catch(e => toastFriendlyError('profile', e));
-  closeModal(); toast('✅ '+t('toast_profile_ok'), 'success'); navigate('settings');
+  const candidate=normalizeUserProfile({...APP.profile,name,weight,height,age,gender,goal,activity,profileSource:'user_confirmed'});
+  if(document.getElementById('ep-weight')?.value && candidate.weight==null){toast(t('toast_weight_inv'),'error');return;}
+  if(document.getElementById('ep-height')?.value && candidate.height==null){toast(t('toast_height_inv'),'error');return;}
+  if(age && candidate.age==null){toast(t('profile_age_invalid'),'error');return;}
+  const owner=currentUserId();
+  try {
+    const user=await sbGetUser();
+    if(!user?.id || user.id!==owner)throw new Error('profile_owner_unavailable');
+    const saved=await sbSavePerfil(owner,{nome:name,peso:candidate.weight,altura:candidate.height,idade:candidate.age,genero:candidate.gender,objetivo:candidate.goal,atividade:candidate.activity,email:APP.user?.email,profile_reviewed_at:new Date().toISOString()});
+    if(!saved || currentUserId()!==owner)throw new Error('profile_save_failed');
+    APP.profile=candidate;APP.user={...APP.user,name};APP.calc=calcProfile(candidate);
+    closeModal();toast('✅ '+t('toast_profile_ok'),'success');navigate('settings');
+  } catch(error){toastFriendlyError('profile',error);}
 };
 
 function editRestrictions() {
-  const p = APP.profile||{};
-  const restrictions = p.restrictions||[];
-  const opts = [
-    {v:'vegetarian',l:'🥗 Vegetariano'},
-    {v:'vegan',l:'🌱 Vegano'},
-    {v:'gluten-free',l:'🌾 Sem glúten'},
-    {v:'lactose-free',l:'🥛 Sem lactose'},
-    {v:'no-pork',l:'🐷 Sem porco'},
-    {v:'halal',l:'☪️ Halal'},
-    {v:'kosher',l:'✡️ Kosher'},
-    {v:'diabetic',l:'💉 Diabético'},
-    {v:'low-sodium',l:'🧂 Baixo sódio'},
-    {v:'nut-free',l:'🥜 Sem amendoim/nozes'},
-  ];
-  openModal('Restrições Alimentares', `
-    <div style='font-size:12px;color:var(--text2);margin-bottom:12px'>Selecione suas restrições e preferências alimentares:</div>
-    <div style='display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px'>
-      ${opts.map(o=>`<label style='display:flex;align-items:center;gap:8px;padding:10px;border-radius:10px;border:1px solid ${restrictions.includes(o.v)?'var(--green)':'var(--border)'};background:${restrictions.includes(o.v)?'rgba(34,197,94,.06)':'var(--surface2)'};cursor:pointer'><input type='checkbox' id='restr-${o.v}' ${restrictions.includes(o.v)?'checked':''} style='accent-color:var(--green)'> <span style='font-size:13px'>${o.l}</span></label>`).join('')}
-    </div>
-    <button class='btn btn-primary btn-full' onclick='saveRestrictions()' style='padding:13px'>💾 Salvar</button>
-  `);
+ const p=APP.profile||{},restrictions=p.restrictions||[];
+ const opts=[['vegetarian','restriction_vegetarian'],['vegan','restriction_vegan'],['gluten-free','restriction_gluten'],['lactose-free','restriction_lactose'],['no-pork','restriction_pork'],['halal','Halal'],['kosher','Kosher'],['diabetic','restriction_diabetes'],['low-sodium','restriction_sodium'],['nut-free','restriction_nuts']];
+ openModal(t('set_restrictions'),`<div style="font-size:12px;color:var(--text2);margin-bottom:12px">${t('restrictions_select')}</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">${opts.map(([code,key])=>`<label class="ingredient-item"><input type="checkbox" id="restr-${code}" ${restrictions.includes(code)?'checked':''}> <span>${key==='Halal'||key==='Kosher'?key:t(key)}</span></label>`).join('')}</div><button class="btn btn-primary btn-full" onclick="saveRestrictions()">${t('profile_save')}</button>`);
 }
 
-window.saveRestrictions = function() {
-  const opts = ['vegetarian','vegan','gluten-free','lactose-free','no-pork','halal','kosher','diabetic','low-sodium','nut-free'];
-  const selected = opts.filter(v => document.getElementById('restr-'+v)?.checked);
-  APP.profile = {...(APP.profile||{}), restrictions: selected};
-  sbGetUser().then(u => { if(u) sbSavePerfil(u.id, { restricoes: selected }); }).catch(e => toastFriendlyError('restrictions', e));
-  closeModal(); toast(`✅ ${selected.length} restrição(ões) salva(s)!`, 'success'); navigate('settings');
+window.saveRestrictions = async function() {
+ const owner=currentUserId(),opts=['vegetarian','vegan','gluten-free','lactose-free','no-pork','halal','kosher','diabetic','low-sodium','nut-free'];
+ const selected=opts.filter(code=>document.getElementById('restr-'+code)?.checked);
+ try {const user=await sbGetUser();if(!user||user.id!==owner)throw Error('owner_mismatch');const saved=await sbSavePerfil(owner,{restricoes:selected});if(!saved||currentUserId()!==owner)throw Error('save_failed');
+ APP.profile={...(APP.profile||{}),restrictions:selected};APP.calc=calcProfile(APP.profile);closeModal();toast(t('restrictions_saved'),'success');navigate('settings');
+ }catch(error){toastFriendlyError('restrictions',error);}
 };
 
 function editMealTimes() {
-  openModal('Horários das Refeições', `
-    <div style='font-size:12px;color:var(--text2);margin-bottom:12px'>Configure os horários para lembretes de cada refeição:</div>
-    ${[['☀️','Café da manhã','07:00'],['🍎','Lanche da manhã','10:00'],['☀️','Almoço','12:30'],['🍎','Lanche da tarde','15:30'],['🌙','Jantar','19:00'],['🌙','Ceia','21:00']].map(([e,l,def])=>`<div class='input-wrap'><label class='input-label'>${e} ${l}</label><input type='time' class='input' value='${def}' id='meal-time-${l.replace(/ /g,'-')}'></div>`).join('')}
-    <div style='display:flex;align-items:center;gap:10px;margin:8px 0 16px'><label class='toggle'><input type='checkbox' checked onchange="toast(this.checked?'Lembretes ativados':'Lembretes desativados','info')"><div class='toggle-slider'></div></label><span style='font-size:13px'>Ativar lembretes</span></div>
-    <button class='btn btn-primary btn-full' onclick="toast('✅ '+t('toast_times_ok'),'success');closeModal()" style='padding:13px'>💾 Salvar horários</button>
-  `);
+ const settings=JSON.parse(localStorage.getItem(userScopedKey('v_meal_reminders'))||'{}');
+ const meals=[['breakfast','nutr_breakfast','07:00'],['morning_snack','nutr_snack','10:00'],['lunch','nutr_lunch','12:30'],['afternoon_snack','nutr_snack','15:30'],['dinner','nutr_dinner','19:00'],['evening_snack','nutr_snack','21:00']];
+ openModal(t('set_meal_times'),`<div style="font-size:12px;color:var(--text2);margin-bottom:12px">${t('reminders_scope')}</div>${meals.map(([code,key,fallback])=>`<div class="input-wrap"><label class="input-label">${t(key)}</label><input type="time" class="input" id="meal-time-${code}" value="${/^\d{2}:\d{2}$/.test(settings.times?.[code])?settings.times[code]:fallback}"></div>`).join('')}<label class="ingredient-item"><input id="meal-reminders-enabled" type="checkbox" ${settings.enabled?'checked':''}>${t('reminders_enabled')}</label><button class="btn btn-primary btn-full" onclick="saveMealTimes()">${t('profile_save')}</button>`);
 }
 
-function handleSecSetting(fn) {
-  if(fn==='bioToggle'){
-    if(!APP.user?.id){
-      toast('Acesse sua conta para configurar a biometria com segurança.', 'info');
-      return;
-    }
-    activateBiometric();
-  } else if(fn==='pinSetup'){
-    APP.authStep='pin'; APP.pinInput='';
-    openModal('Configurar PIN','<div style="text-align:center;padding:20px;color:var(--text2)">Configure seu PIN de 4 dígitos na próxima tela.</div><button class="btn btn-primary btn-full" onclick="closeModal();APP.authStep=\'pin\';renderAuth()">Configurar PIN</button>');
-  } else {
-    openModal('Histórico de acessos',`<div style="font-size:13px;color:var(--text2)">${[['Hoje','18:42','iPhone 15','✅'],['Ontem','09:15','Chrome/Mac','✅'],['3 dias atrás','22:07','Samsung S24','✅']].map(([d,h,dev,s])=>`<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600">${dev}</div><div style="font-size:11px;color:var(--text3)">${d} às ${h}</div></div><span>${s}</span></div>`).join('')}</div><button class="btn btn-danger btn-full" onclick="toast(t('toast_sessions'),'success');closeModal()" style="margin-top:12px">Sair de todos os dispositivos</button>`);
-  }
+async function handleSecSetting(fn) {
+ if(!APP.user?.id){toast(t('auth_bio_setup_required'),'info');return;}
+ if(fn==='bioToggle'){activateBiometric();return;}
+ if(fn==='pinSetup'){APP.authStep='pin';APP.pinInput='';openModal(t('pin_setup'),`<div style="padding:20px">${t('pin_setup_desc')}</div><button class="btn btn-primary btn-full" onclick="closeModal();APP.authStep='pin';renderAuth()">${t('pin_setup')}</button>`);return;}
+ try {const {data,error}=await sb.auth.getUser();if(error||!data.user||data.user.id!==currentUserId())throw Error('session_unavailable');
+ openModal(t('settings_history'),`<div class="card"><strong>${t('session_current')}</strong><div>${escapeHTML(data.user.last_sign_in_at?new Date(data.user.last_sign_in_at).toLocaleString(localeForLang()):'—')}</div></div><div style="font-size:12px;line-height:1.6">${t('session_scope')}</div><button class="btn btn-danger btn-full" onclick="signOutAllDevices()">${t('session_signout')}</button>`);
+ }catch(error){toastFriendlyError('session',error);}
 }
 
 
-async function forgotPassword() {
-  var email = document.getElementById('a-email');
-  if (!email || !email.value.trim()) { toast('Digite seu email primeiro','error'); return; }
-  try { await sb.auth.resetPasswordForEmail(email.value.trim()); toast('📧 Email enviado!','success',4000); } catch(e) { toast(t('set_soon'),'info'); }
-}
+async function forgotPassword() { await sendPasswordReset(document.getElementById('a-email')?.value.trim()); }
 function saveGeminiKey() {
   localStorage.removeItem('v_gemini_key');
   toast('Chave protegida no backend Supabase.', 'success');
@@ -1658,7 +1747,7 @@ async function testGeminiKey() {
 }
 
 function doLogout() {
-  openModal(t('set_logout_title'),`<div style="font-size:13px;color:var(--text2);margin-bottom:16px">${t('set_logout_msg')}</div><div style="display:flex;gap:8px"><button class="btn btn-danger" style="flex:1" onclick="confirmLogout()">${t('set_logout_btn')}</button><button class="btn btn-outline" style="flex:1" onclick="closeModal()">Cancelar</button></div>`);
+  openModal(t('set_logout_title'),`<div style="font-size:13px;color:var(--text2);margin-bottom:16px">${t('set_logout_msg')}</div><div style="display:flex;gap:8px"><button class="btn btn-danger" style="flex:1" onclick="confirmLogout()">${t('set_logout_btn')}</button><button class="btn btn-outline" style="flex:1" onclick="closeModal()">${t('cancel')}</button></div>`);
 }
 
 async function confirmLogout() {
@@ -1692,7 +1781,7 @@ function confirmDeleteLocalAccount() {
       <div style="margin-top:10px">Perfil, refeições, hidratação, progresso, sessão, preferências e chaves locais serão removidos. Se houver sessão Supabase ativa, os dados públicos sincronizados também serão apagados do backend.</div>
       <div style="display:flex;gap:8px;margin-top:16px">
         <button class="btn btn-danger" style="flex:1" onclick="deleteLocalAccountData()">Confirmar exclusão</button>
-        <button class="btn btn-outline" style="flex:1" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-outline" style="flex:1" onclick="closeModal()">${t('cancel')}</button>
       </div>
     </div>
   `);
@@ -1749,7 +1838,7 @@ confirmDeleteLocalAccount = function() {
       <div style="margin-top:10px;padding:10px 12px;background:rgba(248,113,113,.08);border-left:3px solid var(--red);border-radius:8px">A exclusão é irreversível. Exporte seus dados antes se quiser manter uma cópia.</div>
       <div style="display:flex;gap:8px;margin-top:16px">
         <button class="btn btn-danger" style="flex:1" onclick="deleteLocalAccountData()">Confirmar exclusão</button>
-        <button class="btn btn-outline" style="flex:1" onclick="closeModal()">Cancelar</button>
+        <button class="btn btn-outline" style="flex:1" onclick="closeModal()">${t('cancel')}</button>
       </div>
     </div>
   `);
@@ -1806,18 +1895,18 @@ function showPremium() {
 ═══════════════════════════════════════ */
 async function requestVitalIANotifications(force) {
   if (!('Notification' in window)) {
-    if (force) toast('Seu navegador não suporta notificações.', 'info');
+    if (force) toast(t('notif_unsupported'), 'info');
     return false;
   }
   if (Notification.permission === 'granted') return true;
   if (Notification.permission === 'denied') {
-    if (force) toast('Notificações bloqueadas no navegador. Libere nas permissões do site.', 'info', 5000);
+    if (force) toast(t('notif_blocked'), 'info', 5000);
     return false;
   }
   if (!force) return false;
   const perm = await Notification.requestPermission();
   const ok = perm === 'granted';
-  toast(ok ? 'Alertas VitalIA ativados.' : 'Alertas não ativados.', ok ? 'success' : 'info');
+  toast(ok ? t('notif_enabled') : t('notif_disabled'), ok ? 'success' : 'info');
   return ok;
 }
 
@@ -1829,16 +1918,12 @@ function notifyVitalIA(title, body) {
 }
 
 function scheduleNotifications() {
-  if (window._vitaliaNotifsScheduled) return;
-  window._vitaliaNotifsScheduled = true;
-  requestVitalIANotifications(false);
-  const hyd = smartHydrationTarget();
-  const checks = [
-    {delay:9000, run:function(){ if (APP.water < Math.ceil(hyd.cups * .35)) notifyVitalIA('VitalIA Hidratação', 'Comece com 1 copo agora para não deixar a meta acumular.'); }},
-    {delay:18000, run:function(){ if ((APP.meals||[]).length < 2) notifyVitalIA('VitalIA Nutrição', 'Registre sua próxima refeição para eu ajustar calorias e proteína.'); }},
-    {delay:30000, run:function(){ if (APP.tab !== 'coach') notifyVitalIA('Coach IA Mentor', 'Seu plano está pronto para ajustes finos de hoje.'); }}
-  ];
-  checks.forEach(n => setTimeout(n.run, n.delay));
+ if(window._vitaliaNotifsScheduled)return;window._vitaliaNotifsScheduled=true;
+ requestVitalIANotifications(false);
+ const owner=currentUserId();
+ setTimeout(()=>{if(currentUserId()===owner&&(APP.meals||[]).length<2)notifyVitalIA(t('nutrition'),t('reminders_body'));},18000);
+ setTimeout(()=>{if(currentUserId()===owner&&APP.tab!=='coach')notifyVitalIA('Coach IA',t('notif_coach_body'));},30000);
+ window._mealReminderTimer=setInterval(checkMealReminders,30000);
 }
 
 function scheduleFastingAlerts(proto) {
@@ -1847,94 +1932,134 @@ function scheduleFastingAlerts(proto) {
   clearTimeout(window._fastHalfTimer);
   clearTimeout(window._fastFinalTimer);
   const fastMs = Math.max(1, proto.fast || 16) * 3600000;
-  window._fastHalfTimer = setTimeout(() => notifyVitalIA('Jejum VitalIA', 'Você chegou na metade do protocolo. Água e calma agora.'), Math.min(fastMs / 2, 6 * 3600000));
-  window._fastFinalTimer = setTimeout(() => notifyVitalIA('Jejum VitalIA', 'Falta 1 hora. Prepare uma quebra leve e rica em proteína.'), Math.max(60000, Math.min(fastMs - 3600000, 8 * 3600000)));
+  window._fastHalfTimer = setTimeout(() => notifyVitalIA(t('fasting'), t('notif_fasting_half')), Math.min(fastMs / 2, 6 * 3600000));
+  window._fastFinalTimer = setTimeout(() => notifyVitalIA(t('fasting'), t('notif_fasting_end')), Math.max(60000, Math.min(fastMs - 3600000, 8 * 3600000)));
 }
 
 /* ═══════════════════════════════════════
    ANALYTICS / REPORTS SCREEN
 ═══════════════════════════════════════ */
+function rollingWeekDates() {
+  const days = [];
+  const end = new Date();
+  end.setHours(12,0,0,0);
+  for (let offset=6; offset>=0; offset--) {
+    const date = new Date(end);
+    date.setDate(end.getDate()-offset);
+    days.push({key:localDateKey(date),label:new Intl.DateTimeFormat(localeForLang(),{weekday:'short'}).format(date).replace('.','')});
+  }
+  return days;
+}
+
+function realMealDayScore(meals, target) {
+  if (!meals.length) return null;
+  if (!Number.isFinite(target) || target<=0) return null;
+  const kcal = meals.reduce((sum,row)=>sum+Number(row.calorias||0),0);
+  const proteinMeals = meals.filter(row=>Number(row.proteina||0)>=18).length;
+  const energyFit = Math.max(0,100-Math.round(Math.abs(kcal-target)/Math.max(target,1)*100));
+  const diversity = Math.min(100,meals.length*25);
+  const protein = Math.min(100,proteinMeals*35);
+  return Math.round(energyFit*.5+diversity*.25+protein*.25);
+}
+
+async function loadRealNutritionWeek() {
+  if (NUTR.weekLoading) return;
+  NUTR.weekLoading = true; NUTR.weekError = null;
+  try {
+    const user = await sbGetUser();
+    if (!user?.id) throw new Error(t('nutr_login_to_save'));
+    const days = rollingWeekDates();
+    const [mealResult,waterResult] = await Promise.allSettled([sbGetRefeicoesPeriodo(user.id,days[0].key,days[6].key),sbGetHydrationPeriodo(user.id,days[0].key,days[6].key)]);
+    if(mealResult.status!=='fulfilled')throw mealResult.reason;
+    if(currentUserId()!==user.id)return;
+    const rows=mealResult.value;
+    const water=waterResult.status==='fulfilled'?waterResult.value:[];
+    NUTR.weekOwner=user.id;
+    const target = APP.calc?.meta ?? null;
+    NUTR.week = days.map(day=>{
+      const meals = rows.filter(row=>row.data===day.key);
+      const hydration=water.find(row=>row.data===day.key);
+      return {date:day.key,label:day.label,meals:meals.length,kcal:meals.reduce((sum,row)=>sum+Number(row.calorias||0),0),protein:meals.reduce((sum,row)=>sum+Number(row.proteina||0),0),water:hydration && Number.isFinite(hydration.copos)?hydration.copos:null,score:realMealDayScore(meals,target)};
+    });
+  } catch(e) {
+    console.warn('[VitalIA Analytics] weekly history unavailable:',e);
+    NUTR.weekError = t('analytics_week_error');
+  } finally {
+    NUTR.weekLoading = false;
+    if (APP.tab==='analytics' || APP.tab==='progress') navigate(APP.tab);
+  }
+}
+
 function renderAnalytics() {
   normalizeMeals();
-  const c = APP.calc||{meta:1800,aguaCopos:8};
-  const dailyScores = [62,75,48,83,91,70,calcDailyScore()];
-  const weekDays = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
-  const avgScore = Math.round(dailyScores.reduce((a,b)=>a+b,0)/dailyScores.length);
-  const calHistory = [1650,1820,1430,1900,1780,1620,sumKcal(APP.meals)||1750];
-  const avgCal = Math.round(calHistory.reduce((a,b)=>a+b,0)/calHistory.length);
-  const today = new Date();
-  const isMonday = today.getDay()===1;
+  const c = APP.calc||{};
+  if (!NUTR.week && !NUTR.weekLoading && !NUTR.weekError) setTimeout(loadRealNutritionWeek,0);
+  const week = NUTR.week || [];
+  const populated = week.filter(day=>day.meals>0);
+  const scoredDays=populated.filter(day=>Number.isFinite(day.score));
+  const avgScore = scoredDays.length ? Math.round(scoredDays.reduce((sum,day)=>sum+day.score,0)/scoredDays.length) : null;
+  const avgCal = populated.length ? Math.round(populated.reduce((sum,day)=>sum+day.kcal,0)/populated.length) : null;
+  const highestDay = populated.length ? populated.reduce((best,day)=>day.kcal>best.kcal?day:best,populated[0]) : null;
+  const bestScoreDay = populated.length ? populated.reduce((best,day)=>day.score>best.score?day:best,populated[0]) : null;
   return `
   <div class="screen-header">
     <div class="screen-title">📈 Analytics</div>
-    <span class="pill pill-blue" style="font-size:10px">Score hoje: ${calcDailyScore()}</span>
+    <span class="pill pill-blue" style="font-size:10px">${t('analytics_ui_score_today')}: ${calcDailyScore()}</span>
   </div>
-  <div class="section-title">Relatório de Hoje</div>
+  <div class="section-title">${t('analytics_ui_today_report')}</div>
   <div style="padding:0 16px;margin-bottom:12px">
     <div class="card card-glow">
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
-        ${[['🔥','Score',(calcDailyScore()==null?'—':calcDailyScore()+'/100'),'var(--green)'],['🍽️','Calorias',sumKcal(APP.meals)+'/'+(c.meta||1800)+' kcal','var(--orange)'],['💧','Água',APP.water+'/'+(c.aguaCopos||8)+' copos','var(--blue)'],['😊','Humor',APP.mood||'—','var(--purple)'],['🍴','Refeições',APP.meals.length+'/5','var(--yellow)'],['🔥','Streak',APP.streak+' dias','var(--orange)']].map(([e,l,v,col])=>`<div style="background:var(--surface2);border-radius:10px;padding:10px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">${e}</span><div><div style="font-size:10px;color:var(--text3)">${l}</div><div style="font-size:13px;font-weight:700;color:${col}">${v}</div></div></div>`).join('')}
+        ${[['🔥',t('analytics_ui_score'),(calcDailyScore()==null?'—':calcDailyScore()+'/100'),'var(--green)'],['🍽️',t('analytics_ui_calories'),sumKcal(APP.meals)+'/'+(c.meta ?? '—')+' kcal','var(--orange)'],['💧',t('analytics_ui_water'),APP.water+'/'+(c.aguaCopos ?? '—')+' '+t('analytics_ui_cups'),'var(--blue)'],['😊',t('analytics_ui_mood'),APP.mood||'—','var(--purple)'],['🍴',t('analytics_ui_meals'),APP.meals.length+'/5','var(--yellow)'],['🔥',t('analytics_ui_streak'),APP.streak+' '+t('analytics_ui_days'),'var(--orange)']].map(([e,l,v,col])=>`<div style="background:var(--surface2);border-radius:10px;padding:10px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">${e}</span><div><div style="font-size:10px;color:var(--text3)">${l}</div><div style="font-size:13px;font-weight:700;color:${col}">${v}</div></div></div>`).join('')}
       </div>
       <div style="margin-top:10px;padding:10px;background:rgba(34,197,94,.06);border-radius:8px;border-left:3px solid var(--green)">
-        <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:3px">✨ Destaque positivo</div>
-        <div style="font-size:12px;color:var(--text2)">${APP.water>=(c.aguaCopos||8)*.8?'Hidratação excelente hoje!':APP.streak>=7?'Sequência de '+APP.streak+' dias mantida!':''+APP.meals.length+' refeições registradas hoje.'}</div>
+        <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:3px">✨ ${t('analytics_ui_highlight')}</div>
+        <div style="font-size:12px;color:var(--text2)">${c.aguaCopos && APP.water>=c.aguaCopos*.8?t('analytics_ui_water_highlight'):APP.streak>=7?t('analytics_ui_streak_highlight').replace('{days}',APP.streak):t('analytics_ui_meal_highlight').replace('{count}',APP.meals.length)}</div>
       </div>
     </div>
   </div>
-  <div class="section-title">Score — 7 dias</div>
+  <div class="section-title">${t('analytics_ui_week_score')}</div>
   <div style="padding:0 16px;margin-bottom:16px">
     <div class="card">
-      <div style="display:flex;align-items:flex-end;gap:4px;height:72px;margin-bottom:6px">
-        ${dailyScores.map((s,i)=>{const col=s>=70?'var(--green)':s>=40?'var(--orange)':'var(--red)';const isToday=i===6;return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="font-size:8px;color:var(--text3)">${s}</div><div style="width:100%;height:${s}%;min-height:4px;background:${isToday?col:col+'55'};border-radius:3px 3px 0 0;${isToday?'box-shadow:0 0 6px '+col:''}"></div></div>`;}).join('')}
-      </div>
-      <div style="display:flex;gap:4px">${weekDays.map((d,i)=>`<div style="flex:1;text-align:center;font-size:9px;color:${i===6?'var(--green)':'var(--text3)'};font-weight:${i===6?700:400}">${d}</div>`).join('')}</div>
-      <div style="text-align:center;margin-top:8px;font-size:11px;color:var(--text2)">Média: <strong style="color:var(--green)">${avgScore}/100</strong></div>
+      ${NUTR.weekLoading?`<div style="text-align:center;color:var(--text2)">${t('analytics_loading_week')}</div>`:NUTR.weekError?`<div style="text-align:center;color:var(--red)">${escapeHTML(NUTR.weekError)}</div>`:!populated.length?`<div style="text-align:center;color:var(--text2)">${t('analytics_week_empty')}</div>`:`<div style="display:flex;align-items:flex-end;gap:4px;height:72px;margin-bottom:6px">${week.map((day,i)=>{const s=day.score;const col=s==null?'var(--border2)':s>=70?'var(--green)':s>=40?'var(--orange)':'var(--red)';return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="font-size:8px;color:var(--text3)">${s==null?'—':s}</div><div style="width:100%;height:${s==null?4:Math.max(4,s)}%;min-height:4px;background:${col}${i===6?'':'88'};border-radius:3px 3px 0 0"></div></div>`;}).join('')}</div><div style="display:flex;gap:4px">${week.map((day,i)=>`<div style="flex:1;text-align:center;font-size:9px;color:${i===6?'var(--green)':'var(--text3)'}">${escapeHTML(day.label)}</div>`).join('')}</div><div style="text-align:center;margin-top:8px;font-size:11px;color:var(--text2)">${t('analytics_real_days')}: <strong style="color:var(--green)">${populated.length}/7</strong> · ${t('analytics_average')}: <strong style="color:var(--green)">${avgScore==null?'—':avgScore+'/100'}</strong></div>`}
     </div>
   </div>
-  <div class="section-title">Calorias — 7 dias</div>
+  <div class="section-title">${t('analytics_ui_week_calories')}</div>
   <div style="padding:0 16px;margin-bottom:16px">
     <div class="card">
-      <div style="display:flex;align-items:flex-end;gap:4px;height:72px;margin-bottom:6px">
-        ${calHistory.map((v,i)=>{const meta=c.meta||1800;const pct=Math.min(Math.round((v/meta)*100),120);const col=Math.abs(v-meta)<200?'var(--green)':Math.abs(v-meta)<400?'var(--orange)':'var(--red)';const isToday=i===6;return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="font-size:8px;color:var(--text3)">${v}</div><div style="width:100%;height:${Math.min(pct,100)}%;min-height:4px;background:${isToday?col:col+'55'};border-radius:3px 3px 0 0"></div></div>`;}).join('')}
-      </div>
-      <div style="display:flex;gap:4px">${weekDays.map((d,i)=>`<div style="flex:1;text-align:center;font-size:9px;color:${i===6?'var(--orange)':'var(--text3)'}">${d}</div>`).join('')}</div>
-      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--text2)">
-        <span>Média: <strong style="color:var(--orange)">${avgCal} kcal</strong></span>
-        <span>Meta: <strong style="color:var(--green)">${c.meta||1800} kcal</strong></span>
-        <span>Dias OK: <strong style="color:var(--blue)">${calHistory.filter(v=>Math.abs(v-(c.meta||1800))<200).length}/7</strong></span>
-      </div>
+      ${!populated.length?`<div style="text-align:center;color:var(--text2)">${t('analytics_week_empty')}</div>`:`<div style="display:flex;align-items:flex-end;gap:4px;height:72px;margin-bottom:6px">${week.map((day,i)=>{const v=day.kcal;const pct=day.meals?Math.min(Math.round(v/(c.meta||Math.max(1,...week.map(record=>record.kcal)))*100),100):4;const col=!day.meals || !c.meta?'var(--border2)':Math.abs(v-c.meta)<200?'var(--green)':Math.abs(v-(c.meta ?? '—'))<400?'var(--orange)':'var(--red)';return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px"><div style="font-size:8px;color:var(--text3)">${day.meals?v:'—'}</div><div style="width:100%;height:${Math.max(4,pct)}%;min-height:4px;background:${col}${i===6?'':'88'};border-radius:3px 3px 0 0"></div></div>`;}).join('')}</div><div style="display:flex;gap:4px">${week.map((day,i)=>`<div style="flex:1;text-align:center;font-size:9px;color:${i===6?'var(--orange)':'var(--text3)'}">${escapeHTML(day.label)}</div>`).join('')}</div><div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--text2)"><span>${t('analytics_average')}: <strong style="color:var(--orange)">${avgCal} kcal</strong></span><span>${t('analytics_goal')}: <strong style="color:var(--green)">${c.meta==null?'—':c.meta+' kcal'}</strong></span><span>${t('analytics_days_on_target')}: <strong style="color:var(--blue)">${c.meta?populated.filter(day=>Math.abs(day.kcal-c.meta)<200).length+'/'+populated.length:'—'}</strong></span></div>`}
     </div>
   </div>
-  ${isMonday?`<div class="section-title" style="color:var(--yellow)">📋 Relatório Semanal</div><div style="padding:0 16px;margin-bottom:16px"><div class="card card-orange"><div style="font-size:12px;color:var(--text2);line-height:1.75">🤖 Você foi consistente na hidratação (78%) e manteve ${APP.streak} dias de sequência. Qualidade alimentar média: <strong>${avgScore}/100</strong>. Foco desta semana: reduza carboidratos refinados no jantar e adicione +1 porção de vegetais.</div></div></div>`:''}
-  <div class="section-title">📈 Relatório Mensal</div>
+  <div class="section-title" style="color:var(--yellow)">📋 ${t('progress_weekly_title')}</div><div style="padding:0 16px;margin-bottom:16px"><div class="card card-orange"><div style="font-size:12px;color:var(--text2);line-height:1.75">${populated.length?t('analytics_week_summary').replace('{days}',populated.length).replace('{average}',avgCal):t('analytics_week_empty')}</div></div></div>
+  <div class="section-title">📈 ${t('analytics_ui_monthly')}</div>
   <div style="padding:0 16px;margin-bottom:16px">
     <div class="card card-purple">
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">
-        ${[['Início',(APP.calc?.peso||78)+'kg'],['Atual',(APP.weightHistory?.[APP.weightHistory.length-1]?.peso||77.8)+'kg'],['Meta',(APP.calc?.pesoMeta||73)+'kg']].map(([l,v])=>`<div style="text-align:center;background:var(--surface2);border-radius:8px;padding:10px"><div style="font-size:10px;color:var(--text3)">${l}</div><div style="font-size:15px;font-weight:700;color:var(--purple)">${v}</div></div>`).join('')}
+        ${[[t('analytics_ui_initial'),(APP.calc?.peso!=null?APP.calc.peso+'kg':'—')],[t('analytics_ui_current'),(APP.weightHistory?.[APP.weightHistory.length-1]?.peso!=null?APP.weightHistory[APP.weightHistory.length-1].peso+'kg':'—')],[t('analytics_ui_goal'),(APP.calc?.pesoMeta!=null?APP.calc.pesoMeta+'kg':'—')]].map(([l,v])=>`<div style="text-align:center;background:var(--surface2);border-radius:8px;padding:10px"><div style="font-size:10px;color:var(--text3)">${l}</div><div style="font-size:15px;font-weight:700;color:var(--purple)">${v}</div></div>`).join('')}
       </div>
-      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">Previsão: ~${APP.calc?.semanas||8} semanas para a meta</div>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:10px">${Number.isFinite(APP.calc?.semanas)?t('analytics_ui_forecast').replace('{weeks}',APP.calc.semanas):t('analytics_ui_forecast_unavailable')}</div>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-primary" onclick="exportFullHistory()" style="flex:1;padding:10px;font-size:12px">📄 Exportar histórico</button>
-        <button class="btn btn-outline" onclick="shareNative()" style="flex:1;padding:10px;font-size:12px">📤 Compartilhar</button>
+        <button class="btn btn-primary" onclick="exportFullHistory()" style="flex:1;padding:10px;font-size:12px">📄 ${t('analytics_ui_export')}</button>
+        <button class="btn btn-outline" onclick="shareNative()" style="flex:1;padding:10px;font-size:12px">📤 ${t('analytics_ui_share')}</button>
       </div>
     </div>
   </div>
-  <div class="section-title">🤖 Análise Preditiva</div>
+  <div class="section-title">📊 ${t('analytics_real_insights')}</div>
   <div style="padding:0 16px;margin-bottom:16px">
     <div class="card card-blue">
-      ${[['⚠️','Terças-feiras','Tendência a pular o lanche da tarde','var(--yellow)'],['✅','Manhãs','Consistência excelente no café da manhã (92%)','var(--green)'],['📉','Fim de semana','Qualidade alimentar cai ~20% aos sábados','var(--orange)'],['💡','Sugestão IA','Adicione proteína às 15h para manter o metabolismo','var(--blue)']].map(([e,t,d,col])=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><span style="font-size:18px">${e}</span><div><div style="font-size:12px;font-weight:700;color:${col}">${t}</div><div style="font-size:11px;color:var(--text2);margin-top:2px">${d}</div></div></div>`).join('')}
+      ${!populated.length?`<div style="font-size:12px;color:var(--text2)">${t('analytics_no_insights')}</div>`:[["🔥",t('analytics_highest_day'),t('analytics_highest_day_value').replace('{day}',highestDay.label).replace('{kcal}',highestDay.kcal),'var(--orange)'],["✅",t('analytics_best_score_day'),t('analytics_best_score_value').replace('{day}',bestScoreDay.label).replace('{score}',bestScoreDay.score),'var(--green)'],["📅",t('analytics_logged_days'),t('analytics_logged_days_value').replace('{days}',populated.length),'var(--blue)']].map(([e,title,detail,col])=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><span style="font-size:18px">${e}</span><div><div style="font-size:12px;font-weight:700;color:${col}">${escapeHTML(title)}</div><div style="font-size:11px;color:var(--text2);margin-top:2px">${escapeHTML(detail)}</div></div></div>`).join('')}
     </div>
   </div>
-  <div class="section-title">🏆 Top receitas do mês</div>
+  <div class="section-title">🏆 ${t('analytics_ui_recipes')}</div>
   <div style="padding:0 16px;margin-bottom:16px">
-    ${RECIPES.slice(0,3).map((r,i)=>`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-family:var(--font-serif);font-size:18px;font-weight:700;color:${['var(--yellow)','var(--text2)','var(--orange)'][i]};width:20px">${i+1}°</div><span style="font-size:26px">${r.emoji}</span><div style="flex:1"><div style="font-size:13px;font-weight:600">${r.name}</div><div style="font-size:11px;color:var(--text2)">${r.cal} kcal · ⭐ ${r.rating}</div></div></div>`).join('')}
+    ${RECIPES.filter(r=>r.lang===APP.lang).slice(0,3).map((r,i)=>`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-family:var(--font-serif);font-size:18px;font-weight:700;color:${['var(--yellow)','var(--text2)','var(--orange)'][i]};width:20px">${i+1}°</div><span style="font-size:26px">${r.emoji}</span><div style="flex:1"><div style="font-size:13px;font-weight:600">${escapeHTML(recipeTitle(r))}</div><div style="font-size:11px;color:var(--text2)">${r.cal} kcal · ${t('recipes.yourRating')}: ${getRecipePersonalState(r).rating || '—'}</div></div></div>`).join('')}
   </div>
-  <div class="section-title">🛠️ Dashboard Admin</div>
+  <div class="section-title">🛠️ ${t('analytics_ui_admin')}</div>
   <div style="padding:0 16px;margin-bottom:16px">
     <div class="card" style="border:2px dashed var(--border2)">
-      <div style="font-size:13px;font-weight:700;margin-bottom:10px">Painel de controle (simulado)</div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px">${t('analytics_ui_simulated')}</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-        ${[['👥','Usuários ativos','12.847'],['📈','Retenção 7d','74%'],['💎','Conversão Free→Pro','8.3%'],['⭐','NPS Score','72'],['📸','Fotos analisadas/dia','2.341'],['🤖','Msgs Coach/dia','18.920']].map(([e,l,v])=>`<div style="background:var(--surface2);border-radius:8px;padding:10px"><div style="font-size:16px;margin-bottom:2px">${e}</div><div style="font-size:10px;color:var(--text3)">${l}</div><div style="font-size:15px;font-weight:700;color:var(--green)">${v}</div></div>`).join('')}
+        ${[['👥',t('analytics_ui_active_users'),'12.847'],['📈',t('analytics_ui_retention'),'74%'],['💎',t('analytics_ui_conversion'),'8.3%'],['⭐','NPS Score','72'],['📸',t('analytics_ui_photos'),'2.341'],['🤖',t('analytics_ui_messages'),'18.920']].map(([e,l,v])=>`<div style="background:var(--surface2);border-radius:8px;padding:10px"><div style="font-size:16px;margin-bottom:2px">${e}</div><div style="font-size:10px;color:var(--text3)">${l}</div><div style="font-size:15px;font-weight:700;color:var(--green)">${v}</div></div>`).join('')}
       </div>
     </div>
   </div>`;
@@ -2024,7 +2149,7 @@ function renderCommGroups() {
 
 function renderCommProfile() {
   const p = APP.profile||{name:'Usuário'};
-  const diff = Math.abs(+((APP.weightHistory?.[APP.weightHistory.length-1]?.peso||77.8)-(APP.calc?.peso||78)).toFixed(1));
+  const currentWeight=APP.weightHistory?.at(-1)?.peso; const initialWeight=APP.weightHistory?.[0]?.peso; const diff=currentWeight!=null && initialWeight!=null?Math.abs(+(currentWeight-initialWeight).toFixed(1)):0;
   return `<div>
   <div style="padding:20px 16px;text-align:center;background:radial-gradient(ellipse at top,rgba(34,197,94,.1),transparent)">
     <div style="width:72px;height:72px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 10px;border:3px solid rgba(34,197,94,.3)">${p.name?.charAt(0)||'U'}</div>
@@ -2230,7 +2355,7 @@ function telegramLogin() {
     <button class="tg-login-btn" onclick="doTelegramLogin()" style="margin:0 0 10px">
       <span class="tg-plane">✈️</span> Autenticar com Telegram
     </button>
-    <button class="btn btn-ghost btn-full" onclick="closeModal()" style="font-size:13px;color:var(--text3)">Cancelar</button>
+    <button class="btn btn-ghost btn-full" onclick="closeModal()" style="font-size:13px;color:var(--text3)">${t('cancel')}</button>
   `);
 }
 
@@ -2268,7 +2393,7 @@ function doTelegramLogin() {
     };
     APP.profile = {
       name,
-      weight:78, height:175, age:30, gender:'m', goal:'lose', activity:'mod',
+      weight:null, height:null, age:null, gender:null, goal:null, activity:null,
       restrictions:[], telegramLinked: true
     };
     APP.telegram = {
@@ -2282,7 +2407,7 @@ function doTelegramLogin() {
     };
     APP.calc = calcProfile(APP.profile);
     APP.water = 0; APP.meals = [];
-    APP.weightHistory = WEIGHT_HISTORY.map((p,i)=>({date:new Date(Date.now()-i*86400000).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}),peso:p})).reverse();
+    APP.weightHistory = [];
     APP.session = 'tg_' + Date.now();
     clearSensitiveLocalCache();
     saveTelegram();
@@ -2337,7 +2462,7 @@ function openTelegramConnect() {
     </div>
 
     <button class="btn btn-primary btn-full" onclick="verifyOTP('${otp}')" style="padding:13px;margin-bottom:8px" id="verify-otp-btn">✅ Verificar código</button>
-    <button class="btn btn-ghost btn-full" onclick="closeModal()" style="font-size:12px;color:var(--text3)">Cancelar</button>
+    <button class="btn btn-ghost btn-full" onclick="closeModal()" style="font-size:12px;color:var(--text3)">${t('cancel')}</button>
     <div style="text-align:center;font-size:10px;color:var(--text3);margin-top:10px">O código expira em 5 minutos por segurança</div>
   `);
   startOTPTimer(300);
@@ -2414,7 +2539,7 @@ function renderTelegramSettings() {
     },
     water: {
       title:'💧 Lembrete de Água',
-      body:`💧 *Hidratação*\nVocê tomou ${APP.water} de ${APP.calc?.aguaCopos||8} copos hoje.\nBeba mais um agora! 🌊`,
+      body:`💧 *Hidratação*\nVocê tomou ${APP.water} de ${APP.calc?.aguaCopos??'—'} copos hoje.\nBeba mais um agora! 🌊`,
       btns:['✅ Bebi um copo','💧 +500ml']
     },
     streak: {
@@ -2632,7 +2757,7 @@ window.disconnectTelegram = function() {
     </div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-danger" style="flex:1" onclick="confirmDisconnectTelegram()">Desvincular</button>
-      <button class="btn btn-outline" style="flex:1" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-outline" style="flex:1" onclick="closeModal()">${t('cancel')}</button>
     </div>
   `);
 };
@@ -2667,7 +2792,7 @@ window.joinTgChannel = function(key) {
 window.previewTgMessage = function(type) {
   const previews = {
     meal: { title:'⏰ Lembrete de Refeição', body:`🍳 *Café da manhã* — 07:30\nHoje no seu plano: Omelete de espinafre\n📊 Meta: 280kcal | 20g proteína`, btns:['✅ Já comi','⏰ +15min','📖 Ver receita'] },
-    water: { title:'💧 Hidratação', body:`💧 *Hidratação*\nVocê tomou ${APP.water} de ${APP.calc?.aguaCopos||8} copos hoje.\nBeba mais um agora! 🌊`, btns:['✅ Bebi um copo','💧 +500ml'] },
+    water: { title:'💧 Hidratação', body:`💧 *Hidratação*\nVocê tomou ${APP.water} de ${APP.calc?.aguaCopos??'—'} copos hoje.\nBeba mais um agora! 🌊`, btns:['✅ Bebi um copo','💧 +500ml'] },
     streak: { title:'🔥 Streak em Risco', body:`🔥 *Atenção, ${APP.profile?.name?.split(' ')[0]||'Você'}!*\nSua sequência de *${APP.streak} dias* termina em 2 horas.`, btns:['📸 Registrar refeição'] },
     achievement: { title:'🏆 Conquista!', body:`🎖️ *PARABÉNS!*\nVocê desbloqueou o badge *'7 Dias Seguidos'*!\nIsso é dedicação de verdade. Continue! 🚀`, btns:['🏆 Ver conquistas','📤 Compartilhar'] },
     weekly: { title:'📊 Resumo Semanal', body:`📈 *Seu resumo da semana:*\n✅ 5 dias com meta atingida\n💧 Água: 4/7 dias\n🔥 Streak: ${APP.streak} dias`, btns:['📊 Ver relatório'] },
@@ -2694,7 +2819,7 @@ window.previewTgMessage = function(type) {
 window.showMsgPreview = function(k) {
   const previews = {
     meal: `🍳 *Café da manhã* — 07:30\nHoje no seu plano: Omelete de espinafre\n📊 Meta: 280kcal | 20g proteína\n👆 [Ver receita](t.me/VitalIABot)`,
-    water: `💧 *Hidratação*\nVocê tomou ${APP.water} de ${APP.calc?.aguaCopos||8} copos hoje.\nBeba mais um agora! 🌊`,
+    water: `💧 *Hidratação*\nVocê tomou ${APP.water} de ${APP.calc?.aguaCopos??'—'} copos hoje.\nBeba mais um agora! 🌊`,
     streak: `🔥 *Atenção, ${APP.profile?.name?.split(' ')[0]||'Você'}!*\nSua sequência de *${APP.streak} dias* termina em 2 horas.\nRegistre uma refeição! 💪`,
     achievement: `🎖️ *PARABÉNS!*\nVocê desbloqueou o badge *'7 Dias Seguidos'*!\nContinue! 🚀`,
     weekly: `📈 *Seu resumo da semana:*\n✅ 5 dias com meta atingida\n💧 Água: 4/7 dias\n⚖️ Variação: -0,4kg\n🔥 Streak: ${APP.streak} dias`,
@@ -2805,7 +2930,7 @@ function renderMore() {
 ═══════════════════════════════════════ */
 function buildShareText() {
   const p = APP.profile||{};
-  const diff = Math.abs(+((APP.weightHistory?.[APP.weightHistory.length-1]?.peso||p.weight||78)-(p.weight||78)).toFixed(1));
+  const currentWeight=APP.weightHistory?.at(-1)?.peso; const initialWeight=APP.weightHistory?.[0]?.peso; const diff=currentWeight!=null && initialWeight!=null?Math.abs(+(currentWeight-initialWeight).toFixed(1)):0;
   const score = calcDailyScore();
   return `🌿 Estou usando o VitalIA para cuidar da minha saúde!\n\n` +
     `📊 Score hoje: ${score}/100\n` +
@@ -2821,7 +2946,7 @@ window.shareToNetwork = function(network) {
   const url = 'https://elicarlosiurd-sudo.github.io/aplicativo-vitalia/index.html';
   const encoded = encodeURIComponent(text);
   const encodedUrl = encodeURIComponent(url);
-  
+
   const links = {
     whatsapp: `https://wa.me/?text=${encoded}`,
     twitter: `https://twitter.com/intent/tweet?text=${encoded}`,
@@ -2830,7 +2955,7 @@ window.shareToNetwork = function(network) {
     instagram: null, // Instagram não suporta deep link de texto
     tiktok: null,
   };
-  
+
   if(links[network]) {
     window.open(links[network], '_blank', 'noopener');
     toast(t('toast_share_open')+' 🎉','success');
@@ -2906,7 +3031,7 @@ window.exportFullHistory = function() {
   const p = APP.profile||{};
   const u = APP.user||{};
   const hoje = new Date().toLocaleDateString('pt-BR');
-  
+
   let report = `╔══════════════════════════════════════╗
 ║      RELATÓRIO COMPLETO VITALIA      ║
 ╚══════════════════════════════════════╝
@@ -2958,7 +3083,7 @@ window.exportFullHistory = async function() {
     var session = (await sb.auth.getSession())?.data?.session || null;
     if (!session?.user) { toast('Entre na sua conta para exportar seus dados.', 'info'); return; }
     var userId = session.user.id;
-    var tables = ['perfis','refeicoes','hidratacao','peso_historico','humor','gamificacao','coach_memories','coach_messages','coach_usage_daily','privacy_consents','privacy_deletion_requests'];
+    var tables = ['goal_diagnostics','diagnostic_checkins','perfis','refeicoes','hidratacao','peso_historico','humor','gamificacao','coach_memories','coach_messages','coach_usage_daily','privacy_consents','privacy_deletion_requests'];
     var exportData = {
       exported_at: new Date().toISOString(),
       app: 'VitalIA',
@@ -2973,6 +3098,7 @@ window.exportFullHistory = async function() {
       if (table === 'perfis') query = query.eq('id', userId);
       else query = query.eq('user_id', userId);
       var res = await query;
+      if (res.error && ['goal_diagnostics','diagnostic_checkins'].includes(table)) throw res.error;
       exportData.data[table] = sanitizeDbObject(res.data || []);
     }
     var blob = new Blob([JSON.stringify(exportData, null, 2)], {type:'application/json;charset=utf-8'});
@@ -3011,4 +3137,23 @@ function checkBirthdayReminder() {
       `);
     }, 3000);
   }
+}
+
+async function saveMealTimes() {
+ const codes=['breakfast','morning_snack','lunch','afternoon_snack','dinner','evening_snack'],times={};
+ for(const code of codes){const value=document.getElementById('meal-time-'+code)?.value;if(!/^([01]\d|2[0-3]):[0-5]\d$/.test(value)){toast(t('ui_action_error'),'error');return;}times[code]=value;}
+ const enabled=!!document.getElementById('meal-reminders-enabled')?.checked;
+ try{localStorage.setItem(userScopedKey('v_meal_reminders'),JSON.stringify({enabled,times}));}catch(error){toastFriendlyError('reminders',error);return;}
+ if(enabled)await requestVitalIANotifications(true);closeModal();toast(t('toast_times_ok'),'success');
+}
+function checkMealReminders(now=new Date()) {
+ if(!currentUserId())return;
+ try{const key=userScopedKey('v_meal_reminders'),settings=JSON.parse(localStorage.getItem(key)||'{}');if(!settings.enabled)return;
+ const time=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+ const day=now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
+ for(const [code,at] of Object.entries(settings.times||{})){if(at!==time)continue;const delivered=key+':'+day+':'+code;if(localStorage.getItem(delivered))continue;localStorage.setItem(delivered,'1');notifyVitalIA(t('set_meal_times'),t('reminders_body'));}
+ }catch(error){toastFriendlyError('reminders',error);}
+}
+async function signOutAllDevices() {
+ try{const result=await sb.auth.signOut({scope:'global'});if(result.error)throw result.error;await confirmLogout();}catch(error){toastFriendlyError('session',error);}
 }

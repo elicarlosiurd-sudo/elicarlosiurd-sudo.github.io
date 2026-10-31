@@ -23,7 +23,7 @@ const APP = {
   // Daily data
   mood: null, water: 0, calories: 0, meals: [],
   fastingActive: false, fastStart: null, fastProtocol: '16:8',
-  waterContext: JSON.parse(localStorage.getItem('v_water_context') || '{"climate":"normal","activityMinutes":45}'),
+  waterContext: JSON.parse(localStorage.getItem('v_water_context') || '{"climate":"normal","activityMinutes":0}'),
   fastingHistory: JSON.parse(localStorage.getItem('v_fasting_history') || '[]'),
   coachMsgs: [],
   coachLoading: false,
@@ -45,7 +45,7 @@ const APP = {
   loginLoading: false,
 };
 
-if (!LANG[APP.lang]) APP.lang = 'pt';
+if (!LANG[APP.lang]) APP.lang = 'en';
 try { document.documentElement.lang = ({pt:'pt-BR',en:'en',es:'es',ru:'ru'}[APP.lang] || APP.lang); } catch(_) {}
 const CP1252_BYTES = {0x20AC:0x80,0x201A:0x82,0x0192:0x83,0x201E:0x84,0x2026:0x85,0x2020:0x86,0x2021:0x87,0x02C6:0x88,0x2030:0x89,0x0160:0x8A,0x2039:0x8B,0x0152:0x8C,0x017D:0x8E,0x2018:0x91,0x2019:0x92,0x201C:0x93,0x201D:0x94,0x2022:0x95,0x2013:0x96,0x2014:0x97,0x02DC:0x98,0x2122:0x99,0x0161:0x9A,0x203A:0x9B,0x0153:0x9C,0x017E:0x9E,0x0178:0x9F};
 function decodeMojibakeSegment(segment) {
@@ -101,11 +101,11 @@ function repairVisibleText(root) {
   } catch(_) {}
 }
 function t(key, ...args) {
-  const v = LANG[APP.lang]?.[key] ?? LANG.pt?.[key] ?? key;
+  const v = LANG[APP.lang]?.[key] ?? LANG.en?.[key] ?? key;
   return repairI18n(typeof v === 'function' ? v(...args) : v);
 }
 function getLang() {
-  var source = LANG[APP.lang] || LANG.pt || {};
+  var source = LANG[APP.lang] || LANG.en || {};
   var out = {};
   Object.keys(source).forEach(function(key){ out[key] = t(key); });
   return out;
@@ -264,15 +264,59 @@ function translateVisibleStaticText(root) {
   } catch(_) {}
 }
 
+// Localize legacy static catalogs through the existing I18N dictionary.
+// Machine identifiers and user-entered records are never translated.
+function localizeCatalogData(value, field) {
+  if (['key', 'cat', 'source', 'type', 'group', 'evidence', 'status', 'method'].indexOf(field) >= 0) return value;
+  if (typeof value === 'string') {
+    var copy = (LANG[APP.lang] || LANG.en).catalog_copy || {};
+    if (copy[value]) return copy[value];
+    var prefix = value.match(/^([\p{Extended_Pictographic}\uFE0F\u200D]+\s+)/u);
+    return prefix && copy[value.slice(prefix[0].length)] ? prefix[0] + copy[value.slice(prefix[0].length)] : value;
+  }
+  if (Array.isArray(value)) return value.map(function(item) { return localizeCatalogData(item); });
+  if (value && typeof value === 'object') {
+    var result = {};
+    Object.keys(value).forEach(function(key) { result[key] = localizeCatalogData(value[key], key); });
+    return result;
+  }
+  return value;
+}
+
 /* ═══════════════════════════════════════
    CALCULATIONS
 ═══════════════════════════════════════ */
+function normalizeUserProfile(source, name) {
+  var raw = source && typeof source === 'object' ? source : {};
+  var number = function(value, min, max, integer) {
+    if (value == null || value === '') return null;
+    var parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= min && parsed <= max && (!integer || Number.isInteger(parsed)) ? parsed : null;
+  };
+  var choice = function(value, values) { return values.indexOf(value) >= 0 ? value : null; };
+  return Object.assign({}, raw, {
+    name: String(raw.name || raw.nome || name || '').trim(),
+    weight: number(raw.weight ?? raw.peso, 20, 300),
+    height: number(raw.height ?? raw.altura, 100, 250),
+    age: number(raw.age ?? raw.idade, 1, 120, true),
+    gender: choice(raw.gender ?? raw.genero, ['m','f','other']),
+    goal: choice(raw.goal ?? raw.objetivo, ['lose','gain','maintain','health']),
+    activity: choice(raw.activity ?? raw.atividade, ['sed','light','mod','active']),
+    restrictions: Array.isArray(raw.restrictions ?? raw.restricoes) ? (raw.restrictions ?? raw.restricoes).slice() : [],
+    profileSource: raw.profileSource || (raw.profile_reviewed_at ? 'user_confirmed' : raw.id ? 'legacy_unverified' : 'user_input'),
+    primaryGoalCaptured: !!choice(raw.goal ?? raw.objetivo, ['lose','gain','maintain','health'])
+  });
+}
 function calcProfile(p) {
   if (!p) return null;
+  p = normalizeUserProfile(p);
+  if (p.profileSource === 'legacy_unverified') return null;
+  if (p.weight == null || p.height == null || p.age == null || p.age < 18 || !['m','f'].includes(p.gender) || !p.goal || !p.activity) return null;
   const peso = parseFloat(p.weight), h = parseFloat(p.height), idade = parseInt(p.age);
   const male = p.gender === 'm';
   const imc = +(peso / ((h/100)**2)).toFixed(1);
-  const imcClass = imc < 18.5 ? 'Abaixo do peso' : imc < 25 ? 'Normal' : imc < 30 ? 'Sobrepeso' : imc < 35 ? 'Obesidade I' : 'Obesidade II+';
+  const imcLabels={pt:['Abaixo do peso','Normal','Sobrepeso','Obesidade I','Obesidade II+'],en:['Underweight','Normal','Overweight','Obesity I','Obesity II+'],es:['Bajo peso','Normal','Sobrepeso','Obesidad I','Obesidad II+'],ru:['Недостаточная масса','Норма','Избыточная масса','Ожирение I','Ожирение II+']}[VITALIA_CLINICAL.normalizeClinicalLang(APP.lang)];
+  const imcClass = imcLabels[imc < 18.5 ? 0 : imc < 25 ? 1 : imc < 30 ? 2 : imc < 35 ? 3 : 4];
   const tmb = Math.round(male ? 10*peso+6.25*h-5*idade+5 : 10*peso+6.25*h-5*idade-161);
   const acts = {sed:1.2,light:1.375,mod:1.55,active:1.725};
   const tdee = Math.round(tmb*(acts[p.activity]||1.375));
@@ -283,7 +327,12 @@ function calcProfile(p) {
   const pesoIdeal = male ? +(50+2.3*((h-152.4)/2.54)).toFixed(1) : +(45.5+2.3*((h-152.4)/2.54)).toFixed(1);
   const pesoMeta = p.goal==='lose' ? Math.max(pesoIdeal,peso-10) : p.goal==='gain' ? peso+5 : peso;
   const semanas = Math.ceil(Math.abs(peso-pesoMeta)/0.75);
-  return {imc,imcClass,tmb,tdee,meta,prot,fat,carb,agua,aguaCopos,pesoIdeal,pesoMeta,semanas,peso,altura:h};
+  var risk = VITALIA_CLINICAL.classifyClinicalContext('',p);
+  if (risk === 'sensitive_clinical' || risk === 'urgent_red_flag') return null;
+  return {imc,imcClass,tmb,tdee,meta,prot,fat,carb,agua,aguaCopos,pesoIdeal,pesoMeta,semanas,peso,altura:h,estimated:true};
+}
+function coachProfileContext(source) {
+  return window.VITALIA_CLINICAL.verifiedProfileContext(source || APP.profile);
 }
 
 function calcDailyScore() {
@@ -309,8 +358,10 @@ function resetSessionVisualState() {
   APP.mood = null;
   APP.coachMsgs = [];
   APP.chatHistory = [];
+  APP.weightHistory = [];
   NUTR.analysis = null;
   NUTR.loading = false;
+  NUTR.week = null; NUTR.weekError = null; NUTR.weekOwner = null;
   NUTR.imagePreview = null;
   if (typeof SCAN !== 'undefined') {
     SCAN.result = null;
@@ -323,13 +374,15 @@ function addXP(n) {
 }
 
 function goalLabel(goal) {
-  return ({lose:'Emagrecimento', gain:'Hipertrofia', maintain:'Performance', health:'Saude geral'})[goal] || 'Saude geral';
+  return ['lose','gain','maintain','health'].includes(goal)?t('profile_'+goal):t('profile_target_unavailable');
 }
 
 function smartHydrationTarget() {
   const p = APP.profile || {};
   const ctx = APP.waterContext || {};
-  const weight = Number(p.weight || p.peso || 70);
+  const weight = normalizeUserProfile(p).weight;
+  const risk = VITALIA_CLINICAL.classifyClinicalContext('',p);
+  if (weight == null || !APP.calc || risk === 'sensitive_clinical' || risk === 'urgent_red_flag') return {ml:null,cups:null,base:null,activityExtra:null,climateExtra:null,temp:ctx.temp,weatherLabel:ctx.weatherLabel || 'manual',estimated:true};
   const base = weight * 35;
   const activityMin = Number(ctx.activityMinutes || 0);
   const activityExtra = Math.max(0, Math.round(activityMin / 30) * 250);
@@ -339,7 +392,7 @@ function smartHydrationTarget() {
 }
 
 function climateName(value) {
-  return ({cold:'Frio', normal:'Normal', hot:'Quente', very_hot:'Muito quente'})[value || 'normal'] || 'Normal';
+  return t('hydration_'+(['cold','normal','hot','very_hot'].includes(value)?value:'normal'));
 }
 
 async function updateWeatherHydration(force) {
@@ -382,33 +435,21 @@ function nutritionQualityScore(recordedMeals) {
   return Math.max(0, Math.min(100, Math.round((proteinMeals / Math.max(meals.length, 1)) * 55 + Math.min(meals.length, 5) * 9 - ultraPenalty)));
 }
 
-function weeklyReportData() {
-  const c = APP.calc || {};
-  const totals = macroTotals();
-  const hyd = smartHydrationTarget();
-  const energyPct = Math.min(140, Math.round((totals.kcal / (c.meta || 1800)) * 100));
-  const proteinPct = Math.min(160, Math.round((totals.prot / (c.prot || 120)) * 100));
-  const waterPct = Math.min(140, Math.round((APP.water / hyd.cups) * 100));
-  const quality = nutritionQualityScore();
-  const next = [];
-  if (proteinPct < 85) next.push('Distribuir proteina em 4 refeicoes e subir +25g/dia.');
-  if (waterPct < 90) next.push('Antecipar 2 copos ate o almoco e 1 copo pos-treino.');
-  if (energyPct < 75) next.push('Adicionar uma refeicao estrategica antes ou depois do treino.');
-  if (quality < 70) next.push('Trocar uma refeicao fraca por receita alta em proteina.');
-  if (!next.length) next.push('Manter consistencia e ajustar micro-metas para performance.');
-  return { energyPct, proteinPct, waterPct, quality, next: next.slice(0,3), totals };
+function weeklyReportData(){
+ const week=NUTR.week||[],recorded=week.filter(day=>day.meals>0),waterDays=week.filter(day=>day.water!=null);
+ const totals={kcal:recorded.reduce((sum,day)=>sum+day.kcal,0),prot:recorded.reduce((sum,day)=>sum+day.protein,0)};
+ const c=APP.calc||{},ratio=(actual,target,count)=>Number.isFinite(target)&&target>0&&count?Math.min(160,Math.round(actual/(target*count)*100)):null;
+ const energyPct=ratio(totals.kcal,c.meta,recorded.length),proteinPct=ratio(totals.prot,c.prot,recorded.length);
+ const waterPct=ratio(waterDays.reduce((sum,day)=>sum+day.water,0),c.aguaCopos,waterDays.length);
+ const quality=week.length?Math.round(recorded.length/7*100):null;
+ const next=[t('progress_next_log'),t('progress_next_review')];if(!APP.calc)next.unshift(t('progress_next_profile'));
+ return {energyPct,proteinPct,waterPct,quality,next:next.slice(0,3),totals,daysWithMeals:recorded.length,daysWithHydration:waterDays.length};
 }
 
-function weeklyInsightText(r) {
-  const name = (APP.profile?.name || 'Você').split(' ')[0];
-  const goal = goalLabel(APP.profile?.goal || 'health').toLowerCase();
-  const strong = [];
-  if (r.proteinPct >= 90) strong.push('proteína bem encaminhada');
-  if (r.waterPct >= 90) strong.push('hidratação consistente');
-  if (r.quality >= 75) strong.push('boa qualidade alimentar');
-  const best = strong.length ? strong.join(', ') : 'você já tem dados suficientes para ajustar a próxima semana com precisão';
-  const focus = r.proteinPct < 85 ? 'proteína em mais refeições' : r.waterPct < 90 ? 'água mais cedo no dia' : r.quality < 70 ? 'trocas simples por refeições mais limpas' : 'manter constância e subir o nível aos poucos';
-  return name + ', sua semana mostra ' + best + '. Para o objetivo de ' + goal + ', o próximo passo é focar em ' + focus + '. Isso aumenta energia, reduz fome fora de hora e protege massa muscular.';
+function weeklyInsightText(r){
+ if(NUTR.weekLoading)return t('analytics_loading_week');
+ if(NUTR.weekError)return NUTR.weekError;
+ return t('progress_week_summary').replace('{meals}',r.daysWithMeals||0).replace('{water}',r.daysWithHydration||0);
 }
 
 const CONFIG = {
@@ -416,7 +457,7 @@ const CONFIG = {
   GEMINI_FRONTEND_PLACEHOLDER_KEY: 'BACKEND_ONLY_SUPABASE_EDGE_FUNCTION',
   SUPABASE_URL: typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : '',
   SUPABASE_ANON_KEY: typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : '',
-  APP_VERSION: window.VITALIA_APP_VERSION || 'vitalia-v230e1-coach-module',
+  APP_VERSION: window.VITALIA_APP_VERSION,
   TERMS_VERSION: '2026-06-08',
   PRIVACY_VERSION: '2026-06-08'
 };
@@ -459,13 +500,25 @@ function clearSensitiveLocalCache() {
 function toastFriendlyError(scope, err) {
   var raw = String(err?.message || err || '').toLowerCase();
   var msg = raw.includes('fetch') || raw.includes('network') || raw.includes('failed')
-    ? 'Conexão instável. Seus dados serão sincronizados assim que o servidor responder.'
-    : 'Não foi possível concluir agora. Tente novamente em instantes.';
+    ? t('ui_network_error')
+    : t('ui_action_error');
   if (!window.__vitaliaLastErrToast || Date.now() - window.__vitaliaLastErrToast > 5000) {
     window.__vitaliaLastErrToast = Date.now();
     toast(msg, 'info', 3500);
   }
-  vitaliaLogEvent('warn', scope || 'app', msg, { raw: String(err?.message || err || '').slice(0, 500) });
+  vitaliaLogEvent('warn', scope || 'app', 'action_failed', { success:false });
+}
+
+function safeOperationalMetadata(meta) {
+  var safe={};
+  if(!meta || typeof meta!=='object')return safe;
+  ['status','http_status','response_ms','duration_ms','latency_ms','count','bytes','file_size','lineno','colno','recent_ingredients_count','recent_meals_count'].forEach(function(key){
+    var value=meta[key];if(typeof value==='number' && Number.isFinite(value) && value>=0 && value<=1e9)safe[key]=value;
+  });
+  ['success','fallback','mediaDevices'].forEach(function(key){if(typeof meta[key]==='boolean')safe[key]=meta[key];});
+  var enums={input_type:['text','image','camera','file','audio','live'],intent:['meal','recipe','juice','hydration','fasting','motivation','scanner_analysis','weight_loss','muscle_gain','emotional_eating','snack','drink_detox'],unit_system:['metric','imperial'],error_code:['text_request_failed','media_request_failed','action_failed'],protocol:['https:','http:']};
+  Object.keys(enums).forEach(function(key){if(enums[key].indexOf(meta[key])>=0)safe[key]=meta[key];});
+  return safe;
 }
 
 function vitaliaCaptureSentry(level, scope, message, metadata) {
@@ -476,26 +529,27 @@ function vitaliaCaptureSentry(level, scope, message, metadata) {
       sentryScope.setLevel(sentryLevel);
       sentryScope.setTag('scope', String(scope || 'app').slice(0, 80));
       sentryScope.setTag('app_version', CONFIG.APP_VERSION);
-      sentryScope.setContext('vitalia', sanitizeDbObject(metadata || {}));
-      window.Sentry.captureMessage(String(message || 'VitalIA event').slice(0, 240));
+      sentryScope.setContext('vitalia', safeOperationalMetadata(metadata));
+      window.Sentry.captureMessage('VitalIA operational event');
     });
   } catch (_) {}
 }
 
 function vitaliaLogEvent(level, scope, message, meta) {
   try {
-    var currentLang = 'pt';
-    try { currentLang = typeof getUserLanguage === 'function' ? getUserLanguage() : 'pt'; } catch(_) {}
+    var currentLang = 'en';
+    try { currentLang = typeof getUserLanguage === 'function' ? getUserLanguage() : 'en'; } catch(_) {}
+    var scopes=['app','coach_multimodal','coach_elite_call','coach_call','scanner','module_error','privacy_consent','profile','water','sync','sync-save','frontend_runtime','frontend_promise'];
+    scope=scopes.indexOf(scope)>=0?scope:'app';
+    level=['info','warn','error'].indexOf(level)>=0?level:'info';
     var payload = {
       level: String(level || 'info').slice(0, 20),
       scope: String(scope || 'app').slice(0, 80),
-      message: sanitizeDbString(message || 'event', 900),
-      metadata: sanitizeDbObject(Object.assign({
+      message: 'operational_'+scope+'_'+level,
+      metadata: Object.assign({
         app_version: CONFIG.APP_VERSION,
-        lang: currentLang,
-        path: location.pathname + location.hash,
-        user_agent: navigator.userAgent
-      }, meta || {}))
+        lang: currentLang
+      }, safeOperationalMetadata(meta))
     };
     if (typeof console !== 'undefined') {
       (level === 'error' ? console.error : level === 'warn' ? console.warn : console.log)('[VitalIA log]', payload.scope, payload.message, payload.metadata);
@@ -566,14 +620,15 @@ function getUserLanguage(userId) {
   var id = userId || currentUserId();
   try {
     var scoped = id ? localStorage.getItem(userScopedKey('v_lang', id)) : '';
-    return scoped || APP.lang || localStorage.getItem('v_lang') || 'pt';
+    return VITALIA_CLINICAL.normalizeClinicalLang(scoped || APP.lang || localStorage.getItem('v_lang'));
   } catch(_) {
-    return APP.lang || 'pt';
+    return VITALIA_CLINICAL.normalizeClinicalLang(APP.lang);
   }
 }
 
+var userLanguageWrites = new Map();
 function saveUserLanguage(code, userId) {
-  var lang = LANG[code] ? code : 'pt';
+  var lang = VITALIA_CLINICAL.normalizeClinicalLang(code);
   APP.lang = lang;
   try {
     localStorage.setItem('v_lang', lang);
@@ -581,6 +636,17 @@ function saveUserLanguage(code, userId) {
     document.documentElement.lang = ({pt:'pt-BR',en:'en',es:'es',ru:'ru'}[lang] || lang);
   } catch(_) {}
   try { coachMemoryService().saveMemory(userId || currentUserId(), 'language', { lang: lang }, { silent:true }); } catch(_) {}
+  // Same profile and RLS, serialized per user so a late write cannot overwrite a newer preference.
+  var id = userId || currentUserId();
+  if (id && String(id).indexOf('local') < 0 && typeof sbSavePerfil === 'function') {
+    var write = (userLanguageWrites.get(id) || Promise.resolve()).catch(function() {}).then(function() {
+      return sbSavePerfil(id, { language: lang });
+    }).then(function(saved) {
+      if (!saved) console.warn('[i18n] profile language was not synchronized');
+    });
+    userLanguageWrites.set(id, write);
+    write.finally(function() { if (userLanguageWrites.get(id) === write) userLanguageWrites.delete(id); }).catch(function() {});
+  }
 }
 
 function coachMemoryService() {
@@ -628,17 +694,22 @@ function coachMemoryService() {
     }
     return Promise.resolve(memory);
   }
-  function getMemory(userId) { return readLocal(userId || currentUserId()); }
+  function getMemory(userId) {
+    var memory=readLocal(userId || currentUserId());
+    if (memory.profile) memory.profile=coachProfileContext(memory.profile);
+    if (Array.isArray(memory.events)) memory.events=memory.events.map(function(event){return event.type==='profile'?Object.assign({},event,{data:coachProfileContext(event.data)}):event;});
+    return memory;
+  }
   function getRecentMeals(userId) { return (APP.meals || []).slice(-8); }
   function getHydrationStatus(userId) {
     var target = smartHydrationTarget();
-    var pct = Math.min(100, Math.round(((APP.water || 0) / Math.max(target.cups || 1, 1)) * 100));
+    var pct = target.cups ? Math.min(100, Math.round((APP.water || 0)/target.cups*100)) : null;
     return { cups: APP.water || 0, targetCups: target.cups, mlTarget: target.ml, pct:pct, context:APP.waterContext || {} };
   }
   function getGoals(userId) {
-    var p = APP.profile || {};
-    var c = APP.calc || calcProfile(p) || {};
-    return { goal:p.goal || p.objetivo || 'health', weight:p.weight || p.peso, height:p.height || p.altura, gender:p.gender || p.genero, calories:c.meta, protein:c.prot, water:c.aguaCopos };
+    var p = coachProfileContext();
+    var c = APP.calc || {};
+    return { goal:p.goal || p.objetivo || null, weight:p.weight || p.peso, height:p.height || p.altura, gender:p.gender || p.genero, calories:c.meta, protein:c.prot, water:c.aguaCopos };
   }
   function getNutritionContext(userId) {
     normalizeMeals();
@@ -647,8 +718,8 @@ function coachMemoryService() {
     return {
       totals: totals,
       quality: nutritionQualityScore(),
-      proteinPct: goals.protein ? Math.min(160, Math.round((totals.prot / goals.protein) * 100)) : 0,
-      kcalPct: goals.calories ? Math.min(160, Math.round((totals.kcal / goals.calories) * 100)) : 0,
+      proteinPct: goals.protein ? Math.min(160, Math.round((totals.prot / goals.protein) * 100)) : null,
+      kcalPct: goals.calories ? Math.min(160, Math.round((totals.kcal / goals.calories) * 100)) : null,
       meals: getRecentMeals(userId),
       goals: goals
     };
@@ -664,12 +735,12 @@ function coachContextService() {
       return {
         userId:id,
         language:getUserLanguage(id),
-        profile:APP.profile || {},
+        profile:coachProfileContext(),
         goals:svc.getGoals(id),
         units:unitContext(getUserLanguage(id)),
         displays:{
-          weight:formatWeight(APP.profile?.weight || APP.profile?.peso, getUserLanguage(id)),
-          height:formatHeight(APP.profile?.height || APP.profile?.altura, getUserLanguage(id)),
+          weight:formatWeight(coachProfileContext().weight, getUserLanguage(id)),
+          height:formatHeight(coachProfileContext().height, getUserLanguage(id)),
           hydration:formatVolumeMl((APP.water || 0) * 250, getUserLanguage(id))
         },
         nutrition:svc.getNutritionContext(id),
@@ -714,7 +785,7 @@ function coachFeedbackService() {
       calories_low:{pt:'Você consumiu menos calorias do que sua meta até agora.',en:'You have eaten below your calorie target so far.',es:'Has comido por debajo de tu meta calórica hasta ahora.',ru:'Пока вы ниже своей цели по калориям.'},
       scanner_sodium:{pt:'Esse produto merece atenção ao sódio antes de entrar no diário.',en:'This product deserves a sodium check before logging.',es:'Este producto merece revisar sodio antes de guardarlo.',ru:'Перед сохранением продукта стоит проверить натрий.'}
     };
-    return (dict[key] && (dict[key][lang] || dict[key].pt)) || key;
+    return (dict[key] && (dict[key][lang] || dict[key].en)) || key;
   }
   function generate(context) {
     var c = context || coachContextService().build();

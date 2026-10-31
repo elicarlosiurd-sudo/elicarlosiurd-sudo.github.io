@@ -1,4 +1,4 @@
-window.VITALIA_APP_VERSION = 'vitalia-v230e2-main-split';
+// release.js initializes the release before observability; never overwrite it here.
 
 var vitaliaDefaultObservabilityConfig = {
   SENTRY_DSN_PUBLIC: '',
@@ -47,6 +47,12 @@ vitaliaLoadPublicObservabilityConfig(function initVitaliaObservability() {
   var allowedEvents = {
     daily_action_completed: true,
     daily_completed: true,
+    weekly_plan_accepted: true,
+    daily_checkin_submitted: true,
+    weekly_review_viewed: true,
+    plan_adjustment_accepted: true,
+    routine_resumed: true,
+    usefulness_feedback_submitted: true,
     app_opened: true,
     auth_viewed: true,
     signup_started: true,
@@ -187,16 +193,26 @@ vitaliaLoadPublicObservabilityConfig(function initVitaliaObservability() {
     delete event.user;
     delete event.request;
     delete event.extra;
-    if (event.contexts) {
-      delete event.contexts.trace;
-      delete event.contexts.device;
-      delete event.contexts.os;
-      delete event.contexts.browser;
-    }
-    event.tags = sanitizeEventProps(Object.assign({}, event.tags || {}, {
-      app: 'vitalia',
-      surface: 'pwa'
-    }));
+    delete event.breadcrumbs;
+    delete event.logentry;
+    delete event.fingerprint;
+    // Rebuild rather than retain arbitrary SDK/plugin fields (transactions,
+    // spans, attachments and dynamic trace descriptions may contain health data).
+    var allowed = ['event_id','timestamp','platform','level','release','environment','exception','message','contexts','tags'];
+    Object.keys(event).forEach(function(key){if(allowed.indexOf(key)<0)delete event[key];});
+    event.message='VitalIA operational event';
+    var operational=event.contexts && event.contexts.vitalia;
+    event.contexts={vitalia:typeof safeOperationalMetadata==='function'?safeOperationalMetadata(operational):{}};
+    if(event.exception && Array.isArray(event.exception.values))event.exception.values=event.exception.values.map(function(value){
+      var types=['Error','TypeError','ReferenceError','RangeError','SyntaxError','URIError','DOMException'];
+      var frames=value.stacktrace && Array.isArray(value.stacktrace.frames)?value.stacktrace.frames:[];
+      return {type:types.indexOf(value.type)>=0?value.type:'Error',value:'runtime_failure',stacktrace:{frames:frames.map(function(frame){
+        var filename=String(frame.filename||'').split('?')[0].split('#')[0].split('/').pop();
+        var modules=['boot.js','app-core.js','auth.js','screens.js','coach.js','recipes-data.js','labs.js','wearables.js','progress.js','supabase-client.js','i18n.js','bodytwin.js'];
+        return {filename:modules.indexOf(filename)>=0?filename:'runtime',lineno:Number.isInteger(frame.lineno)?frame.lineno:undefined,colno:Number.isInteger(frame.colno)?frame.colno:undefined};
+      })}};
+    });
+    event.tags={app:'vitalia',surface:'pwa'};
     return event;
   }
 
@@ -283,7 +299,7 @@ vitaliaLoadPublicObservabilityConfig(function initVitaliaObservability() {
         if (!window.Sentry || window.__vitaliaSentryReady) return;
         window.Sentry.init({
           dsn: cfg.SENTRY_DSN_PUBLIC,
-          release: cfg.SENTRY_RELEASE || ('vitalia@' + (window.VITALIA_APP_VERSION || 'dev')),
+          release: window.VITALIA_APP_VERSION,
           environment: cfg.SENTRY_ENVIRONMENT || 'production',
           sendDefaultPii: false,
           sampleRate: 1.0,
