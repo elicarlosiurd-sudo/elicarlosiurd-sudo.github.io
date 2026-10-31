@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vitalia-v230e2-main-split';
+const CACHE_NAME = 'vitalia-v230e2-coach-mobile-r1';
 const APP_SHELL = [
   './',
   './index.html',
@@ -26,7 +26,7 @@ const APP_SHELL = [
   './js/modules/athlete.js?v=vitalia-v230e2-main-split',
   './js/modules/diagnostic.js?v=vitalia-v230e2-main-split',
   './js/modules/progress.js?v=vitalia-v230e2-main-split',
-  './js/modules/coach.js?v=vitalia-v230e2-main-split',
+  './js/modules/coach.js?v=vitalia-v230e2-coach-mobile-r1',
   './js/core/app-core.js?v=vitalia-v230e2-main-split',
   './js/modules/recipes-data.js?v=vitalia-v230e2-main-split',
   './js/modules/auth.js?v=vitalia-v230e2-main-split',

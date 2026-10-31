@@ -180,6 +180,7 @@ function toggleCoachTTS() {
 // ── attachCoach ─────────────────────────────────────────────────
 function attachCoach(screen) {
   if (screen) screen.classList.add('coach-open-screen');
+  coachFitComposer(screen);
   setTimeout(function() {
     var inp = document.getElementById('coach-input');
     var msgs = document.getElementById('coach-msgs');
@@ -219,6 +220,52 @@ function attachCoach(screen) {
     }
     setCoachOrbState(APP.coachLoading ? 'thinking' : 'idle');
   }, 80);
+}
+
+// Keep the composer above the real navigation/keyboard bounds, including PWA mode.
+function coachFitComposer(screen) {
+  if (window._coachComposerCleanup) window._coachComposerCleanup();
+  var bar = screen && screen.querySelector('#coach-input-bar');
+  var msgs = screen && screen.querySelector('#coach-msgs');
+  var nav = document.getElementById('bottom-nav');
+  if (!bar) return;
+  var frame = 0;
+  var viewport = window.visualViewport;
+  function fit() {
+    frame = 0;
+    if (!bar.isConnected) { cleanup(); return; }
+    var viewportBottom = viewport ? viewport.offsetTop + viewport.height : window.innerHeight;
+    var targetBottom = viewportBottom - 12;
+    if (nav && nav.getClientRects().length) {
+      var navRect = nav.getBoundingClientRect();
+      if (navRect.top < viewportBottom && navRect.bottom > 0) targetBottom = Math.min(targetBottom, navRect.top - 12);
+    }
+    var rect = bar.getBoundingClientRect();
+    var bottom = parseFloat(getComputedStyle(bar).bottom) || 0;
+    var delta = rect.bottom - targetBottom;
+    if (Math.abs(delta) > 1) bar.style.setProperty('bottom', (bottom + delta) + 'px', 'important');
+    if (msgs) {
+      var reserved = Math.max(12, msgs.getBoundingClientRect().bottom - (targetBottom - rect.height) + 12);
+      msgs.style.setProperty('padding-bottom', reserved + 'px', 'important');
+    }
+  }
+  function schedule() { if (!frame) frame = requestAnimationFrame(fit); }
+  var resize = typeof ResizeObserver === 'function' ? new ResizeObserver(schedule) : null;
+  if (resize) { resize.observe(bar); if (nav) resize.observe(nav); }
+  var removal = new MutationObserver(function() { if (!bar.isConnected) cleanup(); });
+  removal.observe(screen.parentNode || screen, { childList: true });
+  window.addEventListener('resize', schedule);
+  if (viewport) { viewport.addEventListener('resize', schedule); viewport.addEventListener('scroll', schedule); }
+  function cleanup() {
+    cancelAnimationFrame(frame);
+    if (resize) resize.disconnect();
+    removal.disconnect();
+    window.removeEventListener('resize', schedule);
+    if (viewport) { viewport.removeEventListener('resize', schedule); viewport.removeEventListener('scroll', schedule); }
+    if (window._coachComposerCleanup === cleanup) window._coachComposerCleanup = null;
+  }
+  window._coachComposerCleanup = cleanup;
+  schedule();
 }
 
 function setCoachOrbState(state) {
