@@ -370,8 +370,6 @@ function renderHome() {
   const proteinPct = Math.min(100, Math.round((totals.prot/(c.prot||120))*100));
   const waterPct = Math.min(100, Math.round((APP.water/hyd.cups)*100));
   const streak = APP.streak || 0;
-  const missionDone = [APP.meals.length>0, waterPct>=70, proteinPct>=70, (APP.coachMsgs||[]).length>1];
-  const missionPct = Math.round((missionDone.filter(Boolean).length/missionDone.length)*100);
   const dayNames = ['S','T','Q','Q','S','S','D'];
   const liveInsights = (coachInsightsService ? coachInsightsService().home() : []).slice(0,3);
   const insightStyle = {hydration:'insight-blue', nutrition:'insight-orange', progress:'insight-green', scanner:'insight-purple'};
@@ -385,12 +383,7 @@ function renderHome() {
       <button id="profileAvatarHome" class="premium-avatar tap-effect" onclick="navigate('settings')" title="${t('set_profile')}" style="overflow:hidden">${getProfileAvatarHTML(p.name?.charAt(0)||'V')}</button>
     </div>
 
-    <div class="premium-hero firefly-glow">
-      <span class="status-pill">${t('ai_health_system')}</span>
-      <h1>${t('home_hero_title')}</h1>
-      <p>${t('home_hero_subtitle')}</p>
-      <button class="primary-action btn-full tap-effect" onclick="navigate('nutrition')" style="padding:15px 18px">${t('home_continue')}</button>
-    </div>
+    ${window.VitaliaDaily.shell()}
 
     <div class="premium-metrics">
       <button class="metric-card tap-effect" onclick="navigate('nutrition')"><div class="metric-k">${t('home_metric_nutrition')}</div><div class="metric-v" style="color:var(--firefly)">${quality}%</div><div class="metric-sub">${proteinPct}% ${t('home_protein_goal')}</div></button>
@@ -443,17 +436,6 @@ function renderHome() {
         <div class="insight-top"><div class="insight-ico">${insightIcon[it.module]||vitaliaIcon('coach')}</div><div><div class="insight-title">${it.type==='protein_low'?t('insight_protein_low'):it.type==='hydration_low'?t('insight_hydration_low'):it.type==='calories_low'?t('insight_calories_low'):it.type==='scanner_sodium'?t('insight_scanner_sodium'):t('insight_consistency')}</div><div class="insight-copy">${escapeHTML(it.text)}</div></div></div>
         <button class="insight-action tap-effect" onclick="event.stopPropagation();navigate('${it.module||'coach'}')">${it.module==='hydration'?t('insight_adjust_hydration'):it.module==='nutrition'?t('insight_adjust_meal'):it.module==='scanner'?t('insight_review_product'):t('insight_continue')}</button>
       </div>`).join('')}
-    </section>
-
-    <section class="mission-card">
-      <div class="home-block-title">${t('mission_title')}</div>
-      <div class="home-block-sub">${t('mission_sub')}</div>
-      <div class="mission-row"><span class="mission-check ${missionDone[0]?'done':''}">${missionDone[0]?'✓':''}</span><span>${t('mission_register')}</span></div>
-      <div class="mission-row"><span class="mission-check ${missionDone[1]?'done':''}">${missionDone[1]?'✓':''}</span><span>${t('mission_water')}</span></div>
-      <div class="mission-row"><span class="mission-check ${missionDone[2]?'done':''}">${missionDone[2]?'✓':''}</span><span>${t('mission_protein')}</span></div>
-      <div class="mission-row"><span class="mission-check ${missionDone[3]?'done':''}">${missionDone[3]?'✓':''}</span><span>${t('mission_coach')}</span></div>
-      <div class="mission-progress-label"><span>${t('mission_progress')}</span><span>${missionPct}% ${t('mission_done')}</span></div>
-      <div class="mission-track"><div class="mission-fill" style="width:${missionPct}%"></div></div>
     </section>
 
     <section class="evolution-card tap-effect" onclick="navigate('progress')">

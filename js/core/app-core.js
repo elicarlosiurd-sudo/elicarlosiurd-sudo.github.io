@@ -287,13 +287,7 @@ function calcProfile(p) {
 }
 
 function calcDailyScore() {
-  const c = APP.calc;
-  if (!c) return 0;
-  const mealScore = Math.min(APP.meals.length / 5, 1) * 30;
-  const waterScore = Math.min(APP.water / (c.aguaCopos||8), 1) * 25;
-  const streakScore = Math.min(APP.streak / 30, 1) * 20;
-  const qualScore = APP.meals.length > 0 ? 25 : 0;
-  return Math.round(mealScore + waterScore + streakScore + qualScore);
+  return window.VitaliaDaily ? window.VitaliaDaily.snapshot().score : null;
 }
 
 /* ═══════════════════════════════════════
@@ -380,8 +374,8 @@ function macroTotals() {
   };
 }
 
-function nutritionQualityScore() {
-  const meals = APP.meals || [];
+function nutritionQualityScore(recordedMeals) {
+  const meals = Array.isArray(recordedMeals) ? recordedMeals : APP.meals || [];
   if (!meals.length) return 0;
   const proteinMeals = meals.filter(m => Number(m.prot || 0) >= 18).length;
   const ultraPenalty = meals.filter(m => /doce|refrigerante|frito|pizza|burger/i.test(m.name || '')).length * 8;

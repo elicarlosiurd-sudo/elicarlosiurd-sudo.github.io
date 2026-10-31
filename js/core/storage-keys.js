@@ -50,3 +50,5 @@ function vitaliaStorageRemove(key) {
     return false;
   }
 }
+// P1 daily suggestions and cached records are isolated by account and calendar day.
+var VITALIA_DAILY_STORAGE_KEY = 'vitalia_daily_v1';

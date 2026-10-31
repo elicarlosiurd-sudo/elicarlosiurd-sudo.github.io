@@ -45,6 +45,8 @@ function vitaliaLoadPublicObservabilityConfig(done) {
 vitaliaLoadPublicObservabilityConfig(function initVitaliaObservability() {
   var cfg = window.VITALIA_OBSERVABILITY_CONFIG || {};
   var allowedEvents = {
+    daily_action_completed: true,
+    daily_completed: true,
     app_opened: true,
     auth_viewed: true,
     signup_started: true,
