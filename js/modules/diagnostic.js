@@ -560,7 +560,9 @@ window.VitaliaWeek = (function () {
   }
   function safetyText(text) {
     var risk = VITALIA_CLINICAL.classifySharedClinicalRisk(text);
-    return risk === 'normal_nutrition' ? _goalDiagnosticSafetyText() : VITALIA_CLINICAL.buildClinicalContextGuidance(APP.lang, risk, text);
+    return risk === 'normal_nutrition'
+      ? _goalDiagnosticSafetyText()
+      : VITALIA_CLINICAL.buildClinicalContextGuidance(APP.lang, risk, text);
   }
   function e(value) {
     return escHtml(String(value == null ? '' : value));
@@ -788,6 +790,7 @@ window.VitaliaWeek = (function () {
     owner = currentOwner();
     model = null;
     rows = [];
+    draft = null;
     busy = false;
     openModal(
       label('title'),
@@ -851,6 +854,99 @@ window.VitaliaWeek = (function () {
     closeModal();
     navigate('diagnostic');
   }
+  // Local, reviewed habits. IDs shared with Meu Dia where the action is equivalent.
+  var habitCatalog = [
+    { id: 'water_log', pillar: 'hydration', minutes: 1 },
+    { id: 'meal_photo', pillar: 'nutrition', minutes: 1 },
+    { id: 'meal_note', pillar: 'nutrition', minutes: 2 },
+    { id: 'sleep_review', pillar: 'sleep', minutes: 0 },
+    { id: 'sleep_log', pillar: 'sleep', minutes: 1 },
+    { id: 'mind_pause', pillar: 'mind', minutes: 2 },
+    { id: 'mind_check', pillar: 'mind', minutes: 1 },
+    { id: 'recipe_review', pillar: 'nutrition', minutes: 3 },
+    { id: 'walk_5', pillar: 'movement', minutes: 5 },
+    { id: 'walk_10', pillar: 'movement', minutes: 10 },
+    { id: 'walk_20', pillar: 'movement', minutes: 20 }
+  ];
+  var timeOptions = [5, 10, 20, 30, 45],
+    draft = null;
+  function detectedZone() {
+    try {
+      var zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      day(new Date(), zone);
+      return zone || 'UTC';
+    } catch (_) {
+      return 'UTC';
+    }
+  }
+  function suggestions(goal, minutes, values) {
+    var priorities = {
+      weight_loss: 'nutrition',
+      muscle_gain: 'movement',
+      energy: 'sleep',
+      compulsion: 'mind',
+      nutrition: 'nutrition',
+      performance: 'movement',
+      health: 'hydration'
+    };
+    var walk = minutes >= 20 ? 'walk_20' : minutes >= 10 ? 'walk_10' : 'walk_5';
+    return habitCatalog
+      .filter(function (h) {
+        return h.minutes <= minutes && (!h.id.startsWith('walk_') || h.id === walk);
+      })
+      .map(function (h, index) {
+        var score = values?.[h.pillar];
+        // Missing data is unknown, never a fabricated weak score.
+        return {
+          habit: h,
+          index: index,
+          rank:
+            (typeof score === 'number' && Number.isFinite(score) ? Math.max(0, 100 - score) : 0) +
+            (priorities[goal] === h.pillar ? 35 : 0)
+        };
+      })
+      .sort(function (a, b) {
+        return b.rank - a.rank || a.index - b.index;
+      })
+      .slice(0, 8)
+      .map(function (x) {
+        return x.habit;
+      });
+  }
+  function actionTitle(h) {
+    return label('habit_' + h.id);
+  }
+  function actionReason(text) {
+    var habit = habitCatalog.find(function (h) {
+      return ['pt', 'en', 'es', 'ru'].some(function (lang) {
+        return LANG[lang]?.['week_habit_' + h.id] === text;
+      });
+    });
+    return label(habit ? 'why_' + habit.pillar : 'custom_why');
+  }
+  function validateActions(actions) {
+    return (
+      Array.isArray(actions) &&
+      actions.length >= 1 &&
+      actions.length <= 3 &&
+      actions.every(function (a) {
+        return typeof a === 'string' && !!a.trim() && a.trim().length <= 240;
+      }) &&
+      new Set(
+        actions.map(function (a) {
+          return a.trim().toLocaleLowerCase();
+        })
+      ).size === actions.length
+    );
+  }
+  function introKey() {
+    return userScopedKey(VITALIA_WEEK_INTRO_STORAGE_KEY, owner);
+  }
+  function introDone() {
+    if (!valid()) return;
+    vitaliaStorageSet(introKey(), true);
+    drawSetup();
+  }
   function setup() {
     if (
       !valid() ||
@@ -860,56 +956,350 @@ window.VitaliaWeek = (function () {
     )
       return;
     if (APP.profile?.age != null && Number(APP.profile.age) < 18) {
-      host().innerHTML = e(label('adult_only'));
+      host().textContent = label('adult_only');
       return;
     }
     var routine = model.weekly_routine,
       previous = routine?.cycles.at(-1);
-    var zone = routine?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-    var today = day(new Date(), zone);
+    var zone = routine?.timezone || detectedZone(),
+      today = day(new Date(), zone);
     if (previous && today <= previous.end) return;
-    var days = Array.from({ length: 7 }, function (_, i) {
-      return [
-        String(i),
-        new Intl.DateTimeFormat(APP.lang, { weekday: 'long', timeZone: 'UTC' }).format(
-          new Date('2026-11-0' + (i + 1) + 'T12:00:00Z')
-        )
-      ];
-    });
-    host().innerHTML =
-      '<p><strong>' +
-      e(model.goal_text) +
-      '</strong></p><p>' +
-      e(label('actions')) +
-      '</p>' +
-      field('week-zone', label('zone'), zone, 80) +
-      select(
-        'week-end',
-        label('end'),
-        days,
-        previous ? String(new Date(previous.end + 'T12:00:00Z').getUTCDay()) : '0'
-      ) +
-      field('week-availability', label('availability'), previous?.availability || '', 120) +
-      [0, 1, 2]
-        .map(function (i) {
-          return field(
-            'week-action-' + i,
-            label('action') + ' ' + (i + 1),
-            previous?.actions[i] || '',
-            240
-          );
-        })
-        .join('') +
-      '<label><input id="week-adult" type="checkbox"' +
-      (routine?.adult_confirmed ? ' checked' : '') +
-      '> ' +
-      e(label('adult')) +
-      '</label><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:16px">' +
-      button('accept()', label('accept')) +
-      button('open()', label('skip')) +
-      '</div>';
-    document.getElementById('week-zone').disabled = !!routine;
+    var values = {};
+    try {
+      values = window.VitaliaDaily?.snapshot().values || {};
+    } catch (_) {
+      /* unknown pillars remain unknown */
+    }
+    draft = {
+      owner: owner,
+      step: 1,
+      minutes: null,
+      zone: zone,
+      end: add(today, 6),
+      adult: !!routine?.adult_confirmed,
+      selected: [],
+      custom: '',
+      values: values
+    };
+    if (!vitaliaStorageGet(introKey(), false)) {
+      host().innerHTML =
+        '<p>' +
+        e(label('simple_intro')) +
+        '</p><div data-week-intro>' +
+        [1, 2, 3]
+          .map(function (i) {
+            return (
+              '<section class="premium-card" style="padding:16px;margin:12px 0"><span style="color:var(--green)">' +
+              i +
+              '</span><p>' +
+              e(label('intro_' + i)) +
+              '</p></section>'
+            );
+          })
+          .join('') +
+        '</div>' +
+        button('introDone()', label('intro_continue')) +
+        button('introDone()', label('intro_skip'));
+    } else drawSetup();
   }
+  function setupValid() {
+    return valid() && draft?.owner === owner && model?.status === 'active' && !busy;
+  }
+  function minutesLabel(n) {
+    return label(n === 45 ? 'time_plus' : 'time_value').replace('{minutes}', n);
+  }
+  function setTime(n) {
+    if (!setupValid() || !timeOptions.includes(n)) return;
+    draft.minutes = n;
+    // Keep selections only if their combined estimate still fits the chosen time.
+    var total = 0;
+    draft.selected = draft.selected.filter(function (item) {
+      if (total + (item.minutes || 0) > n) return false;
+      total += item.minutes || 0;
+      return true;
+    });
+    drawSetup();
+  }
+  function moveStep(n) {
+    if (!setupValid() || ![1, 2, 3].includes(n)) return;
+    if (n > 1 && !draft.minutes) return;
+    if (
+      n === 3 &&
+      !validateActions(
+        draft.selected.map(function (x) {
+          return x.title;
+        })
+      )
+    )
+      return;
+    draft.step = n;
+    drawSetup();
+    var title = document.getElementById('week-step-title');
+    if (title) title.focus();
+  }
+  function toggleHabit(id) {
+    if (!setupValid()) return;
+    var existing = draft.selected.findIndex(function (x) {
+      return x.id === id;
+    });
+    if (existing >= 0) draft.selected.splice(existing, 1);
+    else {
+      var h = suggestions(model.goal_type, draft.minutes, draft.values).find(function (x) {
+        return x.id === id;
+      });
+      if (
+        !h ||
+        draft.selected.length >= 3 ||
+        draft.selected.reduce(function (sum, x) {
+          return sum + (x.minutes || 0);
+        }, 0) +
+          h.minutes >
+          draft.minutes
+      )
+        return;
+      draft.selected.push({ id: h.id, title: actionTitle(h), minutes: h.minutes });
+    }
+    drawSetup();
+  }
+  function addCustom() {
+    if (!setupValid()) return;
+    var input = document.getElementById('week-custom'),
+      text = input?.value.trim() || '';
+    var actions = draft.selected
+      .map(function (x) {
+        return x.title;
+      })
+      .concat(text);
+    if (!validateActions(actions)) {
+      document.getElementById('week-custom-status').textContent = label('custom_invalid');
+      return;
+    }
+    if (_goalDiagnosticHasSafetySignal(text)) {
+      document.getElementById('week-custom-status').textContent = safetyText(text);
+      return;
+    }
+    draft.selected.push({ id: 'custom_' + Date.now(), title: text, minutes: 0 });
+    draft.custom = '';
+    drawSetup();
+  }
+  function changeAdvanced() {
+    if (!setupValid()) return;
+    try {
+      var zone = document.getElementById('week-zone').value.trim(),
+        today = day(new Date(), zone);
+      var end = document.getElementById('week-end').value;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(end) || end < today || end > add(today, 6))
+        throw Error('end');
+      if (model.weekly_routine && zone !== model.weekly_routine.timezone) throw Error('zone');
+      draft.zone = zone;
+      draft.end = end;
+      drawSetup();
+    } catch (_) {
+      document.getElementById('week-advanced-status').textContent = label('advanced_invalid');
+    }
+  }
+  function setCustom(value) {
+    if (setupValid()) draft.custom = String(value).slice(0, 240);
+  }
+  function setAdult(value) {
+    if (setupValid()) {
+      draft.adult = !!value;
+      updateStart();
+    }
+  }
+  function updateStart() {
+    var b = document.getElementById('week-start');
+    if (b) {
+      b.disabled = !draft?.adult || busy;
+      b.style.opacity = b.disabled ? '.45' : '1';
+    }
+  }
+  function drawSetup() {
+    if (!setupValid()) return;
+    var today = day(new Date(), draft.zone);
+    if (draft.end < today || draft.end > add(today, 6)) draft.end = add(today, 6);
+    var html =
+      '<p>' +
+      e(label('simple_intro')) +
+      '</p><p style="font-size:12px;color:var(--green)">' +
+      e(label('step_count').replace('{step}', draft.step)) +
+      '</p><h3 id="week-step-title" tabindex="-1">' +
+      e(label('step_' + draft.step)) +
+      '</h3>';
+    if (draft.step === 1) {
+      html +=
+        '<div style="display:flex;flex-wrap:wrap;gap:10px">' +
+        timeOptions
+          .map(function (n) {
+            return (
+              '<button type="button" class="btn btn-outline" style="min-height:48px;flex:1 0 28%;border-color:' +
+              (draft.minutes === n ? 'var(--green)' : 'var(--border)') +
+              '" aria-pressed="' +
+              (draft.minutes === n) +
+              '" onclick="VitaliaWeek.setTime(' +
+              n +
+              ')">' +
+              e(minutesLabel(n)) +
+              '</button>'
+            );
+          })
+          .join('') +
+        '</div><p>' +
+        e(label('time_note')) +
+        '</p><button type="button" class="btn btn-primary" style="min-height:48px;width:100%" ' +
+        (!draft.minutes ? 'disabled' : '') +
+        ' onclick="VitaliaWeek.moveStep(2)">' +
+        e(label('continue')) +
+        '</button>';
+    } else if (draft.step === 2) {
+      var used = draft.selected.reduce(function (sum, x) {
+        return sum + (x.minutes || 0);
+      }, 0);
+      html +=
+        '<p>' +
+        e(label('selection_count').replace('{count}', draft.selected.length)) +
+        '</p><div style="display:grid;gap:10px">' +
+        suggestions(model.goal_type, draft.minutes, draft.values)
+          .map(function (h) {
+            var chosen = draft.selected.some(function (x) {
+              return x.id === h.id;
+            });
+            return (
+              '<button type="button" class="premium-card" data-habit="' +
+              h.id +
+              '" aria-pressed="' +
+              chosen +
+              '" ' +
+              (!chosen && (draft.selected.length >= 3 || used + h.minutes > draft.minutes)
+                ? 'disabled'
+                : '') +
+              ' onclick="VitaliaWeek.toggleHabit(\'' +
+              h.id +
+              '\')" style="text-align:left;width:100%;margin:0;box-sizing:border-box;min-width:0;overflow-wrap:anywhere;padding:14px;min-height:88px;color:var(--text);border:1px solid ' +
+              (chosen ? 'var(--green)' : 'var(--border)') +
+              ';background:' +
+              (chosen ? 'rgba(34,197,94,.12)' : 'var(--surface)') +
+              ';border-radius:14px"><strong>' +
+              (chosen ? '✓ ' : '') +
+              e(actionTitle(h)) +
+              '</strong><span style="display:block;font-size:12px;color:var(--text2);margin-top:5px">' +
+              e(label('why_' + h.pillar)) +
+              '</span><span style="display:block;font-size:12px;color:var(--green);margin-top:4px">' +
+              e(h.minutes ? minutesLabel(h.minutes) : label('no_extra')) +
+              '</span></button>'
+            );
+          })
+          .join('') +
+        '</div><p style="font-size:12px">' +
+        e(label('selection_note')) +
+        '</p><details id="week-custom-details"><summary>' +
+        e(label('custom')) +
+        '</summary><p>' +
+        e(label('custom_rule')) +
+        '</p><label>' +
+        e(label('custom')) +
+        '<input id="week-custom" maxlength="240" oninput="VitaliaWeek.setCustom(this.value)" style="width:100%;box-sizing:border-box;padding:12px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:10px" placeholder="' +
+        e(label('custom_example')) +
+        '"></label><p>' +
+        e(label('custom_time')) +
+        '</p><p id="week-custom-status" role="status"></p>' +
+        button('addCustom()', label('custom_add')) +
+        '</details><div id="week-selected" style="margin:12px 0"></div><p id="week-selection-help">' +
+        e(label(draft.selected.length ? 'selection_ready' : 'selection_required')) +
+        '</p><button type="button" class="btn btn-primary" style="min-height:48px;width:100%" ' +
+        (!draft.selected.length ? 'disabled' : '') +
+        ' aria-describedby="week-selection-help" onclick="VitaliaWeek.moveStep(3)">' +
+        e(label('continue')) +
+        '</button>';
+    } else {
+      html +=
+        '<section class="premium-card" style="padding:16px"><p>' +
+        e(label('daily_time')) +
+        ': ' +
+        e(minutesLabel(draft.minutes)) +
+        '</p><ol id="week-summary-actions" style="padding-left:20px;overflow-wrap:anywhere"></ol><p>' +
+        e(label('until')) +
+        ' <strong>' +
+        e(
+          new Intl.DateTimeFormat(APP.lang, {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'short',
+            timeZone: 'UTC'
+          }).format(new Date(draft.end + 'T12:00:00Z'))
+        ) +
+        '</strong></p></section><details style="margin:16px 0"><summary>' +
+        e(label('advanced')) +
+        '</summary><details><summary>' +
+        e(label('change_zone')) +
+        '</summary>' +
+        field('week-zone', label('zone'), draft.zone, 80) +
+        (model.weekly_routine ? '<p>' + e(label('zone_locked')) + '</p>' : '') +
+        '</details><label>' +
+        e(label('end')) +
+        '<input id="week-end" type="date" min="' +
+        today +
+        '" max="' +
+        add(today, 6) +
+        '" value="' +
+        draft.end +
+        '" style="display:block;min-height:44px;max-width:100%"></label><p id="week-advanced-status" role="status"></p>' +
+        button('changeAdvanced()', label('apply_options')) +
+        '</details><label style="display:block;padding:12px 0"><input id="week-adult" type="checkbox" ' +
+        (draft.adult ? 'checked' : '') +
+        ' onchange="VitaliaWeek.setAdult(this.checked)"> ' +
+        e(label('adult_short')) +
+        '</label><button id="week-start" type="button" class="btn btn-primary" style="min-height:48px;width:100%" onclick="VitaliaWeek.accept()" ' +
+        (!draft.adult ? 'disabled' : '') +
+        '>' +
+        e(label('start')) +
+        '</button>';
+    }
+    html +=
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:12px">' +
+      (draft.step > 1 ? button('moveStep(' + (draft.step - 1) + ')', label('back')) : '') +
+      button('close()', label('cancel')) +
+      '</div><details style="margin-top:16px"><summary>ⓘ ' +
+      e(label('learn_more')) +
+      '</summary><p>' +
+      e(label('intro')) +
+      '</p></details>';
+    host().innerHTML = html;
+    // User-written text is only ever assigned through DOM textContent/value.
+    var list = document.getElementById(draft.step === 3 ? 'week-summary-actions' : 'week-selected');
+    if (list)
+      draft.selected.forEach(function (item) {
+        var node = document.createElement(draft.step === 3 ? 'li' : 'div');
+        node.textContent = item.title;
+        if (draft.step === 2) {
+          var remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'btn btn-outline';
+          remove.style.minHeight = '44px';
+          remove.textContent = label('remove');
+          remove.setAttribute('aria-label', label('remove') + ': ' + item.title);
+          remove.addEventListener('click', function () {
+            if (setupValid()) {
+              draft.selected = draft.selected.filter(function (x) {
+                return x.id !== item.id;
+              });
+              drawSetup();
+            }
+          });
+          node.appendChild(remove);
+        }
+        list.appendChild(node);
+      });
+    var customInput = document.getElementById('week-custom');
+    if (customInput) {
+      customInput.value = draft.custom;
+      if (draft.custom) document.getElementById('week-custom-details').open = true;
+    }
+    updateStart();
+    var zoneInput = document.getElementById('week-zone');
+    if (zoneInput) zoneInput.disabled = !!model.weekly_routine;
+  }
+
   async function commit(routine, date, check) {
     if (busy || !valid() || window.VITALIA_WEEKLY_ROUTINE_ENABLED === false) return false;
     busy = true;
@@ -949,6 +1339,7 @@ window.VitaliaWeek = (function () {
             .forEach(function (b) {
               b.disabled = false;
             });
+        if (valid() && draft) updateStart();
       }
     }
   }
@@ -962,19 +1353,20 @@ window.VitaliaWeek = (function () {
   async function accept() {
     if (busy || !valid()) return;
     try {
-      var zone = document.getElementById('week-zone').value.trim();
-      var today = day(new Date(), zone),
-        availability = document.getElementById('week-availability').value.trim();
-      var actions = [0, 1, 2]
-        .map(function (i) {
-          return document.getElementById('week-action-' + i).value.trim();
-        })
-        .filter(Boolean);
+      if (!setupValid() || draft.step !== 3) throw new Error('required');
+      var zone = draft.zone,
+        today = day(new Date(), zone);
+      var availability = minutesLabel(draft.minutes),
+        actions = draft.selected.map(function (x) {
+          return x.title.trim();
+        });
       if (
-        !availability ||
-        !actions.length ||
-        !document.getElementById('week-adult').checked ||
-        (APP.profile?.age != null && Number(APP.profile.age) < 18)
+        !timeOptions.includes(draft.minutes) ||
+        !validateActions(actions) ||
+        !draft.adult ||
+        (APP.profile?.age != null && Number(APP.profile.age) < 18) ||
+        draft.end < today ||
+        draft.end > add(today, 6)
       )
         throw new Error('required');
       if (_goalDiagnosticHasSafetySignal(actions.join(' '))) {
@@ -983,8 +1375,7 @@ window.VitaliaWeek = (function () {
       }
       var old = model.weekly_routine;
       if (old && today <= old.cycles.at(-1).end) throw new Error('conflict');
-      var weekday = new Date(today + 'T12:00:00Z').getUTCDay();
-      var end = add(today, (Number(document.getElementById('week-end').value) - weekday + 7) % 7);
+      var end = draft.end;
       var routine = old
         ? JSON.parse(JSON.stringify(old))
         : {
@@ -1004,6 +1395,7 @@ window.VitaliaWeek = (function () {
       });
       if (await commit(routine)) {
         track(old ? 'plan_adjustment_accepted' : 'weekly_plan_accepted');
+        draft = null;
         render();
       }
     } catch (error) {
@@ -1095,8 +1487,6 @@ window.VitaliaWeek = (function () {
       e(pretty(cycle.start)) +
       ' – ' +
       e(pretty(cycle.end)) +
-      ' · ' +
-      e(routine.timezone) +
       '</p>' +
       (absent ? '<p style="color:var(--green)">' + e(label('resume')) + '</p>' : '') +
       '<label>' +
@@ -1109,37 +1499,73 @@ window.VitaliaWeek = (function () {
       date +
       '" onchange="VitaliaWeek.render(this.value)" style="display:block;padding:10px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border-color);border-radius:10px;color-scheme:dark"></label>' +
       cycle.actions
-        .map(function (action, i) {
+        .map(function (_, i) {
+          var state = data.states?.[i] || 'unrecorded';
           return (
-            '<div style="border-bottom:1px solid var(--border-color);padding:10px 0"><strong>' +
-            e(data.replacements?.[i] || action) +
-            '</strong><div style="font-size:12px;color:var(--text2)">' +
-            e(label('source')) +
-            '</div>' +
-            select(
-              'week-state-' + i,
-              label('action') + ' ' + (i + 1),
-              states.map(function (k) {
-                return [k, label(k)];
-              }),
-              data.states?.[i] || 'unrecorded'
-            ) +
-            (date === today
-              ? '<details><summary>' +
-                e(label('swap')) +
-                '</summary>' +
-                field(
-                  'week-swap-' + i,
-                  label('action') + ' ' + (i + 1),
-                  data.replacements?.[i] || '',
-                  240
-                ) +
-                '</details>'
-              : '') +
-            '</div>'
+            '<section class="premium-card" style="padding:14px;margin:14px 0"><strong id="week-action-title-' +
+            i +
+            '" style="overflow-wrap:anywhere"></strong><p id="week-action-why-' +
+            i +
+            '" style="font-size:12px;color:var(--text2)"></p><input id="week-state-' +
+            i +
+            '" type="hidden" value="' +
+            e(state) +
+            '"><div role="group" aria-labelledby="week-action-title-' +
+            i +
+            '" style="display:flex;flex-wrap:wrap;gap:8px">' +
+            ['done', 'not_done', 'postponed']
+              .map(function (k) {
+                return (
+                  '<button type="button" class="btn btn-outline" data-check-action="' +
+                  i +
+                  '" data-check-state="' +
+                  k +
+                  '" aria-pressed="' +
+                  (state === k) +
+                  '" style="min-height:48px;flex:1;white-space:normal" onclick="VitaliaWeek.setCheckState(' +
+                  i +
+                  ",'" +
+                  k +
+                  '\')">' +
+                  e(label('check_' + k)) +
+                  '</button>'
+                );
+              })
+              .join('') +
+            '</div><details style="margin-top:10px"><summary>' +
+            e(label('more_options')) +
+            '</summary>' +
+            ['dismissed', 'unrecorded']
+              .map(function (k) {
+                return (
+                  '<button type="button" class="btn btn-outline" data-check-action="' +
+                  i +
+                  '" data-check-state="' +
+                  k +
+                  '" aria-pressed="' +
+                  (state === k) +
+                  '" style="min-height:44px" onclick="VitaliaWeek.setCheckState(' +
+                  i +
+                  ",'" +
+                  k +
+                  '\')">' +
+                  e(label(k)) +
+                  '</button>'
+                );
+              })
+              .join('') +
+            (date === today ? field('week-swap-' + i, label('swap'), '', 240) : '') +
+            '</details><p id="week-state-label-' +
+            i +
+            '" style="font-size:12px;color:var(--text2)">' +
+            e(label(state)) +
+            '</p></section>'
           );
         })
         .join('') +
+      '<section id="week-barrier" hidden><h3 style="font-size:16px">' +
+      e(label('barrier_question')) +
+      '</h3>' +
       select(
         'week-difficulty',
         label('difficulty'),
@@ -1148,7 +1574,8 @@ window.VitaliaWeek = (function () {
         }),
         data.difficulty || ''
       ) +
-      field('week-note', label('note'), data.note ?? legacy?.note ?? '', 500) +
+      field('week-note', label('note'), '', 500) +
+      '</section>' +
       (legacy?.note
         ? '<details><summary>' +
           e(label('existing_note')) +
@@ -1192,11 +1619,49 @@ window.VitaliaWeek = (function () {
             .join('') +
           '</details>'
         : '');
+    cycle.actions.forEach(function (action, i) {
+      var title = data.replacements?.[i] || action;
+      document.getElementById('week-action-title-' + i).textContent = title;
+      document.getElementById('week-action-why-' + i).textContent = actionReason(title);
+      var input = document.getElementById('week-swap-' + i);
+      if (input) input.value = data.replacements?.[i] || '';
+    });
+    document.getElementById('week-note').value = data.note ?? legacy?.note ?? '';
+    cycle.actions.forEach(function (_, i) {
+      setCheckState(i, data.states?.[i] || 'unrecorded');
+    });
+    updateBarrier();
     var viewKey = owner + ':' + model.id + ':' + cycle.start;
     if (!reviewViews.has(viewKey)) {
       reviewViews.add(viewKey);
       track('weekly_review_viewed');
     }
+  }
+  function updateBarrier() {
+    if (!valid() || !model?.weekly_routine) return;
+    var blocked = model.weekly_routine.cycles.at(-1).actions.some(function (_, i) {
+      return ['not_done', 'postponed'].includes(document.getElementById('week-state-' + i)?.value);
+    });
+    var section = document.getElementById('week-barrier');
+    if (section) section.hidden = !blocked;
+  }
+  function setCheckState(i, state) {
+    if (busy || !valid() || !states.includes(state)) return;
+    var input = document.getElementById('week-state-' + i);
+    if (!input) return;
+    input.value = state;
+    host()
+      .querySelectorAll('[data-check-action="' + i + '"]')
+      .forEach(function (b) {
+        var selected = b.dataset.checkState === state;
+        b.setAttribute('aria-pressed', String(selected));
+        b.style.borderColor = selected ? 'var(--green)' : 'var(--border)';
+        b.style.background = selected ? 'rgba(34,197,94,.16)' : 'transparent';
+      });
+    document.getElementById('week-state-label-' + i).textContent = label(
+      ['done', 'not_done', 'postponed'].includes(state) ? 'check_' + state : state
+    );
+    updateBarrier();
   }
   async function save() {
     if (busy || !valid()) return;
@@ -1276,7 +1741,8 @@ window.VitaliaWeek = (function () {
       if (meaningful && span(last || cycle.start, date) >= 3) track('routine_resumed');
       render(date);
       if (_goalDiagnosticHasSafetySignal(check.note)) {
-        document.getElementById('week-status').textContent = label('saved') + ' ' + safetyText(check.note);
+        document.getElementById('week-status').textContent =
+          label('saved') + ' ' + safetyText(check.note);
       }
     }
   }
@@ -1292,6 +1758,20 @@ window.VitaliaWeek = (function () {
     closeModal();
   }
   return {
+    suggestions: suggestions,
+    validateActions: validateActions,
+    detectedZone: detectedZone,
+    actionReason: actionReason,
+    catalog: habitCatalog,
+    introDone: introDone,
+    setTime: setTime,
+    moveStep: moveStep,
+    toggleHabit: toggleHabit,
+    addCustom: addCustom,
+    changeAdvanced: changeAdvanced,
+    setCustom: setCustom,
+    setAdult: setAdult,
+    setCheckState: setCheckState,
     home: shell,
     open: open,
     plan: plan,
