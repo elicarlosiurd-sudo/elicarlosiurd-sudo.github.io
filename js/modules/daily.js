@@ -99,6 +99,60 @@ window.VitaliaDaily = (() => {
       return false;
     }
   }
+  // Raw account metadata is cached; the projected display value is never stored.
+  function rememberGamification(row, uid = currentUserId()) {
+    if (!uid || uid !== currentUserId() || (row?.user_id && row.user_id !== uid)) return;
+    ensure();
+    cache.gamification = row && 'meu_dia_completed_on' in row && 'meu_dia_timezone' in row
+      ? { owner: uid, streak: row.streak, completedOn: row.meu_dia_completed_on, timezone: row.meu_dia_timezone }
+      : null;
+    state.records = cache;
+    persist();
+  }
+  function streakDisplay(now = new Date()) {
+    ensure();
+    const fallback = { value: APP.streak || 0, status: 'legacy', hint: 'home_rhythm' };
+    const raw = cache.gamification;
+    if (!owner || raw?.owner !== owner || !Number.isInteger(raw.streak) || raw.streak < 0) return fallback;
+    if (raw.completedOn === null) return { value: 0, status: 'never', hint: 'daily_streak_start' };
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(raw.completedOn) || !validZone(raw.timezone)) return fallback;
+    const parsed = new Date(raw.completedOn + 'T12:00:00Z');
+    if (!Number.isFinite(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== raw.completedOn) return fallback;
+    const today = dateKey(now, raw.timezone);
+    const yesterday = dateKey(new Date(Date.parse(today + 'T12:00:00Z') - 86400000), 'UTC');
+    if (raw.completedOn === today) return { value: raw.streak, status: 'today', hint: 'home_rhythm' };
+    if (raw.completedOn === yesterday) return { value: raw.streak, status: 'yesterday', hint: 'daily_streak_keep' };
+    if (raw.completedOn < yesterday) return { value: 0, status: 'broken', hint: 'daily_streak_restart' };
+    return fallback;
+  }
+  function streakValue(days = true) {
+    watchDisplay();
+    const value = streakDisplay().value;
+    return '<span data-streak-value="' + (days ? 'days' : 'number') + '">' + escapeHTML(String(value) + (days ? ' ' + t('unit_days') : '')) + '</span>';
+  }
+  function streakHint() {
+    return '<span data-streak-hint>' + escapeHTML(t(streakDisplay().hint)) + '</span>';
+  }
+  function streakRemaining() {
+    return '<span data-streak-remaining>' + escapeHTML(t('daily_streak_badge').replace('{days}', Math.max(0, 7 - Number(streakDisplay().value)))) + '</span>';
+  }
+  function analyticsHighlightText() {
+    const c = APP.calc || {}, value = streakDisplay().value;
+    return c.aguaCopos && APP.water >= c.aguaCopos * .8 ? t('analytics_ui_water_highlight')
+      : value >= 7 ? t('analytics_ui_streak_highlight').replace('{days}', value)
+      : t('analytics_ui_meal_highlight').replace('{count}', APP.meals.length);
+  }
+  function analyticsHighlight() {
+    return '<span data-streak-highlight>' + escapeHTML(analyticsHighlightText()) + '</span>';
+  }
+  function refreshStreakDisplay() {
+    const display = streakDisplay();
+    for (const el of document.querySelectorAll?.('[data-streak-value]') || [])
+      el.textContent = String(display.value) + (el.getAttribute('data-streak-value') === 'days' ? ' ' + t('unit_days') : '');
+    for (const el of document.querySelectorAll?.('[data-streak-hint]') || []) el.textContent = t(display.hint);
+    for (const el of document.querySelectorAll?.('[data-streak-remaining]') || []) el.textContent = t('daily_streak_badge').replace('{days}', Math.max(0, 7 - Number(display.value)));
+    for (const el of document.querySelectorAll?.('[data-streak-highlight]') || []) el.textContent = analyticsHighlightText();
+  }
   function bounded(operation) {
     let deadline;
     return Promise.race([
@@ -117,6 +171,7 @@ window.VitaliaDaily = (() => {
         : Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
     const today = dateKey(new Date(), zone);
     if (owner === uid && dayKey === today && state) return;
+    const remembered = owner === uid ? cache?.gamification : null;
     const rolled = owner === uid && !!dayKey && dayKey !== today;
     generation++;
     owner = uid;
@@ -154,6 +209,7 @@ window.VitaliaDaily = (() => {
     )
       state.actions = null;
     cache = state.records || { sleep: null, stress: null, training: false, plan: null, core: null };
+    if (!cache.gamification) cache.gamification = remembered || (stored?.owner === uid ? stored.records?.gamification : null) || null;
     root = document.getElementById('daily-root');
   }
   function persist() {
@@ -264,6 +320,7 @@ window.VitaliaDaily = (() => {
       );
   }
   function draw() {
+    refreshStreakDisplay();
     if (!root || !root.isConnected || owner !== currentUserId()) return;
     const result = snapshot();
     root.replaceChildren();
@@ -358,14 +415,20 @@ window.VitaliaDaily = (() => {
     if (!root || APP.tab !== 'home') return;
     draw();
     loadRemote(!localCoreTrusted);
+    watchDisplay();
+  }
+  function watchDisplay() {
     if (!timer)
       timer = setInterval(() => {
+        const previousDay = dayKey;
+        refreshStreakDisplay();
         if (!document.getElementById('daily-root') || APP.tab !== 'home') {
-          clearInterval(timer);
-          timer = null;
+          if (!document.querySelector?.('[data-streak-value]')) {
+            clearInterval(timer);
+            timer = null;
+          }
           return;
         }
-        const previousDay = dayKey;
         ensure();
         const next = JSON.stringify([
           dayKey,
@@ -432,6 +495,7 @@ window.VitaliaDaily = (() => {
       const game = results[4];
       const gamification =
         game?.status === 'fulfilled' && !game.value.error ? game.value.data?.[0] : null;
+      if (game?.status === 'fulfilled' && !game.value.error) rememberGamification(gamification, uid);
       if (gamification)
         state.backendReady =
           'meu_dia_completed_on' in gamification && 'meu_dia_timezone' in gamification;
@@ -678,10 +742,8 @@ window.VitaliaDaily = (() => {
       if (row?.meu_dia_completed_on !== date || !Number.isInteger(row.streak))
         throw new Error('save_error');
       APP.streak = row.streak;
-      const streakLabel = document.querySelector?.(
-        '.premium-metrics .metric-card:nth-child(3) .metric-v'
-      );
-      if (streakLabel) streakLabel.textContent = APP.streak + ' ' + t('unit_days');
+      rememberGamification(row, uid);
+      refreshStreakDisplay();
       state.credited = true;
       pendingMessage = '';
       persist();
@@ -719,6 +781,13 @@ window.VitaliaDaily = (() => {
     calculate,
     selectActions,
     dateKey,
+    rememberGamification,
+    streakDisplay,
+    streakValue,
+    streakHint,
+    streakRemaining,
+    analyticsHighlight,
+    refreshStreakDisplay,
     snapshot,
     shell,
     mount,

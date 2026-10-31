@@ -369,7 +369,6 @@ function renderHome() {
   const kcalPct = c.meta ? Math.min(100, Math.round(totals.kcal/c.meta*100)) : null;
   const proteinPct = c.prot ? Math.min(100, Math.round(totals.prot/c.prot*100)) : null;
   const waterPct = hyd.cups ? Math.min(100, Math.round(APP.water/hyd.cups*100)) : null;
-  const streak = APP.streak || 0;
   const dayNames = ['S','T','Q','Q','S','S','D'];
   const liveInsights = (coachInsightsService ? coachInsightsService().home() : []).slice(0,3);
   const insightStyle = {hydration:'insight-blue', nutrition:'insight-orange', progress:'insight-green', scanner:'insight-purple'};
@@ -390,7 +389,7 @@ function renderHome() {
     <div class="premium-metrics">
       <button class="metric-card tap-effect" onclick="navigate('nutrition')"><div class="metric-k">${t('home_metric_nutrition')}</div><div class="metric-v" style="color:var(--firefly)">${quality}%</div><div class="metric-sub">${proteinPct==null?t('profile_complete'):proteinPct+'% '+t('home_protein_goal')}</div></button>
       <button class="metric-card tap-effect" onclick="${hyd.cups?"navigate('hydration')":"editProfile()"}"><div class="metric-k">${t('home_metric_hydration')}</div><div class="metric-v" style="color:var(--blue)">${waterPct==null?'—':waterPct+'%'}</div><div class="metric-sub">${hyd.cups==null?t('profile_complete'):APP.water+' '+t('home_cups_of')+' '+hyd.cups+' '+t('unit_cups')}</div></button>
-      <button class="metric-card tap-effect" onclick="navigate('progress')"><div class="metric-k">${t('home_metric_streak')}</div><div class="metric-v" style="color:var(--gold)">${streak} ${t('unit_days')}</div><div class="metric-sub">${t('home_rhythm')}</div></button>
+      <button class="metric-card tap-effect" onclick="navigate('progress')"><div class="metric-k">${t('home_metric_streak')}</div><div class="metric-v" style="color:var(--gold)">${window.VitaliaDaily.streakValue()}</div><div class="metric-sub">${window.VitaliaDaily.streakHint()}</div></button>
       <button class="metric-card tap-effect" onclick="${c.meta?"navigate('nutrition')":"editProfile()"}"><div class="metric-k">${t('home_metric_daily')}</div><div class="metric-v" style="color:var(--orange)">${kcalPct==null?'—':kcalPct+'%'}</div><div class="metric-sub">${c.meta==null?t('profile_complete'):totals.kcal+' / '+c.meta+' kcal'}</div></button>
     </div>
 

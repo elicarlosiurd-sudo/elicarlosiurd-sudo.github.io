@@ -266,7 +266,8 @@ async function sbAddPeso(userId, peso) {
 
 // ── Gamificação ───────────────────────
 async function sbGetGamificacao(userId) {
-  const { data } = await sb.from('gamificacao').select('*').eq('user_id', userId).single();
+  const { data, error } = await sb.from('gamificacao').select('*').eq('user_id', userId).single();
+  if (!error) window.VitaliaDaily?.rememberGamification?.(data, userId);
   return data || { xp: 0, streak: 0 };
 }
 

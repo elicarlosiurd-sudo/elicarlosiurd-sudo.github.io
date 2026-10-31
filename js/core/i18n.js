@@ -2088,3 +2088,9 @@ Object.assign(LANG.pt,{auth_email_example:'seu@email.com'});
 Object.assign(LANG.en,{auth_email_example:'you@example.com'});
 Object.assign(LANG.es,{auth_email_example:'tu@ejemplo.com'});
 Object.assign(LANG.ru,{auth_email_example:'vash@example.com'});
+
+// P1b: display only; never replaces the server streak used by persistence.
+Object.assign(LANG.pt, {daily_streak_keep:'Conclua hoje para manter',daily_streak_restart:'Recomece hoje. Conclua suas 3 ações.',daily_streak_start:'Comece sua sequência hoje',daily_streak_badge:'Próximo badge em {days} dias'});
+Object.assign(LANG.en, {daily_streak_keep:'Complete today to keep your streak',daily_streak_restart:'Start again today. Complete your 3 actions.',daily_streak_start:'Start your streak today',daily_streak_badge:'Next badge in {days} days'});
+Object.assign(LANG.es, {daily_streak_keep:'Completa hoy para mantener tu racha',daily_streak_restart:'Vuelve a empezar hoy. Completa tus 3 acciones.',daily_streak_start:'Empieza tu racha hoy',daily_streak_badge:'Próxima insignia en {days} días'});
+Object.assign(LANG.ru, {daily_streak_keep:'Завершите действия сегодня, чтобы продолжить серию',daily_streak_restart:'Начните заново сегодня. Выполните 3 действия.',daily_streak_start:'Начните серию сегодня',daily_streak_badge:'Следующий значок через {days} дней'});

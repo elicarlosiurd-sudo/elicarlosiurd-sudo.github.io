@@ -1247,8 +1247,8 @@ function renderAchievements() {
   <div style="padding:0 16px;margin-bottom:12px">
     <div style="background:linear-gradient(135deg,rgba(249,115,22,.2),rgba(251,191,36,.1));border:1px solid rgba(249,115,22,.3);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center;gap:14px">
       <div style="font-size:36px">🔥</div>
-      <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--orange)">${APP.streak} dias de sequência!</div><div style="font-size:11px;color:var(--text2);margin-top:2px">Próximo badge em ${Math.max(0,7-APP.streak)} dias</div></div>
-      <div style="font-family:var(--font-serif);font-size:32px;font-weight:700;color:var(--orange)">${APP.streak}</div>
+      <div style="flex:1"><div style="font-size:14px;font-weight:700;color:var(--orange)">${window.VitaliaDaily.streakValue(false)} ${t('home_streak_days')}</div><div style="font-size:11px;color:var(--text2);margin-top:2px">${window.VitaliaDaily.streakRemaining()}<br>${window.VitaliaDaily.streakHint()}</div></div>
+      <div style="font-family:var(--font-serif);font-size:32px;font-weight:700;color:var(--orange)">${window.VitaliaDaily.streakValue(false)}</div>
     </div>
   </div>
 
@@ -1371,7 +1371,7 @@ function renderSettings() {
     <div class="profile-name">${p.name||u.name||t('settings_default_user')}</div>
     <div class="profile-email">${u.email||'user@vitalia.app'}</div>
     <div style="display:flex;gap:8px;justify-content:center;margin-top:8px;flex-wrap:wrap">
-      <span class="pill pill-green">${vitaliaIcon('progress')} ${APP.streak} dias</span>
+      <span class="pill pill-green">${vitaliaIcon('progress')} ${window.VitaliaDaily.streakValue()}</span>
       <span class="pill pill-yellow">${vitaliaIcon('achievements')} ${APP.xp} XP</span>
       <span class="pill pill-blue">${vitaliaIcon('premium')} ${t('set_free')}</span>
       ${APP.telegram?.connected ? `<span class="tg-connected-badge" style="font-size:10px">${vitaliaIcon('telegram')} Telegram</span>` : ''}
@@ -2010,11 +2010,11 @@ function renderAnalytics() {
   <div style="padding:0 16px;margin-bottom:12px">
     <div class="card card-glow">
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
-        ${[['🔥',t('analytics_ui_score'),(calcDailyScore()==null?'—':calcDailyScore()+'/100'),'var(--green)'],['🍽️',t('analytics_ui_calories'),sumKcal(APP.meals)+'/'+(c.meta ?? '—')+' kcal','var(--orange)'],['💧',t('analytics_ui_water'),APP.water+'/'+(c.aguaCopos ?? '—')+' '+t('analytics_ui_cups'),'var(--blue)'],['😊',t('analytics_ui_mood'),APP.mood||'—','var(--purple)'],['🍴',t('analytics_ui_meals'),APP.meals.length+'/5','var(--yellow)'],['🔥',t('analytics_ui_streak'),APP.streak+' '+t('analytics_ui_days'),'var(--orange)']].map(([e,l,v,col])=>`<div style="background:var(--surface2);border-radius:10px;padding:10px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">${e}</span><div><div style="font-size:10px;color:var(--text3)">${l}</div><div style="font-size:13px;font-weight:700;color:${col}">${v}</div></div></div>`).join('')}
+        ${[['🔥',t('analytics_ui_score'),(calcDailyScore()==null?'—':calcDailyScore()+'/100'),'var(--green)'],['🍽️',t('analytics_ui_calories'),sumKcal(APP.meals)+'/'+(c.meta ?? '—')+' kcal','var(--orange)'],['💧',t('analytics_ui_water'),APP.water+'/'+(c.aguaCopos ?? '—')+' '+t('analytics_ui_cups'),'var(--blue)'],['😊',t('analytics_ui_mood'),APP.mood||'—','var(--purple)'],['🍴',t('analytics_ui_meals'),APP.meals.length+'/5','var(--yellow)'],['🔥',t('analytics_ui_streak'),window.VitaliaDaily.streakValue(),'var(--orange)']].map(([e,l,v,col])=>`<div style="background:var(--surface2);border-radius:10px;padding:10px;display:flex;align-items:center;gap:8px"><span style="font-size:20px">${e}</span><div><div style="font-size:10px;color:var(--text3)">${l}</div><div style="font-size:13px;font-weight:700;color:${col}">${v}</div></div></div>`).join('')}
       </div>
       <div style="margin-top:10px;padding:10px;background:rgba(34,197,94,.06);border-radius:8px;border-left:3px solid var(--green)">
         <div style="font-size:11px;font-weight:700;color:var(--green);margin-bottom:3px">✨ ${t('analytics_ui_highlight')}</div>
-        <div style="font-size:12px;color:var(--text2)">${c.aguaCopos && APP.water>=c.aguaCopos*.8?t('analytics_ui_water_highlight'):APP.streak>=7?t('analytics_ui_streak_highlight').replace('{days}',APP.streak):t('analytics_ui_meal_highlight').replace('{count}',APP.meals.length)}</div>
+        <div style="font-size:12px;color:var(--text2)">${window.VitaliaDaily.analyticsHighlight()}</div>
       </div>
     </div>
   </div>
@@ -2156,7 +2156,7 @@ function renderCommProfile() {
     <div style="font-family:var(--font-serif);font-size:20px;font-weight:700">${p.name}</div>
     <div style="font-size:12px;color:var(--text2);margin:4px 0 12px">Explorando saúde com IA 🌿</div>
     <div style="display:flex;gap:16px;justify-content:center">
-      ${[['🔥',APP.streak,'Streak'],['⚖️',diff+'kg','perdidos'],['⚡',APP.xp,'XP'],['🏅','3','Badges']].map(([e,v,l])=>`<div style="text-align:center"><div style="font-size:16px;font-weight:700;color:var(--green)">${v}</div><div style="font-size:10px;color:var(--text3)">${l}</div></div>`).join('')}
+      ${[['🔥',window.VitaliaDaily.streakValue(false),t('home_metric_streak')],['⚖️',diff+'kg','perdidos'],['⚡',APP.xp,'XP'],['🏅','3','Badges']].map(([e,v,l])=>`<div style="text-align:center"><div style="font-size:16px;font-weight:700;color:var(--green)">${v}</div><div style="font-size:10px;color:var(--text3)">${l}</div></div>`).join('')}
     </div>
   </div>
   <div class="section-title">Seguindo</div>
@@ -2179,7 +2179,7 @@ function renderCommProfile() {
   <div class="share-card" style="margin-bottom:16px">
     <div style="font-size:11px;color:rgba(34,197,94,.6);margin-bottom:4px">Minha jornada · VitalIA</div>
     <div style="font-family:var(--font-serif);font-size:40px;font-weight:700;color:var(--green);font-style:italic">-${diff}kg</div>
-    <div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:4px">🔥 ${APP.streak} dias · ⚡ ${APP.xp} XP · Score: ${calcDailyScore()}/100</div>
+    <div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:4px">🔥 ${window.VitaliaDaily.streakValue()} · ⚡ ${APP.xp} XP · Score: ${calcDailyScore()}/100</div>
     <div style="margin:10px 0;font-style:italic;font-family:var(--font-serif);color:rgba(255,255,255,.7);">"Cada escolha saudável me aproxima do melhor eu."</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
       ${[['#25D366','💬 WhatsApp','whatsapp'],['#E1306C','📸 Instagram','instagram'],['#1DA1F2','🐦 Twitter','twitter'],['#000','🎵 TikTok','tiktok']].map(([col,l,net])=>`<button style="background:${col};color:#fff;padding:8px 12px;border-radius:99px;font-size:11px;font-weight:700;cursor:pointer;border:none" onclick="shareToNetwork('${net}')">${l}</button>`).join('')}
