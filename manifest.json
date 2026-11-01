@@ -3,7 +3,7 @@
   "short_name": "VitalIA",
   "description": "Saúde, nutrição e resiliência emocional com inteligência.",
   "id": "/vitalia-app/",
-  "start_url": "./index.html?v=vitalia-v234-footer-clearance-r1",
+  "start_url": "./index.html?v=vitalia-v234-premium-stable-r1",
   "scope": "./",
   "display": "standalone",
   "display_override": [

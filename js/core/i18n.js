@@ -90,7 +90,7 @@ const LANG = {
     recipe_ingredients:'Ingredientes',recipe_steps:'Modo de preparo',recipe_subs:'Substituições',
     recipe_add_plan:'Adicionar ao plano',recipe_shopping:'Lista de compras',
     hydration_title:'Hidratação',hydration_tip:'Dica de hidratação',
-    hydration_last7:'ÚLTIMOS 7 DIAS',hydration_avg:'Média',hydration_goal:'Meta',
+    hydration_last7:'ÚLTIMOS 7 DIAS',hydration_avg:'Média',hydration_goal:'Meta',hydration_history_unavailable:'O histórico dos últimos 7 dias ainda não está disponível.',
     hydration_tip_text:'Coma alimentos ricos em água: pepino, melancia, morango',
     sys_lang_instruction:'Responda SEMPRE no idioma selecionado pelo usuário.',
 
@@ -390,7 +390,7 @@ const LANG = {
     recipe_ingredients:'Ingredients',recipe_steps:'Preparation',recipe_subs:'Substitutions',
     recipe_add_plan:'Add to meal plan',recipe_shopping:'Shopping list',
     hydration_title:'Hydration',hydration_tip:'Hydration tip',
-    hydration_last7:'LAST 7 DAYS',hydration_avg:'Average',hydration_goal:'Goal',
+    hydration_last7:'LAST 7 DAYS',hydration_avg:'Average',hydration_goal:'Goal',hydration_history_unavailable:'The last 7 days of history are not available yet.',
     hydration_tip_text:'Eat water-rich foods: cucumber, watermelon, strawberry',
     sys_lang_instruction:'ALWAYS respond in the language selected by the user.',
 
@@ -691,7 +691,7 @@ const LANG = {
     recipe_ingredients:'Ingredientes',recipe_steps:'Preparación',recipe_subs:'Sustituciones',
     recipe_add_plan:'Agregar al plan',recipe_shopping:'Lista de compras',
     hydration_title:'Hidratación',hydration_tip:'Consejo de hidratación',
-    hydration_last7:'ÚLTIMOS 7 DÍAS',hydration_avg:'Promedio',hydration_goal:'Meta',
+    hydration_last7:'ÚLTIMOS 7 DÍAS',hydration_avg:'Promedio',hydration_goal:'Meta',hydration_history_unavailable:'El historial de los últimos 7 días aún no está disponible.',
     hydration_tip_text:'Come alimentos ricos en agua: pepino, sandía, fresa',
     sys_lang_instruction:'Responde SIEMPRE en el idioma seleccionado por el usuario.',
 
@@ -991,7 +991,7 @@ const LANG = {
     recipe_ingredients:'Ингредиенты',recipe_steps:'Приготовление',recipe_subs:'Замены',
     recipe_add_plan:'Добавить в план',recipe_shopping:'Список покупок',
     hydration_title:'Гидратация',hydration_tip:'Совет по гидратации',
-    hydration_last7:'ПОСЛЕДНИЕ 7 ДНЕЙ',hydration_avg:'Среднее',hydration_goal:'Цель',
+    hydration_last7:'ПОСЛЕДНИЕ 7 ДНЕЙ',hydration_avg:'Среднее',hydration_goal:'Цель',hydration_history_unavailable:'История за последние 7 дней пока недоступна.',
     hydration_tip_text:'Ешьте продукты с высоким содержанием воды: огурец, арбуз, клубника',
     sys_lang_instruction:'ВСЕГДА отвечайте на языке, выбранном пользователем.',
 

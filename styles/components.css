@@ -294,3 +294,52 @@ body.light-mode #root #app #app-body .screen-header{
   line-height:1.6;
   overflow-wrap:anywhere;
 }
+
+/* Narrow Coach headers need two rows: keep actions inside the existing 132px
+   header/suggestion offset without changing its glass, orb, colors or fonts. */
+@media (max-width:480px){
+  #root #app #app-body .coach-header{
+    display:grid!important;
+    height:132px!important;
+    grid-template-columns:40px auto minmax(0,1fr) auto;
+    grid-template-rows:minmax(0,1fr) auto;
+    gap:6px 8px;
+  }
+  #root #app #app-body .coach-header > .coach-back-btn{grid-area:1 / 1;}
+  #root #app #app-body .coach-header > .coach-avatar{grid-area:1 / 2;}
+  #root #app #app-body .coach-header > div:not(.coach-avatar){
+    grid-area:1 / 3 / 2 / 5;
+    min-width:0;
+    margin-left:0!important;
+    overflow-wrap:anywhere;
+  }
+  #root #app #app-body .coach-header > .coach-tts-btn{grid-area:2 / 3;justify-self:end;max-width:100%;}
+  #root #app #app-body .coach-header > .coach-clear-btn{grid-area:2 / 4;max-width:100%;}
+}
+
+/* Dark headers meet the viewport through their full-bleed background. Remove
+   the added rectangular frame and duplicated side stroke, retaining native
+   top/bottom borders, all dimensions and the existing glass/glow. */
+body:not(.light-mode) #root #app #app-body :is(.screen-header,.premium-home > .premium-top,.coach-header){
+  outline:none;
+  border-left-color:transparent!important;
+  border-right-color:transparent!important;
+}
+
+/* Distinguish unavailable history from genuine zero values. Keep the graph
+   and its value labels entirely in the existing area above the floating nav. */
+#root #app #app-body .hydration-screen .water-history-chart{display:flow-root;color:var(--text2);}
+#root #app #app-body .hydration-screen .water-history-empty{padding:16px 0;font-size:12px;line-height:1.6;}
+#root #app #app-body .hydration-screen .water-history-chart .history-bar-row{margin-bottom:28px;}
+#root #app #app-body .hydration-screen .water-history-chart .history-bar::after{
+  content:attr(data-cups);
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+  width:100%;
+  text-align:center;
+  font-size:11px;
+  line-height:16px;
+  color:inherit;
+}
+body.light-mode #root #app #app-body .hydration-screen .water-history-chart{color:#0B0F0C;}
