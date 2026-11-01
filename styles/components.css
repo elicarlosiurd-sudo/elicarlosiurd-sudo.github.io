@@ -247,3 +247,21 @@ body.light-mode #root #app #app-body .screen-header{
   #root #app #app-body > .screen{scrollbar-width:none;}
   #root #app #app-body > .screen::-webkit-scrollbar{display:none;}
 }
+
+/* These lists scroll above the existing floating nav, never underneath it.
+   The nav is at least 76px tall (the legacy token is only 68px); 30px covers
+   its 14px bottom inset plus a 16px gap. Keep nav size/position unchanged.
+   Specificity/important override legacy screen sizing and padding rules. */
+#root #app #app-body > .screen:is(.recipes-screen,.hydration-screen,.more-screen,.fasting-screen){
+  height:auto!important;
+  min-height:0!important;
+  bottom:calc(max(var(--nav-h),76px) + env(safe-area-inset-bottom,0px) + 30px)!important;
+  padding-bottom:16px!important;
+  scroll-padding-bottom:16px!important;
+}
+#root #app #app-body > .screen:is(.recipes-screen,.hydration-screen,.more-screen,.fasting-screen) > .screen-header + *{
+  margin-top:16px!important; /* Includes recipe fallback cards with inline margin:0. */
+}
+#root #app #app-body > .hydration-screen > .water-hero{
+  margin-bottom:16px;
+}
