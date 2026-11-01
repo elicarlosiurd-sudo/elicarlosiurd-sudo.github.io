@@ -1,2 +1,2 @@
 // Generated from release.json; do not edit.
-globalThis.VITALIA_APP_VERSION = "vitalia-v234-content-spacing-r1";
+globalThis.VITALIA_APP_VERSION = "vitalia-v234-hydration-ring-r1";

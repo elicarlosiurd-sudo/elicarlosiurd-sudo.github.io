@@ -265,3 +265,32 @@ body.light-mode #root #app #app-body .screen-header{
 #root #app #app-body > .hydration-screen > .water-hero{
   margin-bottom:16px;
 }
+
+/* Keep the long localized estimate below the 190px ring, inside its card.
+   Important declarations override only the existing inline ring geometry. */
+#root #app #app-body > .hydration-screen > .water-hero > div{
+  width:min(100%,320px)!important;
+  height:auto!important;
+}
+#root #app #app-body > .hydration-screen > .water-hero > div > svg{
+  position:absolute;
+  top:0;
+  left:calc(50% - 95px); /* Preserve the SVG's existing inline -90deg rotation. */
+}
+#root #app #app-body > .hydration-screen > .water-hero > div > div{
+  position:relative!important;
+  inset:auto!important;
+  padding-top:40px;
+}
+#root #app #app-body > .hydration-screen > .water-hero > div > div > div:nth-child(2){
+  width:120px;
+  min-height:32px;
+  margin-top:6px;
+  line-height:1.4;
+}
+#root #app #app-body > .hydration-screen > .water-hero > div > div > div:last-child{
+  width:100%;
+  margin-top:64px;
+  line-height:1.6;
+  overflow-wrap:anywhere;
+}
