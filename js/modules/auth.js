@@ -9,6 +9,8 @@
 ═══════════════════════════════════════ */
 function applyTheme() {
   document.body.className = APP.darkMode ? '' : 'light-mode';
+  var themeColor = document.querySelector('meta[name="theme-color"]');
+  if (themeColor) themeColor.content = APP.darkMode ? '#050505' : '#FFFFFF';
 }
 
 // (init moved to bottom)

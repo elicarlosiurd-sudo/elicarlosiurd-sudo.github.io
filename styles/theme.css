@@ -79,31 +79,554 @@
   --gold:#F59E0B;
 }
 
-.light-mode{
-  --bg:#f0faf4;
-  --bg-mid:#e8f5ee;
-  --bg-top:#f8fffe;
-  --surface:rgba(255,255,255,.90);
-  --surface2:rgba(240,250,244,.95);
-  --surface3:rgba(232,245,238,.98);
-  --surface4:rgba(255,255,255,1);
-  --text:#0a1f10;
-  --text2:#2d6b3a;
-  --text3:#6aaa7a;
-  --text-soft:rgba(10,31,16,.72);
-  --text-muted:rgba(45,107,58,.68);
-  --border:rgba(34,197,94,.12);
-  --border2:rgba(34,197,94,.20);
-  --border3:rgba(34,197,94,.28);
-  --shadow:0 4px 20px rgba(0,0,0,.08);
-  --shadow-lg:0 8px 40px rgba(0,0,0,.12);
-  --gradient-bg:radial-gradient(ellipse 80% 50% at 50% 0%,rgba(34,197,94,.08) 0%,transparent 70%);
-}
-
 @media (display-mode:standalone){
   :root{
     --bg:#020604;
     --bg-mid:#06100b;
     --bg-top:#08160f;
   }
+}
+
+/* P3 R5: white canvas and solid equivalents of all original dark surfaces.
+   Original blur, borders, shadows, glow, foregrounds and artwork stay. */
+body.light-mode {
+  --page-background: #FFFFFF;
+}
+/* Required to beat the existing utilities.css !important page backgrounds. */
+html:has(> body.light-mode),
+body.light-mode,
+body.light-mode #root,
+body.light-mode #root :is(#app,#app-body),
+body.light-mode #root #app #app-body :is(.screen,.premium-home,.home-bg,.settings-screen,.nutrition-screen,.recipes-screen,.more-screen,.hydration-screen,.scanner-screen,.coach-open-screen) {
+  background: var(--page-background) !important;
+}
+html:has(> body.light-mode) { background: transparent !important; }
+/* These pseudo-elements belong to the page canvas, never to a card. */
+body.light-mode::before,body.light-mode::after,
+body.light-mode #root #app #app-body .premium-home::after {
+  background: none !important;
+}
+/* Exception: text lying directly on the page, never inside a green component. */
+body.light-mode #root #app #app-body :is(.section-title,.msg-time,.scanner-examples-title,.scanner-country,#scan-live-status):not(:where(.card *,.premium-card *,.daily-action *,.recipe-card *,.settings-group *,.v-more-item *,.bodytwin-shell *)),
+body.light-mode #root #app #app-body :is(.nutrition-screen,.hydration-screen) > div[style*="font-size:12px"],
+body.light-mode #root #app #app-body .recipes-screen > div[style*="font-size:11px"],
+body.light-mode #root #app #app-body .recipes-screen > div:not(.card):not(.recipe-card) > div[style*="font-size:11px"],
+body.light-mode #root #app #app-body #rec-list > div:not(.recipe-card):not(:has(.recipe-card)):not(:has(> button[onclick^="REC.filter"])),
+body.light-mode #root #app #app-body .settings-screen :is(.profile-email,.profile-name) {
+  color:#0B0F0C !important;
+}
+
+/* P3 EXISTING PREMIUM SURFACES — GENERATED */
+/* Solid dark equivalents for all components, including empty states.
+   Original blur, borders, glow, shadows and foregrounds are untouched.
+   Scoped important backgrounds beat the existing legacy important rules. */
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .premium-top {
+  background-image: linear-gradient(rgb(3, 27, 15) 0%, rgb(3, 25, 14) 62%, rgb(3, 19, 10) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > #daily-root {
+  background-color: rgb(7, 21, 11) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > #daily-root > .daily-actions > .daily-action {
+  background-color: rgb(3, 13, 7) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > #daily-root > .daily-actions > .daily-action > .daily-controls > .btn.btn-outline.daily-button {
+  background-image: linear-gradient(rgb(7, 22, 13), rgb(3, 14, 8)) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .premium-card {
+  background-color: rgb(7, 21, 11) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .premium-card > .btn.btn-outline {
+  background-image: linear-gradient(rgb(9, 26, 15), rgb(5, 17, 10)) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .premium-metrics > .metric-card {
+  background-color: rgb(7, 21, 11) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .premium-card.coach-feature {
+  background-color: rgb(7, 21, 11) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .premium-card.coach-feature > div:nth-child(1) > div:nth-child(1) {
+  background-color: rgb(12, 39, 35) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .premium-card.coach-feature > .btn.btn-outline.btn-full {
+  background-image: linear-gradient(rgb(9, 26, 15), rgb(5, 17, 10)) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .home-register-card {
+  background-color: rgb(7, 21, 11) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .home-register-card > .next-action-icon {
+  background-color: rgb(8, 34, 21) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .home-quick-grid > .quick-card.quick-coach {
+  background-color: rgb(10, 23, 39) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .home-quick-grid > .quick-card.quick-recipes {
+  background-color: rgb(7, 22, 10) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .home-quick-grid > .quick-card.quick-fasting {
+  background-color: rgb(24, 15, 6) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .home-quick-grid > .quick-card.quick-scanner {
+  background-color: rgb(15, 8, 26) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > div:nth-child(11) > .seven-day-btn {
+  background-color: rgb(7, 21, 11) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .coach-insights-card {
+  background-color: rgb(7, 21, 11) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .coach-insights-card > .coach-insights-head > .status-pill {
+  background-color: rgb(10, 39, 19) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .coach-insights-card > .insight-mini.insight-blue {
+  background-image: linear-gradient(rgb(9, 25, 13), rgb(9, 25, 13)) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .coach-insights-card > .insight-mini.insight-blue > .insight-top > .insight-ico {
+  background-color: rgb(14, 45, 39) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .coach-insights-card > .insight-mini.insight-blue > .insight-action {
+  background-color: rgb(18, 33, 21) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .coach-insights-card > .insight-mini.insight-orange {
+  background-image: linear-gradient(rgb(9, 25, 13), rgb(9, 25, 13)) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .coach-insights-card > .insight-mini.insight-orange > .insight-top > .insight-ico {
+  background-color: rgb(39, 39, 17) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .coach-insights-card > .insight-mini.insight-orange > .insight-action {
+  background-color: rgb(18, 33, 21) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .coach-insights-card > .insight-mini.insight-green {
+  background-image: linear-gradient(rgb(9, 25, 13), rgb(9, 25, 13)) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .coach-insights-card > .insight-mini.insight-green > .insight-top > .insight-ico {
+  background-color: rgb(11, 43, 21) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .coach-insights-card > .insight-mini.insight-green > .insight-action {
+  background-color: rgb(18, 33, 21) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .evolution-card {
+  background-color: rgb(7, 21, 11) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .evolution-card > .evolution-icon {
+  background-color: rgb(32, 33, 15) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .evolution-card > div:nth-child(2) > .evolution-pills > .evo-pill {
+  background-color: rgb(10, 39, 19) !important;
+}
+body.light-mode #root #app #app-body > .screen.home-screen.active > .premium-home > .activity-card {
+  background-color: rgb(7, 21, 11) !important;
+}
+body.light-mode #root #bottom-nav {
+  background-image: linear-gradient(0deg, rgb(5, 19, 11) 0%, rgb(5, 19, 10) 55%, rgb(5, 18, 10) 100%) !important;
+}
+body.light-mode #root #bottom-nav > .nav-item.active {
+  background-image: linear-gradient(rgb(15, 47, 31) 0%, rgb(8, 28, 18) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.nutrition-screen.active > .screen-header {
+  background-image: linear-gradient(rgb(3, 10, 5) 0%, rgb(3, 10, 5) 58%, rgb(3, 10, 5) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.nutrition-screen.active > .screen-header > div:nth-child(2) > .btn.btn-sm.btn-outline {
+  background-image: linear-gradient(rgb(7, 21, 12), rgb(4, 13, 8)) !important;
+}
+body.light-mode #root #app #app-body > .screen.nutrition-screen.active > .screen-header > div:nth-child(2) > .btn.btn-sm.btn-outline.active {
+  background-image: linear-gradient(rgb(7, 21, 12), rgb(4, 13, 8)) !important;
+}
+body.light-mode #root #app #app-body > .screen.nutrition-screen.active > #cam-area {
+  background-image: linear-gradient(rgb(2, 14, 9), rgb(2, 8, 5)) !important;
+}
+body.light-mode #root #app #app-body > .screen.nutrition-screen.active > #cam-area > .meal-photo-content > .camera-icon {
+  background-color: rgb(4, 26, 14) !important;
+}
+body.light-mode #root #app #app-body > .screen.nutrition-screen.active > div:nth-child(4) > label:nth-child(1) > .btn.btn-outline.btn-full {
+  background-image: linear-gradient(rgb(7, 21, 12), rgb(4, 13, 8)) !important;
+}
+body.light-mode #root #app #app-body > .screen.nutrition-screen.active > div:nth-child(4) > .btn.btn-outline {
+  background-image: linear-gradient(rgb(7, 21, 12), rgb(4, 13, 8)) !important;
+}
+body.light-mode #root #app #app-body > .screen.nutrition-screen.active > .tab-row {
+  background-image: linear-gradient(rgb(6, 17, 10), rgb(3, 10, 6)) !important;
+}
+body.light-mode #root #app #app-body > .screen.nutrition-screen.active > .tab-row > .tab-btn.active {
+  background-image: linear-gradient(135deg, rgb(3, 66, 34), rgb(4, 35, 19)) !important;
+}
+body.light-mode #root #app #app-body > .screen.nutrition-screen.active > .meal-entry {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.nutrition-screen.active > .meal-entry > .meal-emoji {
+  background-color: rgb(15, 27, 19) !important;
+}
+body.light-mode #root #app #app-body > .screen.nutrition-screen.active > .meal-entry > div:nth-child(5) > .btn.btn-sm.btn-outline {
+  background-image: linear-gradient(rgb(8, 25, 14), rgb(4, 15, 9)) !important;
+}
+body.light-mode #root #app #app-body > .screen.nutrition-screen.active > div:nth-child(9) > .plan-meal-row {
+  background-image: linear-gradient(rgb(13, 22, 19), rgb(5, 8, 7)) !important;
+}
+body.light-mode #root #app #app-body > .screen.nutrition-screen.active > div:nth-child(11) > .card.card-purple {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.nutrition-screen.active > div:nth-child(11) > .card.card-purple > div:nth-child(3) {
+  background-color: rgb(18, 27, 28) !important;
+}
+body.light-mode #root #app #app-body > .screen.recipes-screen.active > .screen-header {
+  background-image: linear-gradient(rgb(3, 10, 5) 0%, rgb(3, 10, 5) 58%, rgb(3, 10, 5) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.recipes-screen.active > div:nth-child(2) > #recipe-search {
+  background-color: rgb(9, 22, 13) !important;
+}
+body.light-mode #root #app #app-body > .screen.recipes-screen.active > div:nth-child(3) > .card {
+  background-image: linear-gradient(rgb(2, 14, 9), rgb(2, 8, 5)) !important;
+}
+body.light-mode #root #app #app-body > .screen.recipes-screen.active > div:nth-child(3) > .card > div:nth-child(3) > #recipe-filter-goal {
+  background-color: rgb(9, 22, 14) !important;
+}
+body.light-mode #root #app #app-body > .screen.recipes-screen.active > div:nth-child(3) > .card > div:nth-child(3) > #recipe-filter-time {
+  background-color: rgb(9, 22, 14) !important;
+}
+body.light-mode #root #app #app-body > .screen.recipes-screen.active > div:nth-child(3) > .card > div:nth-child(3) > #recipe-filter-protein {
+  background-color: rgb(9, 22, 14) !important;
+}
+body.light-mode #root #app #app-body > .screen.recipes-screen.active > div:nth-child(3) > .card > div:nth-child(3) > #recipe-filter-carb {
+  background-color: rgb(9, 22, 14) !important;
+}
+body.light-mode #root #app #app-body > .screen.recipes-screen.active > div:nth-child(3) > .card > div:nth-child(3) > #recipe-filter-budget {
+  background-color: rgb(9, 22, 14) !important;
+}
+body.light-mode #root #app #app-body > .screen.recipes-screen.active > div:nth-child(3) > .card > div:nth-child(3) > .btn.btn-outline {
+  background-image: linear-gradient(rgb(6, 21, 13), rgb(3, 13, 8)) !important;
+}
+body.light-mode #root #app #app-body > .screen.recipes-screen.active > div:nth-child(4) > div:nth-child(2) > .tab-btn.active {
+  background-image: linear-gradient(135deg, rgb(2, 54, 28), rgb(3, 28, 14)) !important;
+}
+body.light-mode #root #app #app-body > .screen.recipes-screen.active > div:nth-child(4) > div:nth-child(2) > .tab-btn:not(.active) {
+  background-image: linear-gradient(rgb(7, 21, 12), rgb(4, 13, 8)) !important;
+}
+body.light-mode #root #app #app-body > .screen.recipes-screen.active > div:nth-child(5) > .filter-chips {
+  background-image: linear-gradient(rgb(5, 27, 16), rgb(2, 11, 6)) !important;
+}
+body.light-mode #root #app #app-body > .screen.recipes-screen.active > div:nth-child(5) > .filter-chips > .filter-chip:not(.active) {
+  background-image: linear-gradient(rgb(7, 25, 15), rgb(4, 16, 10)) !important;
+}
+body.light-mode #root #app #app-body > .screen.recipes-screen.active > #rec-list > div:nth-child(2) > .recipe-card.v-card {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.recipes-screen.active > #rec-list > div:nth-child(2) > .recipe-card.v-card > .recipe-body > div:nth-child(1) > .pill.pill-green {
+  background-color: rgb(8, 36, 17) !important;
+}
+body.light-mode #root #app #app-body > .screen.more-screen.active > .screen-header {
+  background-image: linear-gradient(rgb(3, 10, 5) 0%, rgb(3, 10, 5) 58%, rgb(3, 10, 5) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.more-screen.active > div:nth-child(2) > .v-more-item {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.more-screen.active > div:nth-child(2) > .v-more-item > .more-icon-premium {
+  background-color: rgb(7, 31, 15) !important;
+}
+body.light-mode #root #app #app-body > .screen.more-screen.active > div:nth-child(2) > .v-more-item > div:nth-child(2) > div:nth-child(1) > .smart-badge {
+  background-color: rgb(5, 32, 16) !important;
+}
+body.light-mode #root #app #app-body > .screen.more-screen.active > div:nth-child(3) > .premium-card {
+  background-image: linear-gradient(rgb(2, 14, 9), rgb(2, 8, 5)) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .screen-header {
+  background-image: linear-gradient(rgb(3, 10, 5) 0%, rgb(3, 10, 5) 58%, rgb(3, 10, 5) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .screen-header > .back-btn-inline {
+  background-image: linear-gradient(rgb(2, 16, 9) 0%, rgb(2, 10, 6) 55%, rgb(1, 5, 3) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .profile-hero > .profile-avatar-big.settings-avatar-action {
+  background-image: linear-gradient(135deg, rgb(0, 212, 109), rgb(14, 118, 64)) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .profile-hero > .profile-avatar-big.settings-avatar-action > .settings-avatar-edit {
+  background-color: rgb(5, 14, 10) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .profile-hero > .settings-avatar-copy {
+  background-color: rgb(3, 25, 13) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .profile-hero > div:nth-child(5) > .pill.pill-green {
+  background-color: rgb(6, 29, 14) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .profile-hero > div:nth-child(5) > .pill.pill-yellow {
+  background-color: rgb(33, 32, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .profile-hero > div:nth-child(5) > .pill.pill-blue {
+  background-color: rgb(9, 31, 34) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .settings-pad > .premium-card {
+  background-image: linear-gradient(rgb(2, 14, 9), rgb(2, 8, 5)) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .settings-group {
+  background-image: linear-gradient(rgb(2, 16, 9) 0%, rgb(2, 10, 6) 55%, rgb(1, 5, 3) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .settings-group > .settings-row {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .settings-group > .settings-row > .settings-icon {
+  background-color: rgb(8, 36, 18) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .lang-options.settings-pad > .lang-option.active {
+  background-image: radial-gradient(circle at 18% 0%, rgba(34, 197, 94, 0.075), rgba(0, 0, 0, 0) 32%), linear-gradient(rgb(2, 16, 9) 0%, rgb(2, 9, 6) 52%, rgb(1, 5, 3) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .lang-options.settings-pad > .lang-option:not(.active) {
+  background-image: radial-gradient(circle at 18% 0%, rgba(34, 197, 94, 0.075), rgba(0, 0, 0, 0) 32%), linear-gradient(rgb(2, 16, 9) 0%, rgb(2, 9, 6) 52%, rgb(1, 5, 3) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .settings-pad > .tg-card {
+  background-image: linear-gradient(135deg, rgb(7, 28, 30), rgb(4, 16, 13)) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .settings-pad > .tg-card > .tg-login-btn {
+  background-image: linear-gradient(135deg, rgb(9, 43, 31), rgb(6, 30, 25)) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .settings-group > .settings-row > div:nth-child(1) > .settings-icon {
+  background-color: rgb(8, 36, 18) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .settings-group > .settings-row > div:nth-child(2) > #gemini-key-input {
+  background-image: linear-gradient(rgb(3, 18, 10) 0%, rgb(2, 12, 7) 55%, rgb(1, 7, 4) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > div:nth-child(22) > .btn.btn-danger.btn-full {
+  background-color: rgb(32, 22, 18) !important;
+}
+body.light-mode #root #app #app-body > .screen.settings-screen.active > .settings-screen > .settings-group > .settings-row > .toggle > input:not(:checked) + .toggle-slider {
+  background-color: rgb(1, 9, 5) !important;
+}
+body.light-mode #root #modal-overlay > #modal-sheet {
+  background-color: rgb(12, 25, 16) !important;
+}
+body.light-mode #root #modal-overlay > #modal-sheet > .sheet-handle {
+  background-color: rgb(17, 68, 35) !important;
+}
+body.light-mode #root #modal-overlay > #modal-sheet > .sheet-header > .sheet-close {
+  background-color: rgb(4, 14, 8) !important;
+}
+body.light-mode #root #modal-overlay > #modal-sheet > #modal-body > #week-content > .premium-card {
+  background-image: linear-gradient(rgb(7, 20, 13), rgb(4, 11, 7)) !important;
+}
+body.light-mode #root #modal-overlay > #modal-sheet > #modal-body > #week-content > .premium-card > div:nth-child(4) > .btn.btn-outline {
+  background-color: rgb(9, 21, 14) !important;
+}
+body.light-mode #root #modal-overlay > #modal-sheet > #modal-body > #week-content > div:nth-child(8) > .btn.btn-outline {
+  background-color: rgb(12, 26, 17) !important;
+}
+body.light-mode #root #modal-overlay > #modal-sheet > #modal-body > #week-content > div:nth-child(11) > .btn.btn-outline {
+  background-color: rgb(12, 26, 17) !important;
+}
+body.light-mode #root #app #app-body > .screen.coach-screen.coach-open-screen.active > #coach-wrap > .coach-header {
+  background-color: rgb(2, 15, 8) !important;
+}
+body.light-mode #root #app #app-body > .screen.coach-screen.coach-open-screen.active > #coach-wrap > .coach-header > .coach-back-btn {
+  background-color: rgb(13, 25, 19) !important;
+}
+body.light-mode #root #app #app-body > .screen.coach-screen.coach-open-screen.active > #coach-wrap > .coach-header > #tts-toggle-btn {
+  background-color: rgb(5, 31, 17) !important;
+}
+body.light-mode #root #app #app-body > .screen.coach-screen.coach-open-screen.active > #coach-wrap > .coach-header > .coach-clear-btn {
+  background-color: rgb(16, 28, 21) !important;
+}
+body.light-mode #root #app #app-body > .screen.coach-screen.coach-open-screen.active > #coach-wrap > .coach-sugg-bar {
+  background-color: rgb(2, 14, 7) !important;
+}
+body.light-mode #root #app #app-body > .screen.coach-screen.coach-open-screen.active > #coach-wrap > .coach-sugg-bar > .coach-sugg-chip {
+  background-color: rgb(11, 22, 16) !important;
+}
+body.light-mode #root #app #app-body > .screen.coach-screen.coach-open-screen.active > #coach-wrap > #coach-msgs > .msg-wrap.ai > .msg-bubble {
+  background-image: linear-gradient(rgb(15, 25, 22), rgb(8, 13, 12)) !important;
+}
+body.light-mode #root #app #app-body > .screen.coach-screen.coach-open-screen.active > #coach-wrap > #coach-input-bar {
+  background-color: rgb(3, 17, 10) !important;
+}
+body.light-mode #root #app #app-body > .screen.coach-screen.coach-open-screen.active > #coach-wrap > #coach-input-bar > #coach-plus-btn {
+  background-color: rgb(17, 30, 23) !important;
+}
+body.light-mode #root #app #app-body > .screen.coach-screen.coach-open-screen.active > #coach-wrap > #coach-input-bar > #coach-input {
+  background-color: rgb(2, 13, 8) !important;
+}
+body.light-mode #root #app #app-body > .screen.coach-screen.coach-open-screen.active > #coach-wrap > #coach-input-bar > #coach-mic-btn {
+  background-color: rgb(17, 30, 23) !important;
+}
+body.light-mode #root #app #app-body > .screen.coach-screen.coach-open-screen.active > #coach-wrap > #coach-input-bar > #coach-sound-btn {
+  background-color: rgb(17, 30, 23) !important;
+}
+body.light-mode #root #app #app-body > .screen.hydration-screen.active > .screen-header {
+  background-image: linear-gradient(rgb(3, 10, 5) 0%, rgb(3, 10, 5) 58%, rgb(3, 10, 5) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.hydration-screen.active > .water-hero {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.hydration-screen.active > div:nth-child(4) > .card.card-blue {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.hydration-screen.active > div:nth-child(4) > .card.card-blue > .btn.btn-outline.btn-full {
+  background-image: linear-gradient(rgb(8, 25, 14), rgb(4, 15, 9)) !important;
+}
+body.light-mode #root #app #app-body > .screen.hydration-screen.active > div:nth-child(5) > .input {
+  background-color: rgb(9, 22, 13) !important;
+}
+body.light-mode #root #app #app-body > .screen.hydration-screen.active > .water-liquid-cups > .water-capsule.filled {
+  background-image: linear-gradient(rgb(7, 25, 25), rgb(4, 14, 10)) !important;
+}
+body.light-mode #root #app #app-body > .screen.hydration-screen.active > .water-liquid-cups > .water-capsule {
+  background-image: linear-gradient(rgb(7, 25, 25), rgb(4, 14, 10)) !important;
+}
+body.light-mode #root #app #app-body > .screen.hydration-screen.active > .water-buttons > .water-add-btn {
+  background-image: linear-gradient(rgb(9, 25, 30), rgb(5, 15, 18)) !important;
+}
+body.light-mode #root #app #app-body > .screen.hydration-screen.active > div:nth-child(8) > .card {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.hydration-screen.active > div:nth-child(8) > .card > .btn.btn-outline.btn-full {
+  background-image: linear-gradient(rgb(8, 25, 14), rgb(4, 15, 9)) !important;
+}
+body.light-mode #root #app #app-body > .screen.hydration-screen.active > div:nth-child(10) > .history-bar-row > .history-bar {
+  background-image: linear-gradient(rgb(25, 90, 110), rgb(10, 37, 40)) !important;
+}
+body.light-mode #root #app #app-body > .screen.scanner-screen.active > .screen-header {
+  background-image: linear-gradient(rgb(3, 10, 5) 0%, rgb(3, 10, 5) 58%, rgb(3, 10, 5) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.scanner-screen.active > .screen-header > .back-btn-inline {
+  background-image: linear-gradient(rgb(2, 16, 9) 0%, rgb(2, 10, 6) 55%, rgb(1, 5, 3) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.scanner-screen.active > .scanner-shell.v-safe-text > .tab-row.scanner-tabs {
+  background-image: linear-gradient(rgb(6, 17, 10), rgb(3, 10, 6)) !important;
+}
+body.light-mode #root #app #app-body > .screen.scanner-screen.active > .scanner-shell.v-safe-text > .tab-row.scanner-tabs > .tab-btn.active {
+  background-image: linear-gradient(135deg, rgb(3, 66, 34), rgb(4, 35, 19)) !important;
+}
+body.light-mode #root #app #app-body > .screen.scanner-screen.active > .scanner-shell.v-safe-text > #scanner-live-wrap {
+  background-image: radial-gradient(circle at 50% 35%, rgba(34, 197, 94, 0.11), rgba(0, 0, 0, 0) 36%), linear-gradient(rgb(2, 17, 9), rgb(0, 5, 3)) !important;
+}
+body.light-mode #root #app #app-body > .screen.scanner-screen.active > .scanner-shell.v-safe-text > #scanner-live-wrap > #quagga-viewport {
+  background-image: radial-gradient(circle at 50% 35%, rgba(34, 197, 94, 0.11), rgba(0, 0, 0, 0) 36%), linear-gradient(rgb(2, 19, 10), rgb(0, 6, 4)) !important;
+}
+body.light-mode #root #app #app-body > .screen.scanner-screen.active > .scanner-shell.v-safe-text > #scanner-live-wrap > #scan-laser {
+  background-color: rgb(27, 183, 92) !important;
+}
+body.light-mode #root #app #app-body > .screen.scanner-screen.active > .scanner-shell.v-safe-text > #scanner-live-wrap > .scanner-aim {
+  background-color: rgb(1, 8, 4) !important;
+}
+body.light-mode #root #app #app-body > .screen.scanner-screen.active > .scanner-shell.v-safe-text > #scan-live-status > a:nth-child(1) {
+  background-color: rgb(3, 10, 5) !important;
+}
+body.light-mode #root #app #app-body > .screen.scanner-screen.active > .scanner-shell.v-safe-text > .scanner-actions > .btn.btn-outline.scanner-file-btn {
+  background-image: linear-gradient(rgb(7, 21, 12), rgb(4, 13, 8)) !important;
+}
+body.light-mode #root #app #app-body > .screen.scanner-screen.active > .scanner-shell.v-safe-text > .btn.btn-danger.btn-full.scanner-stop-btn {
+  background-color: rgb(32, 22, 18) !important;
+}
+body.light-mode #root #app #app-body > .screen.scanner-screen.active > .scanner-shell.v-safe-text > .scanner-examples > .scanner-chip-row > .tab-btn.scanner-demo-chip:not(.active) {
+  background-image: linear-gradient(rgb(7, 21, 12), rgb(4, 13, 8)) !important;
+}
+body.light-mode #root #app #app-body > .screen.nutrition-screen.active > .card {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.recipes-screen.active > #rec-list > div:has(> button[onclick^="REC.filter"]) {
+  background-color: rgb(3, 10, 5) !important;
+}
+body.light-mode #root #app #app-body > .screen.recipes-screen.active > #rec-list > div:has(> button[onclick^="REC.filter"]) > .btn.btn-outline {
+  background-image: linear-gradient(rgb(7, 21, 12), rgb(4, 13, 8)) !important;
+}
+body.light-mode #root #app #app-body > .screen.fasting-screen.active > .screen-header {
+  background-image: linear-gradient(rgb(3, 10, 5) 0%, rgb(3, 10, 5) 58%, rgb(3, 10, 5) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.fasting-screen.active > .screen-header > .back-btn-inline {
+  background-image: linear-gradient(rgb(2, 16, 9) 0%, rgb(2, 10, 6) 55%, rgb(1, 5, 3) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.fasting-screen.active > .fast-hero.v-fasting-card {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.fasting-screen.active > div:nth-child(4) > .protocol-card.v-fasting-card.active {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.fasting-screen.active > div:nth-child(4) > .protocol-card.v-fasting-card {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.fasting-screen.active > div:nth-child(5) > .card.card-blue.v-fasting-card {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.fasting-screen.active > div:nth-child(7) > .card.v-fasting-card {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > .screen-header {
+  background-image: linear-gradient(rgb(3, 10, 5) 0%, rgb(3, 10, 5) 58%, rgb(3, 10, 5) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > .screen-header > .back-btn-inline {
+  background-image: linear-gradient(rgb(2, 16, 9) 0%, rgb(2, 10, 6) 55%, rgb(1, 5, 3) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > .screen-header > .pill.pill-blue {
+  background-color: rgb(9, 31, 34) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(3) > .card.card-glow {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(3) > .card.card-glow > div:nth-child(1) > div:nth-child(1) {
+  background-image: linear-gradient(rgb(3, 18, 10) 0%, rgb(2, 12, 7) 55%, rgb(1, 7, 4) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(3) > .card.card-glow > div:nth-child(1) > div:nth-child(2) {
+  background-image: linear-gradient(rgb(3, 18, 10) 0%, rgb(2, 12, 7) 55%, rgb(1, 7, 4) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(3) > .card.card-glow > div:nth-child(1) > div:nth-child(3) {
+  background-image: linear-gradient(rgb(3, 18, 10) 0%, rgb(2, 12, 7) 55%, rgb(1, 7, 4) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(3) > .card.card-glow > div:nth-child(1) > div:nth-child(4) {
+  background-image: linear-gradient(rgb(3, 18, 10) 0%, rgb(2, 12, 7) 55%, rgb(1, 7, 4) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(3) > .card.card-glow > div:nth-child(1) > div:nth-child(5) {
+  background-image: linear-gradient(rgb(3, 18, 10) 0%, rgb(2, 12, 7) 55%, rgb(1, 7, 4) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(3) > .card.card-glow > div:nth-child(1) > div:nth-child(6) {
+  background-image: linear-gradient(rgb(3, 18, 10) 0%, rgb(2, 12, 7) 55%, rgb(1, 7, 4) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(3) > .card.card-glow > div:nth-child(2) {
+  background-color: rgb(7, 29, 14) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(5) > .card {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(7) > .card {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(9) > .card.card-orange {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(11) > .card.card-purple {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(11) > .card.card-purple > div:nth-child(1) > div:nth-child(1) {
+  background-image: linear-gradient(rgb(3, 18, 10) 0%, rgb(2, 12, 7) 55%, rgb(1, 7, 4) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(11) > .card.card-purple > div:nth-child(1) > div:nth-child(2) {
+  background-image: linear-gradient(rgb(3, 18, 10) 0%, rgb(2, 12, 7) 55%, rgb(1, 7, 4) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(11) > .card.card-purple > div:nth-child(1) > div:nth-child(3) {
+  background-image: linear-gradient(rgb(3, 18, 10) 0%, rgb(2, 12, 7) 55%, rgb(1, 7, 4) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(11) > .card.card-purple > div:nth-child(3) > .btn.btn-outline {
+  background-image: linear-gradient(rgb(8, 25, 14), rgb(4, 15, 9)) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(13) > .card.card-blue {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(15) {
+  background-color: rgb(3, 10, 5) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(17) > .card {
+  background-color: rgb(5, 18, 9) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(17) > .card > div:nth-child(2) > div:nth-child(1) {
+  background-image: linear-gradient(rgb(3, 18, 10) 0%, rgb(2, 12, 7) 55%, rgb(1, 7, 4) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(17) > .card > div:nth-child(2) > div:nth-child(2) {
+  background-image: linear-gradient(rgb(3, 18, 10) 0%, rgb(2, 12, 7) 55%, rgb(1, 7, 4) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(17) > .card > div:nth-child(2) > div:nth-child(3) {
+  background-image: linear-gradient(rgb(3, 18, 10) 0%, rgb(2, 12, 7) 55%, rgb(1, 7, 4) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(17) > .card > div:nth-child(2) > div:nth-child(4) {
+  background-image: linear-gradient(rgb(3, 18, 10) 0%, rgb(2, 12, 7) 55%, rgb(1, 7, 4) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(17) > .card > div:nth-child(2) > div:nth-child(5) {
+  background-image: linear-gradient(rgb(3, 18, 10) 0%, rgb(2, 12, 7) 55%, rgb(1, 7, 4) 100%) !important;
+}
+body.light-mode #root #app #app-body > .screen.analytics-screen.active > div:nth-child(17) > .card > div:nth-child(2) > div:nth-child(6) {
+  background-image: linear-gradient(rgb(3, 18, 10) 0%, rgb(2, 12, 7) 55%, rgb(1, 7, 4) 100%) !important;
+}
+body.light-mode #root #modal-overlay > #modal-sheet > #modal-body > #week-content > .btn.btn-outline {
+  background-color: rgb(12, 26, 17) !important;
 }
