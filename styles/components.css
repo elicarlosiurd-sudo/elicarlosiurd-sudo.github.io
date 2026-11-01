@@ -252,7 +252,7 @@ body.light-mode #root #app #app-body .screen-header{
    The nav is at least 76px tall (the legacy token is only 68px); 30px covers
    its 14px bottom inset plus a 16px gap. Keep nav size/position unchanged.
    Specificity/important override legacy screen sizing and padding rules. */
-#root #app #app-body > .screen:is(.recipes-screen,.hydration-screen,.more-screen,.fasting-screen){
+#root #app #app-body > .screen:is(.recipes-screen,.nutrition-screen,.hydration-screen,.more-screen,.fasting-screen){
   height:auto!important;
   min-height:0!important;
   bottom:calc(max(var(--nav-h),76px) + env(safe-area-inset-bottom,0px) + 30px)!important;
