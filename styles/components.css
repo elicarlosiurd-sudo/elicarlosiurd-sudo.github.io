@@ -220,3 +220,30 @@ body.light-mode #root #app #app-body .screen-header{
 #root #app #app-body > .screen.settings-screen > .settings-screen{
   overflow:visible!important;
 }
+
+/* Narrow devices can have fractional DPR and a CSS viewport just above 430px.
+   Fill that viewport instead of leaving the centered app's white side gutters.
+   Keep the existing 430px desktop frame outside this narrow-screen range. */
+@media (max-width:480px){
+  /* One CSS px of paint bleed covers fractional device-pixel clipping at the
+     right edge. The matching margin and existing viewport overflow prevent
+     a horizontal scrollbar; no content or control is placed in that bleed. */
+  body #root{
+    max-width:none!important;
+    width:calc(100% + 1px)!important;
+    margin-left:0!important;
+    margin-right:-1px!important;
+  }
+  /* Avoid two fractional center/translate operations on fixed header layers. */
+  #root #app #app-body :is(.coach-header,.coach-sugg-bar){
+    max-width:none!important;
+    width:auto!important;
+    left:0!important;
+    right:-1px!important;
+    transform:none!important;
+  }
+  /* Hide only the outer scroll indicator/gutter, not scrolling. Overflow and
+     touch/wheel behavior stay on the existing .screen scroll container. */
+  #root #app #app-body > .screen{scrollbar-width:none;}
+  #root #app #app-body > .screen::-webkit-scrollbar{display:none;}
+}
