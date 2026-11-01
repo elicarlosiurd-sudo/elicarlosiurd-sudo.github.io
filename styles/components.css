@@ -188,3 +188,10 @@ html,body,#root{background:radial-gradient(ellipse 65% 40% at 12% 15%,rgba(34,19
 .daily-formula{font-size:12px;line-height:1.6;margin-top:14px;color:var(--text2)}
 .daily-formula summary{cursor:pointer;min-height:32px;padding:6px 0}
 .daily-action{display:flex;flex-direction:column;justify-content:space-between}
+
+/* Close the existing app-header perimeter inside its bounds. An inset outline
+   avoids clipping at viewport edges and leaves layout, glass and shadows intact. */
+#root #app #app-body :is(.screen-header,.premium-home > .premium-top,.coach-header){
+  outline:1px solid rgba(34,197,94,.22);
+  outline-offset:-1px;
+}
