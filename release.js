@@ -1,2 +1,2 @@
 // Generated from release.json; do not edit.
-globalThis.VITALIA_APP_VERSION = "vitalia-v234-header-border-r1";
+globalThis.VITALIA_APP_VERSION = "vitalia-v234-header-seal-r2";

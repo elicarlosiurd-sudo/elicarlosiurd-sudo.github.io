@@ -195,3 +195,28 @@ html,body,#root{background:radial-gradient(ellipse 65% 40% at 12% 15%,rgba(34,19
   outline:1px solid rgba(34,197,94,.22);
   outline-offset:-1px;
 }
+
+/* Home has a 16px content gutter. Fit the app, not 100vw: the app is capped
+   at 430px, so a viewport-wide header loses its side edges to root clipping.
+   Important only overrides the existing important viewport-width rules. */
+#root #app #app-body .premium-home > .premium-top{
+  width:auto!important;
+  max-width:none!important;
+  margin-left:-16px!important;
+  margin-right:-16px!important;
+}
+
+/* A solid dark backing closes uncomposed light-theme headers (including
+   modules outside the original P3 capture set). Opaque approved gradients
+   remain identical; translucent stops now compose over the original green
+   floor instead of the white page. Existing important background shorthands
+   require an important background-color here. */
+body.light-mode #root #app #app-body .screen-header{
+  background-color:#030A05!important;
+}
+
+/* Only the outer .screen scrolls. The nested settings wrapper must not create
+   a second scroll ancestor that carries its sticky header off the screen. */
+#root #app #app-body > .screen.settings-screen > .settings-screen{
+  overflow:visible!important;
+}
