@@ -2891,6 +2891,7 @@ function renderBodyTwin() {
 
 function renderMore() {
   const items = [
+    {id:'wearables',label:t('connect_title'),desc:t('connect_intro'),badge:'Connect'},
     {id:'fasting',label:t('more_fasting'),desc:t('more_fasting_d'),badge:'Timer'},
     {id:'scanner',label:t('more_scanner'),desc:t('more_scanner_d'),badge:'Vision'},
     {id:'coach',icon:'🤖',label:t('more_coach'),desc:t('more_coach_d'),badge:'IA'},
@@ -3083,7 +3084,7 @@ window.exportFullHistory = async function() {
     var session = (await sb.auth.getSession())?.data?.session || null;
     if (!session?.user) { toast('Entre na sua conta para exportar seus dados.', 'info'); return; }
     var userId = session.user.id;
-    var tables = ['goal_diagnostics','diagnostic_checkins','perfis','refeicoes','hidratacao','peso_historico','humor','gamificacao','coach_memories','coach_messages','coach_usage_daily','privacy_consents','privacy_deletion_requests'];
+    var tables = ['device_health_snapshots','device_connections','health_daily','sleep_sessions','goal_diagnostics','diagnostic_checkins','perfis','refeicoes','hidratacao','peso_historico','humor','gamificacao','coach_memories','coach_messages','coach_usage_daily','privacy_consents','privacy_deletion_requests'];
     var exportData = {
       exported_at: new Date().toISOString(),
       app: 'VitalIA',
@@ -3098,7 +3099,7 @@ window.exportFullHistory = async function() {
       if (table === 'perfis') query = query.eq('id', userId);
       else query = query.eq('user_id', userId);
       var res = await query;
-      if (res.error && ['goal_diagnostics','diagnostic_checkins'].includes(table)) throw res.error;
+      if (res.error && ['device_health_snapshots','device_connections','health_daily','sleep_sessions','goal_diagnostics','diagnostic_checkins'].includes(table)) throw res.error;
       exportData.data[table] = sanitizeDbObject(res.data || []);
     }
     var blob = new Blob([JSON.stringify(exportData, null, 2)], {type:'application/json;charset=utf-8'});

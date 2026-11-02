@@ -174,6 +174,7 @@ async function renderAthlete() {
     + ("" + "<button id=\"ath-coach-btn\" class=\"btn-secondary\" style=\"width:100%;margin-top:8px;\">" + (LANG[APP.lang] || LANG.en).catalog_copy["Analisar periodização com CoachIA"] + "</button>" + "")
     + '</div>';
 
+  if (window.VitaliaConnect) window.VitaliaConnect.mountBle(main,phaseKey);
   var coachBtn = document.getElementById('ath-coach-btn');
   if (coachBtn) {
     coachBtn.addEventListener('click', function() {

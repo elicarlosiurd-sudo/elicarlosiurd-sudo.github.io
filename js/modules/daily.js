@@ -483,7 +483,8 @@ window.VitaliaDaily = (() => {
         ),
         scopedQuery('athlete_logs', 'id,session_date', 'session_date', date),
         scopedQuery('goal_diagnostics', '*', null, date),
-        scopedQuery('gamificacao', '*', null, date)
+        scopedQuery('gamificacao', '*', null, date),
+        Promise.resolve().then(()=>getVitaliaSupabaseClient().from('sleep_sessions').select('source,start_at,end_at,stages').eq('user_id',uid).order('end_at',{ascending:false}).limit(60))
       ];
       const results = await Promise.race([
         Promise.allSettled(queries),
@@ -520,6 +521,16 @@ window.VitaliaDaily = (() => {
         const row = result.value.data?.[0] || null;
         cache[key] = key === 'training' ? !!row : row;
       });
+      const sessions=results[5];
+      if(sessions?.status==='fulfilled'&&!sessions.value.error){
+        const priority={health_connect:0,apple_health:0,fitbit:1,oura:1,garmin:1,manual:3};
+        const rows=(sessions.value.data||[]).filter(r=>Number.isFinite(Date.parse(r.end_at))&&dateKey(new Date(r.end_at),state.timezone)===date).sort((a,b)=>(priority[a.source]??9)-(priority[b.source]??9)||Date.parse(b.end_at)-Date.parse(a.end_at));
+        // Prefer one source; merge overlapping intervals without double counting.
+        const source=rows[0]?.source,chosen=rows.filter(r=>r.source===source);
+        let minutes=0,lastEnd=0,quality=null;
+        chosen.sort((a,b)=>Date.parse(a.start_at)-Date.parse(b.start_at)).forEach(r=>{const a=Date.parse(r.start_at),b=Date.parse(r.end_at),duration=(b-a)/60000;if(!Number.isFinite(a)||duration<=0||duration>1440)return;const s=r.stages?.summary||{};const available=Math.max(0,b-Math.max(a,lastEnd))/60000;const asleep=Number.isFinite(s.minutes_asleep)?s.minutes_asleep:duration;minutes+=Math.min(available,asleep);lastEnd=Math.max(lastEnd,b);if(r.source==='manual'&&Number.isInteger(s.quality)&&s.quality>=1&&s.quality<=5)quality=s.quality;});
+        if(chosen.length&&minutes>0&&minutes<=1440)cache.sleep={duration_hours:minutes/60,quality,sleep_date:date};
+      }
       if (!state.selectionFinalized && !state.actions.some(a => a.done))
         state.actions = selectActions(
           calculate(values()),
@@ -789,6 +800,7 @@ window.VitaliaDaily = (() => {
     analyticsHighlight,
     refreshStreakDisplay,
     snapshot,
+    accountTimezone: () => {ensure();return state.timezone;},
     shell,
     mount,
     complete,

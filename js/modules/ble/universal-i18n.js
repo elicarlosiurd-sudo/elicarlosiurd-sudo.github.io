@@ -1,0 +1,341 @@
+(function () {
+  const keys = [
+    'connect',
+    'automatic',
+    'direct',
+    'depends',
+    'guide',
+    'vary',
+    'unknown',
+    'signal',
+    'scan',
+    'remember',
+    'monitor',
+    'minutes',
+    'permission',
+    'native_only',
+    'health_read',
+    'background',
+    'stop',
+    'measuring',
+    'no_rr',
+    'no_measurement',
+    'capabilities',
+    'origin',
+    'other',
+    'restore',
+    'select',
+    'battery',
+    'running',
+    'cycling',
+    'information',
+    'heart_rate',
+    'oximeter',
+    'health_missing'
+  ];
+  const rows = {
+    pt: [
+      'Conectar relógio ou sensor',
+      'Conexão automática (recomendada)',
+      'Bluetooth direto',
+      'A compatibilidade depende do modelo e dos dados compartilhados pelo app da marca.',
+      'Ativar Bluetooth no meu relógio',
+      'Os nomes e a disponibilidade podem variar conforme o modelo. Não despareie do app oficial.',
+      'Consulte o manual do seu modelo. Só conectamos perfis Bluetooth padrão.',
+      'Sinal não disponível',
+      'Buscar dispositivos',
+      'Lembrar este dispositivo nesta conta',
+      'Monitorar agora',
+      'minutos sentado, em repouso',
+      'Permissão não concedida. Ajuste os tipos escolhidos ou autorize nas configurações.',
+      'A conexão automática está disponível no APK Android de teste. Apple Health será ativado no app para iPhone.',
+      'Acesso somente de leitura. Primeiro, sincronize o relógio com o app oficial e confira quais dados ele envia ao Health Connect.',
+      'VitalIA lendo seu sensor Bluetooth',
+      'Parar',
+      'Medição em andamento',
+      'RR insuficiente: HRV não foi calculada.',
+      'Ainda não há leituras suficientes para salvar.',
+      'O que este dispositivo oferece',
+      'Origem dos dados',
+      'Outras conexões e registro manual',
+      'Reconectar dispositivo salvo',
+      'Selecionar dispositivo',
+      'Bateria',
+      'Corrida',
+      'Ciclismo',
+      'Fabricante e modelo',
+      'Batimentos',
+      'Oxímetro',
+      'Health Connect indisponível. Verifique a instalação e as permissões no Android.'
+    ],
+    en: [
+      'Connect watch or sensor',
+      'Automatic connection (recommended)',
+      'Direct Bluetooth',
+      'Compatibility depends on the model and what its companion app shares.',
+      'Enable Bluetooth on my watch',
+      'Names and availability may vary by model. Keep the official app pairing.',
+      'Check your model’s manual. We connect standard Bluetooth profiles only.',
+      'Signal unavailable',
+      'Find devices',
+      'Remember this device for this account',
+      'Monitor now',
+      'minutes seated at rest',
+      'Permission was not granted. Adjust selected types or authorize them in settings.',
+      'Automatic connection is available in the Android test APK. Apple Health will be enabled in the iPhone app.',
+      'Read-only access. First sync your watch with its official app and check what it exports to Health Connect.',
+      'VitalIA reading your Bluetooth sensor',
+      'Stop',
+      'Measuring',
+      'Not enough RR intervals: HRV was not calculated.',
+      'Not enough readings to save yet.',
+      'What this device offers',
+      'Data origin',
+      'Other connections and manual records',
+      'Reconnect saved device',
+      'Select device',
+      'Battery',
+      'Running',
+      'Cycling',
+      'Manufacturer and model',
+      'Heart rate',
+      'Oximeter',
+      'Health Connect is unavailable. Check installation and Android permissions.'
+    ],
+    es: [
+      'Conectar reloj o sensor',
+      'Conexión automática (recomendada)',
+      'Bluetooth directo',
+      'La compatibilidad depende del modelo y de lo que comparte su app oficial.',
+      'Activar Bluetooth en mi reloj',
+      'Los nombres y la disponibilidad varían según el modelo. Mantén el emparejamiento con la app oficial.',
+      'Consulta el manual de tu modelo. Solo conectamos perfiles Bluetooth estándar.',
+      'Señal no disponible',
+      'Buscar dispositivos',
+      'Recordar este dispositivo para esta cuenta',
+      'Monitorizar ahora',
+      'minutos sentado, en reposo',
+      'Permiso no concedido. Ajusta los tipos elegidos o autorízalos en configuración.',
+      'La conexión automática está disponible en el APK Android de prueba. Apple Health se activará en la app para iPhone.',
+      'Acceso de solo lectura. Sincroniza primero el reloj con su app oficial y comprueba qué envía a Health Connect.',
+      'VitalIA leyendo tu sensor Bluetooth',
+      'Parar',
+      'Midiendo',
+      'RR insuficientes: no se calculó HRV.',
+      'Aún no hay suficientes lecturas para guardar.',
+      'Qué ofrece este dispositivo',
+      'Origen de los datos',
+      'Otras conexiones y registro manual',
+      'Reconectar dispositivo guardado',
+      'Seleccionar dispositivo',
+      'Batería',
+      'Carrera',
+      'Ciclismo',
+      'Fabricante y modelo',
+      'Pulsaciones',
+      'Oxímetro',
+      'Health Connect no disponible. Revisa la instalación y los permisos de Android.'
+    ],
+    ru: [
+      'Подключить часы или датчик',
+      'Автоматическое подключение (рекомендуется)',
+      'Прямой Bluetooth',
+      'Совместимость зависит от модели и данных, которыми делится приложение производителя.',
+      'Включить Bluetooth на часах',
+      'Названия и функции зависят от модели. Сохраняйте сопряжение с официальным приложением.',
+      'Проверьте руководство вашей модели. Подключаем только стандартные профили Bluetooth.',
+      'Уровень сигнала недоступен',
+      'Найти устройства',
+      'Запомнить устройство для этой учётной записи',
+      'Измерить сейчас',
+      'минут сидя в покое',
+      'Нет разрешения. Измените выбранные типы или разрешите их в настройках.',
+      'Автоматическое подключение доступно в тестовом APK Android. Apple Health появится в приложении для iPhone.',
+      'Только чтение. Сначала синхронизируйте часы с официальным приложением и проверьте экспорт в Health Connect.',
+      'VitalIA считывает Bluetooth-датчик',
+      'Остановить',
+      'Идёт измерение',
+      'Недостаточно RR: HRV не рассчитана.',
+      'Пока недостаточно измерений для сохранения.',
+      'Функции устройства',
+      'Источник данных',
+      'Другие подключения и ручные записи',
+      'Подключить сохранённое устройство',
+      'Выбрать устройство',
+      'Батарея',
+      'Бег',
+      'Велоспорт',
+      'Производитель и модель',
+      'Пульс',
+      'Пульсоксиметр',
+      'Health Connect недоступен. Проверьте установку и разрешения Android.'
+    ]
+  };
+  for (const lang of Object.keys(rows))
+    keys.forEach((k, i) => {
+      LANG[lang]['universal_' + k] = rows[lang][i];
+    });
+  const notification = {
+    pt: 'A sessão usa uma notificação com o botão Parar. O Android pedirá essa permissão ao iniciar.',
+    en: 'The session uses a notification with a Stop button. Android will request this permission when you start.',
+    es: 'La sesión usa una notificación con el botón Parar. Android pedirá este permiso al iniciar.',
+    ru: 'Во время сеанса отображается уведомление с кнопкой остановки. Android запросит разрешение при запуске.'
+  };
+  for (const lang of Object.keys(notification))
+    LANG[lang].universal_notification = notification[lang];
+  const additions = {
+    pt: {
+      imported: 'Dados importados',
+      minimum: 'FC mínima',
+      sleep_minutes: 'Sono registrado',
+      estimated: 'estimativa',
+      estimate_tip:
+        'Estimativa da menor média de 5 minutos durante o sono registrado. Não é uma medição de FC em repouso.',
+      rest_missing: 'FC em repouso: dados insuficientes. A média do dia não substitui essa medida.',
+      no_live:
+        'Este relógio não envia batimentos ao vivo por Bluetooth. Seus dados chegam pela Conexão automática (Health Connect).'
+    },
+    en: {
+      imported: 'Imported data',
+      minimum: 'Minimum HR',
+      sleep_minutes: 'Recorded sleep',
+      estimated: 'estimate',
+      estimate_tip:
+        'Estimate from the lowest 5-minute average during recorded sleep. This is not a resting heart rate measurement.',
+      rest_missing:
+        'Resting heart rate: insufficient data. Daily average is not a substitute for this measurement.',
+      no_live:
+        'This watch does not send live heart rate over Bluetooth. Your data arrives through Automatic connection (Health Connect).'
+    },
+    es: {
+      imported: 'Datos importados',
+      minimum: 'FC mínima',
+      sleep_minutes: 'Sueño registrado',
+      estimated: 'estimación',
+      estimate_tip:
+        'Estimación del promedio más bajo de 5 minutos durante el sueño registrado. No es una medición de FC en reposo.',
+      rest_missing:
+        'FC en reposo: datos insuficientes. El promedio del día no sustituye esta medición.',
+      no_live:
+        'Este reloj no envía pulsaciones en vivo por Bluetooth. Tus datos llegan por la Conexión automática (Health Connect).'
+    },
+    ru: {
+      imported: 'Импортированные данные',
+      minimum: 'Минимальный пульс',
+      sleep_minutes: 'Записанный сон',
+      estimated: 'оценка',
+      estimate_tip:
+        'Оценка по самому низкому среднему за 5 минут записанного сна. Это не измерение пульса в покое.',
+      rest_missing:
+        'Пульс в покое: недостаточно данных. Среднее за день не заменяет это измерение.',
+      no_live:
+        'Эти часы не передают пульс в реальном времени по Bluetooth. Данные поступают через автоматическое подключение (Health Connect).'
+    }
+  };
+  for (const [lang, values] of Object.entries(additions))
+    for (const [key, value] of Object.entries(values)) LANG[lang]['universal_' + key] = value;
+  const readable = {
+    pt: {
+      install_android: 'Instalar VitalIA para Android',
+      native_only:
+        'Para receber os dados do relógio no Android, instale o aplicativo VitalIA. No navegador, você pode consultar os dados já sincronizados.',
+      summary_title: 'Seu resumo',
+      heart_title: 'Batimentos cardíacos',
+      day_average: 'Média do dia',
+      day_lowest: 'Menor valor registrado',
+      day_highest: 'Maior valor registrado',
+      at_rest: 'Em repouso',
+      per_minute: 'por minuto',
+      sleep_title: 'Sono',
+      sleep_total: 'Tempo de sono',
+      steps_title: 'Passos',
+      steps_unit: 'passos',
+      oxygen_title: 'Oxigênio no sangue',
+      variation_title: 'Variação entre batimentos',
+      variation_tip: 'Mostra quanto varia o tempo entre uma batida do coração e outra.',
+      milliseconds: 'milissegundos',
+      hours_short: 'h',
+      minutes_short: 'min',
+      rest_missing: 'Batimentos em repouso: ainda não há dados suficientes.',
+      estimate_tip:
+        'Valor estimado a partir dos batimentos durante o sono registrado. Não é uma medição direta em repouso.'
+    },
+    en: {
+      install_android: 'Install VitalIA for Android',
+      native_only:
+        'Install the VitalIA Android app to receive watch data. In the browser, you can view data already synced.',
+      summary_title: 'Your summary',
+      heart_title: 'Heart rate',
+      day_average: 'Daily average',
+      day_lowest: 'Lowest recorded value',
+      day_highest: 'Highest recorded value',
+      at_rest: 'At rest',
+      per_minute: 'per minute',
+      sleep_title: 'Sleep',
+      sleep_total: 'Time asleep',
+      steps_title: 'Steps',
+      steps_unit: 'steps',
+      oxygen_title: 'Blood oxygen',
+      variation_title: 'Time variation between heartbeats',
+      variation_tip: 'Shows how much the time between one heartbeat and the next varies.',
+      milliseconds: 'milliseconds',
+      hours_short: 'h',
+      minutes_short: 'min',
+      rest_missing: 'Resting heart rate: not enough data yet.',
+      estimate_tip:
+        'Estimated from heartbeats during recorded sleep. This is not a direct resting measurement.'
+    },
+    es: {
+      install_android: 'Instalar VitalIA para Android',
+      native_only:
+        'Instala VitalIA para Android para recibir los datos del reloj. En el navegador puedes consultar los datos ya sincronizados.',
+      summary_title: 'Tu resumen',
+      heart_title: 'Latidos del corazón',
+      day_average: 'Promedio del día',
+      day_lowest: 'Menor valor registrado',
+      day_highest: 'Mayor valor registrado',
+      at_rest: 'En reposo',
+      per_minute: 'por minuto',
+      sleep_title: 'Sueño',
+      sleep_total: 'Tiempo de sueño',
+      steps_title: 'Pasos',
+      steps_unit: 'pasos',
+      oxygen_title: 'Oxígeno en la sangre',
+      variation_title: 'Variación entre latidos',
+      variation_tip: 'Muestra cuánto varía el tiempo entre un latido y el siguiente.',
+      milliseconds: 'milisegundos',
+      hours_short: 'h',
+      minutes_short: 'min',
+      rest_missing: 'Latidos en reposo: todavía no hay datos suficientes.',
+      estimate_tip:
+        'Valor estimado a partir de los latidos durante el sueño registrado. No es una medición directa en reposo.'
+    },
+    ru: {
+      install_android: 'Установить VitalIA для Android',
+      native_only:
+        'Чтобы получать данные часов, установите VitalIA для Android. В браузере можно просматривать уже синхронизированные данные.',
+      summary_title: 'Ваши данные',
+      heart_title: 'Пульс',
+      day_average: 'Среднее за день',
+      day_lowest: 'Минимальное значение',
+      day_highest: 'Максимальное значение',
+      at_rest: 'В покое',
+      per_minute: 'в минуту',
+      sleep_title: 'Сон',
+      sleep_total: 'Продолжительность сна',
+      steps_title: 'Шаги',
+      steps_unit: 'шагов',
+      oxygen_title: 'Кислород в крови',
+      variation_title: 'Изменение интервалов между ударами сердца',
+      variation_tip: 'Показывает, как меняется время между соседними ударами сердца.',
+      milliseconds: 'миллисекунд',
+      hours_short: 'ч',
+      minutes_short: 'мин',
+      rest_missing: 'Пульс в покое: пока недостаточно данных.',
+      estimate_tip:
+        'Оценка по пульсу во время записанного сна. Это не прямое измерение пульса в покое.'
+    }
+  };
+  for (const [lang, values] of Object.entries(readable))
+    for (const [key, value] of Object.entries(values)) LANG[lang]['universal_' + key] = value;
+})();

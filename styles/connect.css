@@ -1,0 +1,19 @@
+/* P4 only: keep all existing premium components and theme rules untouched. */
+#vitalia-connect,#connect-ble{color:#e8f4eb;line-height:1.5;max-width:560px;margin:16px auto;padding:0 16px 24px;overflow-wrap:anywhere}
+#vitalia-connect .connect-card,#connect-ble .connect-card{background:linear-gradient(145deg,#0a2011,#041209);border:1px solid #267a43;border-radius:22px;box-shadow:0 8px 24px #0005,inset 0 1px 0 #52ec8420;padding:20px;margin-bottom:16px;backdrop-filter:blur(16px);scroll-margin-top:100px}
+#vitalia-connect h2,#connect-ble h2{font-size:22px;margin:0 0 12px;color:#f2fff5}
+#vitalia-connect p,#connect-ble p{color:#bfdbc7;margin:8px 0 16px}
+#vitalia-connect button,#connect-ble button{min-height:48px;border-radius:14px;border:1px solid #4ad97a;background:#073519;color:#edfff2;padding:10px 16px;font:inherit;cursor:pointer;max-width:100%}
+#vitalia-connect button:disabled,#connect-ble button:disabled{cursor:wait;opacity:.7}
+#vitalia-connect .connect-primary,#connect-ble .connect-primary{background:linear-gradient(135deg,#41e778,#26bc59);color:#03240d;font-weight:700;box-shadow:0 0 18px #34df6530}
+#vitalia-connect .connect-actions,#connect-ble .connect-actions{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+#vitalia-connect label,#connect-ble label{display:block;margin:12px 0;color:#e8f4eb}
+#vitalia-connect input:not([type=checkbox]),#vitalia-connect select{display:block;width:100%;box-sizing:border-box;min-height:48px;background:#06180d;border:1px solid #62ac79;border-radius:10px;color:#f2fff5;padding:10px;font:inherit;color-scheme:dark}
+#vitalia-connect input[type=checkbox],#connect-ble input[type=checkbox]{width:22px;height:22px;vertical-align:middle;margin-right:10px;accent-color:#35da6d}
+#vitalia-connect a,#connect-ble a{display:inline-block;color:#7defa2;min-height:32px}
+#vitalia-connect>details{background:#06180d;color:#e8f4eb;padding:16px;border-radius:16px}
+#vitalia-connect .connect-status,#connect-ble .connect-status{min-height:24px;color:#d4f0dd}
+#connect-ble .connect-bpm{font-size:56px;font-weight:800;color:#54ed89;line-height:1.2}
+#connect-ble svg{display:block;width:100%;height:90px;background:#031007;border-radius:12px;margin:16px 0}
+#connect-ble dl{display:grid;grid-template-columns:1fr 1fr;gap:10px}#connect-ble dd{margin:0;text-align:right}
+#vitalia-connect button:focus-visible,#connect-ble button:focus-visible,#vitalia-connect input:focus-visible{outline:3px solid #c2ffd4;outline-offset:3px}

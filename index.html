@@ -10,11 +10,13 @@
 <meta name="theme-color" content="#050505">
 <title>VitalIA - Saúde com Inteligência</title>
 <link rel="manifest" href="./manifest.json">
-<link rel="apple-touch-icon" href="/assets/apple-touch-icon-Dpi31azn.png?v=vitalia-v234-premium-stable-r1">
-<link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192-IrzRsN2J.png?v=vitalia-v234-premium-stable-r1">
-<link rel="icon" type="image/png" sizes="512x512" href="/assets/icon-512-BFxO-nrp.png?v=vitalia-v234-premium-stable-r1">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon-Dpi31azn.png?v=vitalia-v235-connect-r1">
+<link rel="icon" type="image/png" sizes="192x192" href="/assets/icon-192-IrzRsN2J.png?v=vitalia-v235-connect-r1">
+<link rel="icon" type="image/png" sizes="512x512" href="/assets/icon-512-BFxO-nrp.png?v=vitalia-v235-connect-r1">
   <script type="module" crossorigin src="/assets/main-8T_HSBca.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/main-DTJMghYh.css">
+<link rel="stylesheet" href="./styles/connect.css?v=vitalia-v235-connect-r1">
+<link rel="stylesheet" href="./styles/universal.css?v=vitalia-v235-connect-r1">
 </head>
 <body>
 <div id="root">
@@ -54,41 +56,50 @@
 </div>
 
 <!-- Runtime version + observability -->
-<script src="./release.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/core/observability-boot.js?v=vitalia-v234-premium-stable-r1"></script>
+<script src="./release.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/core/observability-boot.js?v=vitalia-v235-connect-r1"></script>
 
 <!-- Supabase SDK -->
-<script src="./vendor/supabase/supabase.js?v=vitalia-v234-premium-stable-r1"></script>
+<script src="./vendor/supabase/supabase.js?v=vitalia-v235-connect-r1"></script>
 
-<script src="./js/core/supabase-client.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/core/storage-keys.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/core/errors.js?v=vitalia-v234-premium-stable-r1"></script>
+<script src="./js/core/supabase-client.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/core/storage-keys.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/core/errors.js?v=vitalia-v235-connect-r1"></script>
 
-<script src="./js/core/i18n.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/modules/sleep.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/modules/supplements.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/modules/notifications.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/modules/labs.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/modules/longevity.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/modules/mental.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/modules/microbiome.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/modules/shopping.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/modules/wearables.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/modules/athlete.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/modules/diagnostic.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/modules/progress.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/core/clinical-policy.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/core/app-core.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/core/recipe-fallback.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/core/recipe-nutrition.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/modules/recipes-data.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/modules/auth.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/core/router.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/modules/screens.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/modules/daily.js?v=vitalia-v234-premium-stable-r1"></script>
-<script src="./js/core/boot.js?v=vitalia-v234-premium-stable-r1"></script>
+<script src="./js/core/i18n.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/sleep.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/supplements.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/notifications.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/labs.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/longevity.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/mental.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/microbiome.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/shopping.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/wearables.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/ble-hr.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/connect-i18n.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/connect.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/ble/profiles.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/ble/monitor.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/ble/transport.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/ble/health-bridge.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/ble/universal-i18n.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/ble/universal.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/athlete.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/diagnostic.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/progress.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/core/clinical-policy.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/core/app-core.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/core/recipe-fallback.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/core/recipe-nutrition.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/recipes-data.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/auth.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/core/router.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/screens.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/modules/daily.js?v=vitalia-v235-connect-r1"></script>
+<script src="./js/core/boot.js?v=vitalia-v235-connect-r1"></script>
 
-<script src="./js/modules/coach.js?v=vitalia-v234-premium-stable-r1"></script>
+<script src="./js/modules/coach.js?v=vitalia-v235-connect-r1"></script>
 
 </body>
 </html>

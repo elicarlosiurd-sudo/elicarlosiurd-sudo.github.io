@@ -24,8 +24,8 @@ function renderWearablesShell() {
   return '<div class="screen-header"><div class="screen-title">⌚ Wearables</div></div><div id="main-content"></div>';
 }
 
-async function renderWearables() {
-  var main = document.getElementById('main-content');
+async function renderWearablesLegacy(target, metricsOnly) {
+  var main = target || document.getElementById('main-content');
   if (!main) return;
 
   var today = localDateKey();
@@ -126,16 +126,18 @@ async function renderWearables() {
     + ("<p style=\"font-size:13px;opacity:.6;margin-bottom:14px;\">" + getLang().ui_wear_intro + "</p>")
     + metricsHtml
     + manualHtml
-    + providersHtml
+    + (metricsOnly ? '' : providersHtml)
     + '</div>';
 
   var urlParams = new URLSearchParams(window.location.search);
   var fitbitCode = urlParams.get('fitbit_code') || urlParams.get('code');
-  if (fitbitCode) {
+  if (fitbitCode && !metricsOnly) {
     window.history.replaceState({}, '', window.location.pathname);
     handleFitbitCallback(fitbitCode);
   }
 }
+
+function renderWearables() { return window.VitaliaUniversal ? window.VitaliaUniversal.renderDevices() : window.VitaliaConnect ? window.VitaliaConnect.render() : renderWearablesLegacy(); }
 
 function saveWearableManual() {
   var sb = getVitaliaSupabaseClient();
