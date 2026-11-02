@@ -1,6 +1,12 @@
 /* P5 controls only; existing themes and premium cards stay untouched. */
+#vitalia-connect{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))}
 #vitalia-connect .universal-select,#connect-ble .universal-select{min-height:48px;max-width:100%;width:100%;padding:10px;background:#06180d;border:1px solid #62ac79;color:#f2fff5;border-radius:10px;font:inherit}
 #vitalia-connect section[data-universal-state],#connect-ble section[data-universal-state]{scroll-margin-top:100px}
 #vitalia-connect .connect-bpm{font-size:56px;font-weight:800;line-height:1.2;color:#54ed89}
 #vitalia-connect > details.universal-legacy > summary{color:#e8f4eb}
 #vitalia-connect .connect-card h3{color:#f2fff5;font-size:18px;line-height:1.4;margin:20px 0 8px}
+#vitalia-connect .universal-metrics{margin:12px 0;display:grid;gap:10px}
+#vitalia-connect .universal-metrics>div{padding:10px 0;border-bottom:1px solid #285439}
+#vitalia-connect .universal-metrics dt{color:#e8f4eb;font-size:15px}
+#vitalia-connect .universal-metrics dd{margin:4px 0;color:#54ed89;font-size:26px;font-weight:700;line-height:1.25;overflow-wrap:anywhere}
+#vitalia-connect .universal-metrics small{display:block;color:#c5d9cc;font-size:13px;font-weight:400;margin-top:4px}

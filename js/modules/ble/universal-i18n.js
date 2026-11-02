@@ -236,9 +236,15 @@
     for (const [key, value] of Object.entries(values)) LANG[lang]['universal_' + key] = value;
   const readable = {
     pt: {
-      install_android: 'Instalar VitalIA para Android',
       native_only:
-        'Para receber os dados do relógio no Android, instale o aplicativo VitalIA. No navegador, você pode consultar os dados já sincronizados.',
+        'A conexão com o celular não está disponível nesta sessão. Os dados já sincronizados nesta conta continuam disponíveis para consulta.',
+      loading: 'Buscando seus dados…',
+      connect_data: 'Conectar meus dados',
+      options: 'Opções de conexão',
+      details_history: 'Ver detalhes e dias anteriores',
+      no_data: 'Ainda não há dados sincronizados nesta conta. Conecte seus dados para começar.',
+      no_record: 'Sem registro',
+      sensor_authorized: 'Acesso autorizado. Aguardando leitura do sensor.',
       summary_title: 'Seu resumo',
       heart_title: 'Batimentos cardíacos',
       day_average: 'Média do dia',
@@ -261,9 +267,15 @@
         'Valor estimado a partir dos batimentos durante o sono registrado. Não é uma medição direta em repouso.'
     },
     en: {
-      install_android: 'Install VitalIA for Android',
       native_only:
-        'Install the VitalIA Android app to receive watch data. In the browser, you can view data already synced.',
+        'The phone connection is unavailable in this session. You can still view data already synced to this account.',
+      loading: 'Loading your data…',
+      connect_data: 'Connect my data',
+      options: 'Connection options',
+      details_history: 'View details and previous days',
+      no_data: 'No data has been synced to this account yet. Connect your data to get started.',
+      no_record: 'No record',
+      sensor_authorized: 'Access authorized. Waiting for a sensor reading.',
       summary_title: 'Your summary',
       heart_title: 'Heart rate',
       day_average: 'Daily average',
@@ -286,9 +298,15 @@
         'Estimated from heartbeats during recorded sleep. This is not a direct resting measurement.'
     },
     es: {
-      install_android: 'Instalar VitalIA para Android',
       native_only:
-        'Instala VitalIA para Android para recibir los datos del reloj. En el navegador puedes consultar los datos ya sincronizados.',
+        'La conexión con el teléfono no está disponible en esta sesión. Puedes consultar los datos ya sincronizados en esta cuenta.',
+      loading: 'Buscando tus datos…',
+      connect_data: 'Conectar mis datos',
+      options: 'Opciones de conexión',
+      details_history: 'Ver detalles y días anteriores',
+      no_data: 'Todavía no hay datos sincronizados en esta cuenta. Conecta tus datos para empezar.',
+      no_record: 'Sin registro',
+      sensor_authorized: 'Acceso autorizado. Esperando una lectura del sensor.',
       summary_title: 'Tu resumen',
       heart_title: 'Latidos del corazón',
       day_average: 'Promedio del día',
@@ -311,9 +329,15 @@
         'Valor estimado a partir de los latidos durante el sueño registrado. No es una medición directa en reposo.'
     },
     ru: {
-      install_android: 'Установить VitalIA для Android',
       native_only:
-        'Чтобы получать данные часов, установите VitalIA для Android. В браузере можно просматривать уже синхронизированные данные.',
+        'Подключение к телефону недоступно в этом сеансе. Данные, уже синхронизированные с этой учётной записью, доступны для просмотра.',
+      loading: 'Загружаем ваши данные…',
+      connect_data: 'Подключить мои данные',
+      options: 'Настройки подключения',
+      details_history: 'Подробности и предыдущие дни',
+      no_data: 'В этой учётной записи пока нет синхронизированных данных. Подключите данные, чтобы начать.',
+      no_record: 'Нет записи',
+      sensor_authorized: 'Доступ разрешён. Ожидается показание датчика.',
       summary_title: 'Ваши данные',
       heart_title: 'Пульс',
       day_average: 'Среднее за день',

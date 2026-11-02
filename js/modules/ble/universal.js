@@ -198,60 +198,82 @@ window.VitaliaUniversal = (() => {
     main.replaceChildren(root);
     const header = document.querySelector('.screen-header .screen-title');
     if (header) header.textContent = c('title');
-    const top = card(u('connect'));
-    top.append(node('p', u('depends')));
-    if (!native()) {
-      const install = node('a', u('install_android'));
-      install.href =
-        'https://elicarlosiurd-sudo.github.io/downloads/VitalIA.apk?v=' +
-        globalThis.VITALIA_APP_VERSION;
-      install.setAttribute('download', 'VitalIA.apk');
-      top.append(node('p', u('native_only')), install);
-    }
+    const top = card(u('summary_title'));
+    top.dataset.universalState = 'overview';
+    const readings = node('div');
+    const feedback = status(top);
+    feedback.textContent = u('loading');
+    top.insertBefore(readings, feedback);
     root.append(top);
     const panel = node('div');
     root.append(panel);
-    button(
+    let connection = null;
+    const primary = button(
       top,
-      u('connect'),
-      () => {
+      u('connect_data'),
+      async () => {
+        if (!native()) {
+          feedback.textContent = u('native_only');
+          return;
+        }
+        if (hcBusy) return;
         panel.replaceChildren();
-        const choose = card(u('select'));
-        panel.append(choose);
-        button(
-          choose,
-          u('automatic'),
-          () => {
-            if (!native()) {
-              choose.append(node('p', u('native_only')));
-              return;
-            }
-            consent(
-              panel,
-              'health_connect',
-              ['sleep', 'heart_rate', 'hrv', 'steps', 'spo2'],
-              async scopes => {
-                choose.append(node('p', u('health_read')));
-                const s = status(choose);
-                await bridge((i, n) => (s.textContent = c('saving') + ' ' + i + '/' + n)).connect(
-                  scopes
-                );
-                await renderDevices();
-              }
+        primary.disabled = true;
+        if (connection) {
+          feedback.textContent = c('saving');
+          try {
+            await bridge((i, n) => (feedback.textContent = c('saving') + ' ' + i + '/' + n)).sync(
+              connection.scopes
             );
-          },
-          true
+            if (root.isConnected) await renderDevices();
+            VitaliaDaily.refresh();
+          } catch (e) {
+            feedback.textContent = errorText(e);
+          } finally {
+            primary.disabled = false;
+          }
+          return;
+        }
+        await consent(
+          panel,
+          'health_connect',
+          ['sleep', 'heart_rate', 'hrv', 'steps', 'spo2'],
+          async scopes => {
+            await bridge(
+              (i, n) => (feedback.textContent = c('saving') + ' ' + i + '/' + n)
+            ).connect(scopes);
+            if (root.isConnected) await renderDevices();
+            VitaliaDaily.refresh();
+          }
         );
-        button(choose, u('direct'), () => direct(panel, false));
+        primary.disabled = false;
       },
       true
     );
+    primary.disabled = true;
+    const options = node('details', null, 'universal-legacy');
+    options.append(node('summary', u('options')));
+    const settings = node('div');
+    options.append(settings);
+    root.append(options);
+    button(settings, u('direct'), () => direct(panel, false));
     try {
       const sb = getVitaliaSupabaseClient(),
         uid = owner(),
         r = await sb.from('device_connections').select('*').eq('user_id', uid);
       if (r.error) throw r.error;
       if (uid !== owner() || !root.isConnected) return;
+      connection =
+        (r.data || []).find(
+          row =>
+            row.connector === 'health_connect' &&
+            row.status === 'active' &&
+            row.consent_version === CONSENT &&
+            Date.parse(row.consented_at) ===
+              Date.parse(vitaliaStorageGet(bindingKey('health_connect'), null))
+        ) || null;
+      primary.textContent = connection ? c('sync') : u('connect_data');
+      primary.disabled = false;
       for (const connection of r.data || []) {
         if (
           !['health_connect', 'ble_hr'].includes(connection.connector) ||
@@ -260,7 +282,10 @@ window.VitaliaUniversal = (() => {
           continue;
         const box = card(connection.device_label || connection.connector),
           s = status(box);
-        s.textContent = c(connection.status);
+        s.textContent =
+          connection.connector === 'ble_hr' && connection.status === 'active'
+            ? u('sensor_authorized')
+            : c(connection.status);
         if (connection.last_sync_at)
           box.append(
             node(
@@ -274,36 +299,6 @@ window.VitaliaUniversal = (() => {
                 }).format(new Date(connection.last_sync_at))
             )
           );
-        if (connection.connector === 'health_connect' && connection.status === 'active') {
-          if (native()) {
-            try {
-              await bridge().permissions(connection.scopes);
-            } catch (e) {
-              s.textContent = errorText(e);
-            }
-            if (uid !== owner() || !root.isConnected) return;
-          } else box.append(node('p', u('native_only')));
-          const sync = button(box, c('sync'), async () => {
-            if (hcBusy) {
-              s.textContent = c('saving');
-              return;
-            }
-            sync.disabled = true;
-            s.textContent = c('saving');
-            try {
-              await bridge((i, n) => (s.textContent = c('saving') + ' ' + i + '/' + n)).sync(
-                connection.scopes
-              );
-              s.textContent = c('saved');
-              VitaliaDaily.refresh();
-            } catch (e) {
-              s.textContent = errorText(e);
-            } finally {
-              sync.disabled = !native();
-            }
-          });
-          sync.disabled = !native();
-        }
         button(box, c('disconnect'), async () => {
           try {
             await active?.disconnect();
@@ -328,16 +323,59 @@ window.VitaliaUniversal = (() => {
             s.textContent = errorText(e);
           }
         });
-        root.append(box);
+        settings.append(box);
       }
       const snapshots = await sb
         .from('device_health_snapshots')
         .select('origins,day,source,payload')
         .eq('user_id', uid)
         .order('day', { ascending: false })
-        .limit(5);
+        .limit(30);
       if (snapshots.error) throw snapshots.error;
       if (uid !== owner() || !root.isConnected) return;
+      const available = (snapshots.data || []).filter(
+        snapshot => readableSections(snapshot.payload?.daily || {}).length
+      );
+      const latest = available[0];
+      feedback.textContent = latest ? '' : u('no_data');
+      const daily = latest?.payload?.daily || {};
+      if (latest) {
+        readings.append(node('p', summaryDate(latest.day)));
+        for (const id of latest.origins || [])
+          readings.append(node('p', originLabel(id, latest.payload?.origin_names?.[id])));
+      }
+      const metrics = node('dl', null, 'universal-metrics');
+      for (const [key, title, format] of [
+        ['sleep_minutes', 'sleep_title', sleepTime],
+        ['hr_avg', 'heart_title', value => number(value) + ' ' + u('per_minute')],
+        ['steps', 'steps_title', number]
+      ]) {
+        const row = node('div');
+        row.append(
+          node('dt', u(title)),
+          node('dd', Number.isFinite(daily[key]) ? format(daily[key]) : u('no_record'))
+        );
+        if (key === 'hr_avg' && Number.isFinite(daily[key]))
+          row.querySelector('dd').append(node('small', u('day_average')));
+        metrics.append(row);
+      }
+      readings.append(metrics);
+      if (connection?.last_sync_at)
+        readings.append(
+          node(
+            'p',
+            c('last') +
+              ': ' +
+              new Intl.DateTimeFormat(APP.lang, {
+                dateStyle: 'short',
+                timeStyle: 'short',
+                timeZone: zone()
+              }).format(new Date(connection.last_sync_at))
+          )
+        );
+      const history = node('details', null, 'universal-legacy');
+      history.append(node('summary', u('details_history')));
+      root.insertBefore(history, options);
       const origins = new Map();
       for (const snapshot of snapshots.data || [])
         for (const id of snapshot.origins || [])
@@ -345,7 +383,7 @@ window.VitaliaUniversal = (() => {
       if (origins.size) {
         const origin = card(u('origin'));
         for (const [id, name] of origins) origin.append(node('p', originLabel(id, name)));
-        root.append(origin);
+        history.append(origin);
       }
       for (const snapshot of snapshots.data || []) {
         if (snapshot.source !== 'health_connect') continue;
@@ -364,10 +402,11 @@ window.VitaliaUniversal = (() => {
           }
           if (section.kind === 'variation') box.append(node('p', u('variation_tip')));
         }
-        root.append(box);
+        history.append(box);
       }
     } catch (e) {
       const failure = card(c('error'));
+      feedback.textContent = c('error');
       failure.append(node('p', errorText(e)));
       button(failure, c('retry'), renderDevices);
       root.append(failure);
@@ -376,10 +415,15 @@ window.VitaliaUniversal = (() => {
     legacy.append(node('summary', u('other')));
     const inner = node('div');
     legacy.append(inner);
-    root.append(legacy);
+    settings.append(legacy);
     legacy.addEventListener('toggle', () => {
       if (legacy.open && !inner.childNodes.length) VitaliaConnect.render(inner);
     });
+    // Consent can scroll this screen. A completed refresh must reveal the new
+    // summary, rather than retaining a scroll offset from the removed form.
+    if (root.isConnected) {
+      for (let parent = main; parent; parent = parent.parentElement) parent.scrollTop = 0;
+    }
   }
   function originLabel(name, provided) {
     const label =
