@@ -1,14 +1,14 @@
 {
   "project_ref": "qyerrlteeoiudtgmguzk",
   "package": "app.vitalia",
-  "release": "vitalia-v235-connect-r1",
-  "source_commit": "5e751bf104261d50b9439d0da5bdb5543282ee17",
-  "public_source_commit": "b69870438806329487dbe7f6a888ace86c4a9771",
+  "release": "vitalia-v235-connect-simple-r2",
+  "source_commit": "03cad1ec992fe4f53a78a167c1c3bb0e498d5859",
+  "public_source_commit": "862b2d6d4efcec0587638d16a8c498b2e5e7cee4",
   "release_signed": true,
   "debug_signed": false,
   "health_read_only": true,
   "health_permissions": 6,
-  "checked_assets": 96,
+  "checked_assets": 94,
   "qa_references": 0,
   "user_credentials_embedded": false
 }

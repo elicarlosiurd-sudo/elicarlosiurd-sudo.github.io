@@ -1,6 +1,5 @@
-VitalIA para Android — vitalia-v235-connect-r1
+VitalIA Android 1.0.1 — vitalia-v235-connect-simple-r2
 
-Baixe VitalIA.apk, abra o arquivo no Android e confirme Instalar. Depois abra o aplicativo pelo ícone VitalIA.
-Entre com sua conta do VitalIA principal. O aplicativo VitalIA QA e suas credenciais são separados.
-Em Meus dispositivos, use Conexão automática e autorize Sono, Batimentos e os demais dados que desejar no Health Connect. Sincronize primeiro o aplicativo oficial do relógio.
-Esta distribuição é um APK Android assinado pelo projeto, fora da Play Store. A aprovação da loja não foi solicitada nesta entrega.
+Atualização do mesmo VitalIA principal (app.vitalia), com a mesma assinatura. Abra VitalIA.apk e confirme Atualizar; seus dados e sua conta são preservados.
+Em Meus dispositivos, toque Conectar meus dados e autorize os tipos desejados no pedido do Android. Depois, Sincronizar agora atualiza Sono, Batimentos cardíacos e Passos na mesma tela.
+A conta do QA e a conta principal são separadas. Não há transferência automática de registros entre contas.
