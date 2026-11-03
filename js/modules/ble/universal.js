@@ -95,6 +95,9 @@ window.VitaliaUniversal = (() => {
       });
     return sections;
   }
+  function latestMetric(snapshots, key) {
+    return snapshots.find(snapshot => Number.isFinite(snapshot.payload?.daily?.[key])) || null;
+  }
   const bindingKey = source => userScopedKey('vitalia_native_consent_' + source, owner());
   async function request(action, source, body) {
     const payload = { ...(body || {}) };
@@ -368,7 +371,6 @@ window.VitaliaUniversal = (() => {
       );
       const latest = available[0];
       feedback.textContent = latest ? '' : u('no_data');
-      const daily = latest?.payload?.daily || {};
       if (latest) {
         readings.append(node('p', summaryDate(latest.day)));
         for (const id of latest.origins || [])
@@ -380,13 +382,19 @@ window.VitaliaUniversal = (() => {
         ['hr_avg', 'heart_title', value => number(value) + ' ' + u('per_minute')],
         ['steps', 'steps_title', number]
       ]) {
+        const metricSnapshot = latestMetric(available, key);
+        const metricValue = metricSnapshot?.payload?.daily?.[key];
         const row = node('div');
         row.append(
           node('dt', u(title)),
-          node('dd', Number.isFinite(daily[key]) ? format(daily[key]) : u('no_record'))
+          node('dd', Number.isFinite(metricValue) ? format(metricValue) : u('no_record'))
         );
-        if (key === 'hr_avg' && Number.isFinite(daily[key]))
+        if (key === 'hr_avg' && Number.isFinite(metricValue))
           row.querySelector('dd').append(node('small', u('day_average')));
+        if (metricSnapshot && metricSnapshot !== latest)
+          row.querySelector('dd').append(
+            node('small', u('last_record') + ' · ' + summaryDate(metricSnapshot.day))
+          );
         metrics.append(row);
       }
       readings.append(metrics);
@@ -1023,6 +1031,7 @@ window.VitaliaUniversal = (() => {
     originLabel,
     autosync,
     readableSections,
+    latestMetric,
     sleepTime,
     summaryDate,
     versionLabel
