@@ -198,6 +198,26 @@ function socialLogin(provider) {
 }
 
 async function tryBiometric() {
+  if (window.Capacitor?.isNativePlatform?.()) {
+    if (!window.VitaliaNative?.verifyUnlock || !window.VitaliaNative.unlockText) { toast(t('auth_bio_unavailable'), 'info', 4200); return; }
+    if (window.VitaliaNative.unlockBusy) return;
+    window.VitaliaNative.unlockBusy = true;
+    try {
+      const session = await window.VitaliaNative.verifyUnlock(sb);
+      APP.user = {email:session.user.email,name:session.user.user_metadata?.nome || session.user.email.split('@')[0],id:session.user.id};
+      APP.session = session.access_token;
+      await syncFromSupabase(session.user.id);
+      const current = (await sb.auth.getSession())?.data?.session;
+      if (current?.user?.id !== session.user.id || current.access_token !== session.access_token) throw Object.assign(new Error('Session changed'), {code:'SESSION_CHANGED'});
+      localStorage.setItem(userScopedKey('v_biometric', session.user.id), '1');
+      finishAuth();
+    } catch (error) {
+      const key = error?.code === 'SESSION_CHANGED' ? 'session' : error?.code === 'NOT_CONFIGURED' ? 'not_configured' : error?.code === 'CANCELLED' ? 'cancelled' : 'unavailable';
+      toast(window.VitaliaNative.unlockText(key), 'info', 5000);
+      if (key === 'session') { APP.user = null; APP.session = null; resetSessionVisualState(); APP.authStep = 'login'; renderAuth(); }
+    } finally { window.VitaliaNative.unlockBusy = false; }
+    return;
+  }
   var liveSession = null;
   try { liveSession = (await sb.auth.getSession())?.data?.session || null; } catch(_) {}
   if (!liveSession?.user) {
@@ -232,6 +252,7 @@ async function tryBiometric() {
 }
 
 async function activateBiometric() {
+  if (window.Capacitor?.isNativePlatform?.()) { await tryBiometric(); return; }
   if (window.PublicKeyCredential && navigator.credentials) {
     try {
       var challenge = new Uint8Array(32); window.crypto.getRandomValues(challenge);
@@ -249,6 +270,7 @@ async function activateBiometric() {
 }
 
 function renderBiometricOffer() {
+  if (window.Capacitor?.isNativePlatform?.()) { renderPinScreen(); return; }
   const el = document.getElementById('auth-screen');
   const hasBio = window.PublicKeyCredential;
   el.innerHTML = `<div class="auth-bg" style="justify-content:center">
@@ -269,6 +291,11 @@ function renderBiometricOffer() {
 }
 
 function renderPinScreen() {
+  if (window.Capacitor?.isNativePlatform?.()) {
+    const label = key => escapeHTML(window.VitaliaNative.unlockText(key));
+    document.getElementById('auth-screen').innerHTML = '<div class="auth-bg" style="justify-content:center"><div class="auth-card" style="text-align:center;max-width:340px"><div style="font-size:48px;margin-bottom:16px">🔐</div><h2 class="auth-title">'+label('title')+'</h2><p class="auth-sub">'+label('description')+'</p><button class="btn btn-primary btn-full" onclick="tryBiometric()" style="margin-bottom:12px;padding:14px">'+label('button')+'</button><button class="btn btn-ghost btn-full" onclick="APP.authStep=\'login\';renderAuth()">'+label('back')+'</button></div></div>';
+    return;
+  }
   const el = document.getElementById('auth-screen');
   const pin = APP.pinInput;
   el.innerHTML = `<div class="auth-bg" style="justify-content:center">
@@ -287,6 +314,7 @@ function renderPinScreen() {
 }
 
 function pinKey(k) {
+  if (window.Capacitor?.isNativePlatform?.()) { tryBiometric(); return; }
   if (k === '⌫') { APP.pinInput = APP.pinInput.slice(0,-1); }
   else if (k === '*') { APP.pinInput = ''; }
   else if (APP.pinInput.length < 4) { APP.pinInput += k; }

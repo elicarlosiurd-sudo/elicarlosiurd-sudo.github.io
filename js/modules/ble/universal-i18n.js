@@ -185,6 +185,11 @@
     LANG[lang].universal_notification = notification[lang];
   const additions = {
     pt: {
+      web_environment: 'Web (navegador)',
+      web_hint: 'A conexão automática com o relógio funciona no VitalIA para Android. No celular, abra o arquivo VitalIA.apk recebido e toque em Abrir após instalar.',
+      refresh_data: 'Atualizar meus dados',
+      version_unknown: 'versão indisponível',
+      version_pending: 'identificando versão',
       imported: 'Dados importados',
       minimum: 'FC mínima',
       sleep_minutes: 'Sono registrado',
@@ -196,6 +201,11 @@
         'Este relógio não envia batimentos ao vivo por Bluetooth. Seus dados chegam pela Conexão automática (Health Connect).'
     },
     en: {
+      web_environment: 'Web (browser)',
+      web_hint: 'Automatic watch syncing works in VitalIA for Android. On your phone, open the VitalIA.apk file you received, then tap Open after installing.',
+      refresh_data: 'Refresh my data',
+      version_unknown: 'version unavailable',
+      version_pending: 'checking version',
       imported: 'Imported data',
       minimum: 'Minimum HR',
       sleep_minutes: 'Recorded sleep',
@@ -208,6 +218,11 @@
         'This watch does not send live heart rate over Bluetooth. Your data arrives through Automatic connection (Health Connect).'
     },
     es: {
+      web_environment: 'Web (navegador)',
+      web_hint: 'La sincronización automática del reloj funciona en VitalIA para Android. En el teléfono, abre el archivo VitalIA.apk recibido y toca Abrir tras instalarlo.',
+      refresh_data: 'Actualizar mis datos',
+      version_unknown: 'versión no disponible',
+      version_pending: 'identificando versión',
       imported: 'Datos importados',
       minimum: 'FC mínima',
       sleep_minutes: 'Sueño registrado',
@@ -220,6 +235,11 @@
         'Este reloj no envía pulsaciones en vivo por Bluetooth. Tus datos llegan por la Conexión automática (Health Connect).'
     },
     ru: {
+      web_environment: 'Веб (браузер)',
+      web_hint: 'Автоматическая синхронизация часов работает в VitalIA для Android. На телефоне откройте полученный файл VitalIA.apk и после установки нажмите «Открыть».',
+      refresh_data: 'Обновить мои данные',
+      version_unknown: 'версия недоступна',
+      version_pending: 'определяем версию',
       imported: 'Импортированные данные',
       minimum: 'Минимальный пульс',
       sleep_minutes: 'Записанный сон',

@@ -55,3 +55,5 @@ var VITALIA_DAILY_STORAGE_KEY = 'vitalia_daily_v1';
 // P2 introduction only; routines and check-ins remain in their existing entities.
 var VITALIA_WEEK_INTRO_STORAGE_KEY = 'vitalia_week_intro_v1';
 var VITALIA_CONNECT_WAITLIST_STORAGE_KEY = 'vitalia_connect_waitlist_v1';
+// User-owned, local-only recovery journal for the last explicitly confirmed import.
+var VITALIA_LOCAL_TRANSFER_JOURNAL_KEY = 'vitalia_local_transfer_journal_v1';

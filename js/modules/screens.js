@@ -1349,7 +1349,7 @@ window.addShopItem = function() {
    SETTINGS SCREEN
 ═══════════════════════════════════════ */
 function showAppInfoModal() {
-  openModal('VitalIA', '<div class="settings-modal-copy"><b>VitalIA</b><br>v1.0.0<br><br><span>Saúde com Inteligência</span></div>');
+  openModal('VitalIA', '<div class="settings-modal-copy"><b>VitalIA</b><br><span data-vitalia-version>'+escapeHTML(window.VitaliaUniversal?.versionLabel?.() || globalThis.VITALIA_APP_VERSION || '')+'</span><br><br><span>Saúde com Inteligência</span></div>');
 }
 
 function showReportProblemModal() {
@@ -1501,7 +1501,7 @@ function renderSettings() {
   <!-- App info -->
   <div class="section-title">${t('settings_about')}</div>
   <div class="settings-group">
-    <div class="settings-row" onclick="showAppInfoModal()"><div class="settings-icon">${vitaliaIcon('premium')}</div><div class="settings-text"><div class="settings-label">VitalIA v1.0.0</div><div class="settings-sub">${t('settings_app_version')}</div></div><div class="settings-arrow">›</div></div>
+    <div class="settings-row" onclick="showAppInfoModal()"><div class="settings-icon">${vitaliaIcon('premium')}</div><div class="settings-text"><div class="settings-label">VitalIA</div><div class="settings-sub" data-vitalia-version>${escapeHTML(window.VitaliaUniversal?.versionLabel?.() || globalThis.VITALIA_APP_VERSION || '')}</div></div><div class="settings-arrow">›</div></div>
     <div class="settings-row" onclick="toast(t('settings_rate_toast'),'success',3000)"><div class="settings-icon">${vitaliaIcon('achievements')}</div><div class="settings-text"><div class="settings-label">${t('settings_rate_app')}</div><div class="settings-sub">${t('settings_rate_sub')}</div></div><div class="settings-arrow">›</div></div>
     <div class="settings-row" onclick="showReportProblemModal()"><div class="settings-icon">${vitaliaIcon('scanner')}</div><div class="settings-text"><div class="settings-label">${t('settings_report_problem')}</div><div class="settings-sub">${t('settings_report_sub')}</div></div><div class="settings-arrow">›</div></div>
 
@@ -1805,12 +1805,51 @@ async function deleteLocalAccountData() {
 // eslint-disable-next-line no-func-assign -- pré-existente no index.html; corrigir na V231
 showPrivacyCenter = function() {
   var analyticsConsent = !!(window.VitalIAConsent && window.VitalIAConsent.hasAnalyticsConsent());
+  var privacyDetails = {
+    "pt": {
+      "title": "Câmera, lembretes e dados locais",
+      "paragraphs": [
+        "A câmera e o microfone são solicitados quando você escolhe tirar uma foto, fazer uma leitura ao vivo ou gravar uma mensagem de voz. Você pode negar a permissão e continuar usando os demais recursos. Algumas análises, conversas e funções de salvamento podem enviar os arquivos que você escolher aos serviços utilizados pelo VitalIA. Processamento no aparelho e análise pela internet são operações diferentes.",
+        "Os lembretes são agendados no Android quando você os ativa. Você pode retirar a permissão nas configurações do aparelho. A economia de bateria pode atrasar a entrega. Os lembretes são voltados ao bem-estar e não são alarmes clínicos.",
+        "Para verificar seu acesso, o Android pode solicitar a biometria ou a credencial de bloqueio do aparelho. O VitalIA não recebe seu PIN, sua senha, seu padrão ou seus dados biométricos. Uma sessão válida da conta continua necessária.",
+        "Você pode escolher exportar dados locais em um arquivo JSON e importá-los em outra instalação usando a mesma conta. A transferência ocorre por meio do arquivo escolhido por você; o próprio recurso não envia esse arquivo ao servidor. Ele pode conter dados pessoais: guarde-o com cuidado e apague as cópias quando não forem mais necessárias. Revise a prévia antes de confirmar a importação."
+      ]
+    },
+    "en": {
+      "title": "Camera, reminders and local data",
+      "paragraphs": [
+        "Camera and microphone access is requested when you choose to take a photo, run a live scan, or record a voice message. You may decline and continue using other features. Some analysis, conversation, and saving features may send your selected files to services used by VitalIA. On-device processing and online analysis are different operations.",
+        "Reminders are scheduled on Android when you enable them. You can revoke permission in device settings. Battery management may delay delivery. These are wellness reminders, not clinical alarms.",
+        "To verify access, Android may request biometrics or the device screen-lock credential. VitalIA does not receive your PIN, password, pattern, or biometric data. A valid account session is still required.",
+        "You can choose to export local data to a JSON file and import it into another installation using the same account. The transfer uses the file you select; the feature itself does not send that file to the server. It may contain personal data: keep it safe and delete copies when no longer needed. Review the preview before confirming the import."
+      ]
+    },
+    "es": {
+      "title": "Cámara, recordatorios y datos locales",
+      "paragraphs": [
+        "La cámara y el micrófono se solicitan cuando eliges tomar una foto, realizar una lectura en directo o grabar un mensaje de voz. Puedes negar el permiso y seguir utilizando las demás funciones. Algunas funciones de análisis, conversación y guardado pueden enviar los archivos que elijas a servicios utilizados por VitalIA. El procesamiento en el dispositivo y el análisis en línea son operaciones diferentes.",
+        "Los recordatorios se programan en Android cuando los activas. Puedes retirar el permiso en los ajustes del dispositivo. El ahorro de batería puede retrasar la entrega. Son recordatorios de bienestar, no alarmas clínicas.",
+        "Para verificar el acceso, Android puede solicitar la biometría o la credencial de bloqueo del dispositivo. VitalIA no recibe tu PIN, contraseña, patrón ni datos biométricos. Sigue siendo necesaria una sesión válida de la cuenta.",
+        "Puedes elegir exportar datos locales a un archivo JSON e importarlos en otra instalación con la misma cuenta. La transferencia usa el archivo que seleccionas; esta función no envía el archivo al servidor. Puede contener datos personales: guárdalo con cuidado y elimina las copias cuando ya no sean necesarias. Revisa la vista previa antes de confirmar la importación."
+      ]
+    },
+    "ru": {
+      "title": "Камера, напоминания и локальные данные",
+      "paragraphs": [
+        "Доступ к камере и микрофону запрашивается, когда вы выбираете фотографирование, сканирование в реальном времени или запись голосового сообщения. Вы можете отказать и продолжать пользоваться другими функциями. Некоторые функции анализа, общения и сохранения могут отправлять выбранные файлы в службы, используемые VitalIA. Обработка на устройстве и онлайн-анализ — разные операции.",
+        "Напоминания планируются в Android после включения. Разрешение можно отозвать в настройках устройства. Экономия заряда может задержать доставку. Это напоминания для поддержания благополучия, а не медицинские сигналы тревоги.",
+        "Для проверки доступа Android может запросить биометрию или данные блокировки устройства. VitalIA не получает ваш PIN-код, пароль, графический ключ или биометрические данные. Действующий сеанс учётной записи по-прежнему необходим.",
+        "Вы можете экспортировать локальные данные в файл JSON и импортировать их в другую установку с той же учётной записью. Для переноса используется выбранный вами файл; сама функция не отправляет его на сервер. Файл может содержать персональные данные: храните его осторожно и удалите копии, когда они больше не нужны. Перед подтверждением проверьте предварительный просмотр."
+      ]
+    }
+  };
+  var privacyDetailsForLang = privacyDetails[APP.lang] || privacyDetails.en;
   openModal('Privacidade e Dados', `
     <div style="font-size:13px;color:var(--text2);line-height:1.7">
       <div style="font-weight:700;color:var(--text);font-size:15px;margin-bottom:8px">Centro de Privacidade LGPD/GDPR</div>
       <p><b style="color:var(--text)">Política de Privacidade.</b> O VitalIA trata dados de conta, perfil físico, nutrição, hidratação, peso, humor, progresso e mensagens do Coach para personalizar sua experiência. Dados de saúde são sensíveis e exigem consentimento claro.</p>
       <p style="margin-top:8px"><b style="color:var(--text)">Termos de Uso.</b> O VitalIA é uma ferramenta de apoio a hábitos saudáveis e educação nutricional. Ele não substitui médico, nutricionista, psicólogo ou atendimento de emergência.</p>
-      <p style="margin-top:8px"><b style="color:var(--text)">Base operacional.</b> Após login, o histórico principal é sincronizado com Supabase Auth/Database. O navegador mantém apenas preferências técnicas como idioma, tema e biometria local.</p>
+      <details style="margin-top:8px"><summary>${escapeHTML(privacyDetailsForLang.title)}</summary>${privacyDetailsForLang.paragraphs.map(function(paragraph){return '<p style="margin-top:8px">'+escapeHTML(paragraph)+'</p>';}).join('')}</details>
       <p style="margin-top:8px"><b style="color:var(--text)">IA.</b> O Coach usa backend protegido; recomendações são educativas e devem ser validadas por profissional quando houver doença, gestação, medicação ou restrição clínica.</p>
       <div style="margin-top:12px;padding:10px 12px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.18);border-radius:10px">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px">
@@ -1821,6 +1860,7 @@ showPrivacyCenter = function() {
         <button id="analytics-consent-toggle" class="btn ${analyticsConsent ? 'btn-outline' : 'btn-primary'} btn-full" style="margin-top:10px" onclick="window.VitalIAConsent&&window.VitalIAConsent.setConsent({analytics:${analyticsConsent ? 'false' : 'true'}});showPrivacyCenter();toast(t('${analyticsConsent ? 'analytics_consent_disabled' : 'analytics_consent_enabled'}'),'success',1800)">${analyticsConsent ? t('analytics_consent_disable') : t('analytics_consent_allow')}</button>
       </div>
       <div style="margin-top:12px;padding:10px 12px;background:rgba(34,197,94,.06);border-left:3px solid var(--green);border-radius:8px">Versões: Termos ${CONFIG.TERMS_VERSION} · Privacidade ${CONFIG.PRIVACY_VERSION}. Consentimentos são registrados com data e idioma.</div>
+      <button class="btn btn-outline btn-full" style="margin-top:12px;min-height:48px;white-space:normal" onclick="VitaliaLocalTransfer.open()">${escapeHTML((window.VitaliaLocalTransfer.labels[APP.lang]||window.VitaliaLocalTransfer.labels.en).title)}</button>
       <div style="display:flex;gap:8px;margin-top:14px">
         <button class="btn btn-outline" style="flex:1" onclick="exportFullHistory()">Exportar dados</button>
         <button class="btn btn-danger" style="flex:1" onclick="confirmDeleteLocalAccount()">Excluir dados</button>

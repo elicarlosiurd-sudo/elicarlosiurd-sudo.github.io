@@ -164,6 +164,26 @@ window.VitaliaUniversal = (() => {
       ? window.VitaliaNative
       : null;
   }
+  function versionLabel() {
+    const platform = native(),
+      web = globalThis.VITALIA_APP_VERSION || u('version_unknown');
+    if (!platform) return u('web_environment') + ' · ' + web;
+    const info = platform.info;
+    const valid =
+      info && /^\d+(?:\.\d+){1,3}$/.test(info.version) && Number.isSafeInteger(info.build);
+    return (
+      'Android' +
+      (info?.appId === 'app.vitalia.qa' ? ' QA' : '') +
+      (valid ? ' ' + info.version + ' (' + info.build + ')' : ' · ' + u('version_pending')) +
+      ' · web ' +
+      web
+    );
+  }
+  function updateVersionLabels() {
+    document.querySelectorAll('[data-vitalia-version]').forEach(label => {
+      label.textContent = versionLabel();
+    });
+  }
   let hcBusy = false;
   function bridge(progress = () => {}) {
     const n = native();
@@ -204,16 +224,22 @@ window.VitaliaUniversal = (() => {
     const feedback = status(top);
     feedback.textContent = u('loading');
     top.insertBefore(readings, feedback);
+    if (!native()) top.insertBefore(node('p', u('web_hint')), feedback);
     root.append(top);
     const panel = node('div');
     root.append(panel);
     let connection = null;
     const primary = button(
       top,
-      u('connect_data'),
+      native() ? u('connect_data') : u('refresh_data'),
       async () => {
         if (!native()) {
-          feedback.textContent = u('native_only');
+          primary.disabled = true;
+          try {
+            await renderDevices();
+          } finally {
+            primary.disabled = false;
+          }
           return;
         }
         if (hcBusy) return;
@@ -272,7 +298,11 @@ window.VitaliaUniversal = (() => {
             Date.parse(row.consented_at) ===
               Date.parse(vitaliaStorageGet(bindingKey('health_connect'), null))
         ) || null;
-      primary.textContent = connection ? c('sync') : u('connect_data');
+      primary.textContent = !native()
+        ? u('refresh_data')
+        : connection
+          ? c('sync')
+          : u('connect_data');
       primary.disabled = false;
       for (const connection of r.data || []) {
         if (
@@ -986,6 +1016,7 @@ window.VitaliaUniversal = (() => {
     if (!document.hidden) autosync();
   });
   window.addEventListener('online', autosync);
+  window.addEventListener('vitalia-native-info', updateVersionLabels);
   return {
     renderDevices,
     mountAthlete,
@@ -993,6 +1024,7 @@ window.VitaliaUniversal = (() => {
     autosync,
     readableSections,
     sleepTime,
-    summaryDate
+    summaryDate,
+    versionLabel
   };
 })();

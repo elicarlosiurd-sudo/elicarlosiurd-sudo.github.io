@@ -43,6 +43,9 @@ self.addEventListener('message', event => {
 self.addEventListener('fetch', event => {
   const request = event.request;
   const url = new URL(request.url);
+  // Installers are downloads, never app navigations: do not cache or fall back
+  // to index.html, even when Android/Chrome launches their URL inside the PWA.
+  if (/\.apk$/i.test(url.pathname) || url.pathname.startsWith(new URL('./downloads/', ROOT).pathname)) return;
   if (request.method !== 'GET' || url.origin !== ROOT.origin) return;
   const navigation = request.mode === 'navigate';
   // Only public application assets; never API responses or user data.

@@ -1,14 +1,25 @@
 {
   "project_ref": "qyerrlteeoiudtgmguzk",
   "package": "app.vitalia",
-  "release": "vitalia-v235-connect-simple-r2",
-  "source_commit": "03cad1ec992fe4f53a78a167c1c3bb0e498d5859",
-  "public_source_commit": "862b2d6d4efcec0587638d16a8c498b2e5e7cee4",
+  "version_name": "1.0.3",
+  "version_code": 103,
+  "release": "vitalia-v235-android-capabilities-r1",
+  "source_commit": "db0616a5e4fd8a4798de697fec1ec9eaa6eff074",
+  "public_source_commit": "3251ba36a297dd6be02d531d85f650b5d67d9c46",
   "release_signed": true,
   "debug_signed": false,
   "health_read_only": true,
   "health_permissions": 6,
-  "checked_assets": 94,
-  "qa_references": 0,
-  "user_credentials_embedded": false
+  "media_permissions": [
+    "CAMERA",
+    "RECORD_AUDIO",
+    "MODIFY_AUDIO_SETTINGS"
+  ],
+  "checked_assets": 95,
+  "apk_sha256": "6edd089370084e3f6e559e40bb113673e3cf327577f1bf4ad15f5978fa7899f0",
+  "known_qa_supabase_project_refs_detected": false,
+  "qa_android_namespace_present": true,
+  "qa_observability_file_present": true,
+  "qa_observability_matches_previous_android": true,
+  "credential_scan": "No recognized service-role secret or nonproduction JWT in web assets"
 }

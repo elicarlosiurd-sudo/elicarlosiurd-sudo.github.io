@@ -1,5 +1,3 @@
-VitalIA Android 1.0.1 — vitalia-v235-connect-simple-r2
+VitalIA Android 1.0.3 / 103
 
-Atualização do mesmo VitalIA principal (app.vitalia), com a mesma assinatura. Abra VitalIA.apk e confirme Atualizar; seus dados e sua conta são preservados.
-Em Meus dispositivos, toque Conectar meus dados e autorize os tipos desejados no pedido do Android. Depois, Sincronizar agora atualiza Sono, Batimentos cardíacos e Passos na mesma tela.
-A conta do QA e a conta principal são separadas. Não há transferência automática de registros entre contas.
+Abra VitalIA.apk e escolha Atualizar. Use a mesma conta. Depois, no VitalIA do Chrome, abra Configurações → Privacidade e Dados → Transferir meus dados locais e crie o arquivo. No Android, abra a mesma opção, confira a prévia e importe. Apague o arquivo após conferir os dados. Mantenha o VitalIA do Chrome até concluir os testes.
